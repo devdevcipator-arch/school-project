@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Icon, iconPaths } from "@/components/ui/Icon";
 import ContactForm from "@/components/contact/ContactForm";
@@ -25,27 +26,22 @@ export default function ContactSection() {
       <span id="register" className="absolute top-0" aria-hidden />
       <span id="demo" className="absolute top-0" aria-hidden />
 
-      <div className="pb-12 pt-[136px] text-center lg:pb-14 lg:pt-[164px]">
-        <div className="shell">
-          <div className="mx-auto max-w-[780px]">
-            <Eyebrow>Contact Us</Eyebrow>
-            <h1 data-reveal className="mb-5 text-[clamp(2.1rem,4.4vw,3.4rem)] font-extrabold leading-[1.1] tracking-tight">
+      <div className="shell pt-[116px] lg:pt-[124px]">
+        <div className="relative grid gap-6 lg:grid-cols-[.9fr_1.1fr]">
+          {/* Intro + institutional contact details, background image 1 of 2 */}
+          <aside data-reveal className="relative isolate flex flex-col overflow-hidden rounded-[22px] bg-ink p-7 text-surface shadow-[0_30px_70px_rgba(6,30,41,.3)] sm:p-8 lg:p-10">
+            <Image src="/images/contact-hero.jpg" alt="" fill preload sizes="(min-width: 1024px) 45vw, 100vw" className="-z-20 object-cover" />
+            <div aria-hidden className="absolute inset-0 -z-10 bg-[linear-gradient(160deg,rgba(6,30,41,.94)_0%,rgba(6,30,41,.86)_55%,rgba(29,84,109,.8)_100%)]" />
+
+            <div>
+              <Eyebrow light>Contact Us</Eyebrow>
+            </div>
+            <h1 className="mb-4 text-[clamp(1.9rem,3.4vw,2.8rem)] font-extrabold leading-[1.1] tracking-tight">
               Get in touch with our team
             </h1>
-            <p data-reveal className="text-[1.08rem] text-ink/70">
-              Principals, administrators and trustees: reach out with any question, register your school, or book a live
-              demo. We will help you take your school paperless.
+            <p className="mb-8 text-[1rem] text-surface/80">
+              Principals, administrators and trustees: ask a question, register your school, or book a live demo.
             </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="shell">
-        <div className="relative grid gap-6 lg:grid-cols-[.8fr_1.2fr]">
-          {/* Institutional contact details */}
-          <aside data-reveal className="order-2 flex flex-col lg:order-1 rounded-[22px] bg-linear-135 from-ink to-primary p-7 text-surface shadow-[0_30px_70px_rgba(6,30,41,.3)] sm:p-8 lg:p-10">
-            <h2 className="text-[1.5rem] font-extrabold tracking-tight">Contact details</h2>
-            <p className="mb-7 mt-1 text-[.93rem] text-surface/75">Reach our team directly through any of these channels.</p>
 
             <ul className="grid gap-3.5">
               {details.map((d) => {
@@ -95,7 +91,7 @@ export default function ContactSection() {
           </aside>
 
           {/* Form card */}
-          <div data-reveal className="order-1 min-w-0 rounded-[22px] border lg:order-2 border-ink/10 bg-white shadow-[0_30px_70px_rgba(6,30,41,.18)]">
+          <div data-reveal className="min-w-0 rounded-[22px] border border-ink/10 bg-white shadow-[0_30px_70px_rgba(6,30,41,.18)]">
             <ContactForm />
           </div>
         </div>
