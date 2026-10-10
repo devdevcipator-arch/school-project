@@ -1,16 +1,8 @@
 "use client";
 
-import { useState, useSyncExternalStore, type FormEvent, type ReactNode } from "react";
-import { pillClass, useSlidingPill } from "@/components/motion/useSlidingPill";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { Icon, iconPaths } from "@/components/ui/Icon";
 import { buttonClass } from "@/components/ui/Button";
-
-const topics = [
-  { id: "inquiry", label: "General inquiry" },
-  { id: "register", label: "School registration" },
-  { id: "demo", label: "Live demo" },
-] as const;
-type Topic = (typeof topics)[number]["id"];
 
 const roles = ["Principal", "Administrator", "Trustee", "School Owner", "Other"];
 
@@ -29,14 +21,6 @@ function validate(f: Fields): Errors {
   if (f.message.trim().length < 10) e.message = "Please tell us a little more (at least 10 characters).";
   return e;
 }
-
-// Topic preselected from the URL hash (/contact#register, /contact#demo)
-const subscribeHash = (cb: () => void) => {
-  window.addEventListener("hashchange", cb);
-  return () => window.removeEventListener("hashchange", cb);
-};
-const readHash = () => window.location.hash.slice(1);
-const topicFromHash = (hash: string): Topic => (hash === "register" || hash === "demo" ? hash : "inquiry");
 
 const fieldBase =
   "w-full rounded-xl border bg-white px-4 py-3 text-[.95rem] text-ink outline-none placeholder:text-ink/40 transition-[border-color,box-shadow,translate] duration-300 ease-soft hover:-translate-y-1 hover:shadow-[0_10px_24px_rgba(6,30,41,.08)] focus:-translate-y-1 focus:ring-4";
@@ -70,12 +54,6 @@ function Field({
 }
 
 export default function ContactForm() {
-  const hash = useSyncExternalStore(subscribeHash, readHash, () => "");
-  const [topicChoice, setTopicChoice] = useState<Topic | null>(null);
-  const topic = topicChoice ?? topicFromHash(hash);
-  const topicIndex = topics.findIndex((t) => t.id === topic);
-  const { listRef, setHover } = useSlidingPill(topicIndex);
-
   const [fields, setFields] = useState<Fields>(empty);
   const [errors, setErrors] = useState<Errors>({});
   const [touched, setTouched] = useState(false);
@@ -131,7 +109,7 @@ export default function ContactForm() {
         <h3 className="text-[1.5rem] font-extrabold">Message sent. Thank you!</h3>
         <p className="max-w-[420px] text-ink/70">
           Thanks, {fields.name.split(" ")[0]}. Our team will contact you at <strong className="text-primary">{fields.email}</strong> within
-          one business day about {topics[topicIndex].label.toLowerCase()} for {fields.school}.
+          one business day.
         </p>
         <button type="button" onClick={reset} className={buttonClass("dark", "md", "mt-2 cursor-pointer")}>
           Send another message
@@ -146,35 +124,6 @@ export default function ContactForm() {
         <h2 className="text-[1.5rem] font-extrabold tracking-tight">Send us a message</h2>
         <p className="mt-1 text-[.93rem] text-ink/60">Fields marked * are required.</p>
       </div>
-
-      {/* Topic: same sliding pill as the navigation */}
-      <fieldset data-reveal>
-        <legend className="mb-2 text-[.85rem] font-semibold text-ink/80">I&apos;m interested in</legend>
-        <div
-          ref={listRef}
-          role="radiogroup"
-          onMouseLeave={() => setHover(null)}
-          className="relative grid grid-cols-1 gap-1 rounded-2xl border border-ink/10 bg-surface p-1 sm:grid-cols-3"
-        >
-          <span data-pill aria-hidden className={`${pillClass} shadow-none`} />
-          {topics.map((t, i) => (
-            <button
-              key={t.id}
-              type="button"
-              role="radio"
-              aria-checked={topic === t.id}
-              data-pill-item
-              onClick={() => setTopicChoice(t.id)}
-              onMouseEnter={() => setHover(i)}
-              className={`relative z-10 cursor-pointer rounded-full px-3 py-2.5 text-[.85rem] font-semibold transition-colors duration-[350ms] ease-nav ${
-                topic === t.id ? "text-surface" : "text-ink/70 hover:text-primary"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </fieldset>
 
       <Field id="school" label="School / Institution Name" error={errors.school}>
         <input id="school" name="school" autoComplete="organization" placeholder="e.g. Greenfield Public School" value={fields.school} onChange={update("school")} className={fieldClass("school")} {...aria("school")} />

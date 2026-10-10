@@ -17,12 +17,10 @@ export default function Hero() {
         <div>
           <Eyebrow light>Paperless · Online · AI-Powered</Eyebrow>
           <h1 data-reveal className="mb-5 text-[clamp(2.1rem,4.4vw,3.6rem)] font-extrabold leading-[1.1] tracking-tight">
-            Run your entire school online. Paperless, connected and powered by AI.
+            Run your entire school online, powered by AI.
           </h1>
           <p data-reveal className="mb-8 max-w-[600px] text-[1.08rem] text-surface/80">
-            {site.name} brings Principals, Teachers and Students into one unified system. Principals monitor attendance
-            and analytics, teachers mark attendance and create AI-generated quizzes in seconds, and students take tests,
-            track attendance and download report cards, all from a single dashboard.
+            {site.name} connects principals, teachers and students in one simple, paperless dashboard.
           </p>
           <div data-reveal className="mb-8 flex flex-wrap gap-3.5">
             <ButtonLink href="/contact#register" size="lg" className="max-sm:w-full max-sm:whitespace-normal">

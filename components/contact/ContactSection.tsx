@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Icon, iconPaths } from "@/components/ui/Icon";
 import ContactForm from "@/components/contact/ContactForm";
@@ -26,17 +25,14 @@ export default function ContactSection() {
       <span id="register" className="absolute top-0" aria-hidden />
       <span id="demo" className="absolute top-0" aria-hidden />
 
-      {/* Background image 1 of 2 */}
-      <div className="relative isolate overflow-hidden bg-ink pb-[200px] pt-[124px] text-center text-surface lg:pb-[220px] lg:pt-[150px]">
-        <Image src="/images/contact-hero.jpg" alt="" fill preload sizes="100vw" className="-z-20 object-cover" />
-        <div aria-hidden className="absolute inset-0 -z-10 bg-[linear-gradient(115deg,rgba(6,30,41,.94)_0%,rgba(6,30,41,.82)_50%,rgba(29,84,109,.7)_100%)]" />
+      <div className="pb-12 pt-[136px] text-center lg:pb-14 lg:pt-[164px]">
         <div className="shell">
           <div className="mx-auto max-w-[780px]">
-            <Eyebrow light>Contact Us</Eyebrow>
+            <Eyebrow>Contact Us</Eyebrow>
             <h1 data-reveal className="mb-5 text-[clamp(2.1rem,4.4vw,3.4rem)] font-extrabold leading-[1.1] tracking-tight">
               Get in touch with our team
             </h1>
-            <p data-reveal className="text-[1.08rem] text-surface/80">
+            <p data-reveal className="text-[1.08rem] text-ink/70">
               Principals, administrators and trustees: reach out with any question, register your school, or book a live
               demo. We will help you take your school paperless.
             </p>
@@ -45,7 +41,7 @@ export default function ContactSection() {
       </div>
 
       <div className="shell">
-        <div className="relative -mt-[150px] grid gap-6 lg:-mt-[170px] lg:grid-cols-[.8fr_1.2fr]">
+        <div className="relative grid gap-6 lg:grid-cols-[.8fr_1.2fr]">
           {/* Institutional contact details */}
           <aside data-reveal className="order-2 flex flex-col lg:order-1 rounded-[22px] bg-linear-135 from-ink to-primary p-7 text-surface shadow-[0_30px_70px_rgba(6,30,41,.3)] sm:p-8 lg:p-10">
             <h2 className="text-[1.5rem] font-extrabold tracking-tight">Contact details</h2>
