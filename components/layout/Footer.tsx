@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/layout/Logo";
-import { mainNav, portals, site } from "@/lib/site";
+import { mainNav, site } from "@/lib/site";
 
 const heading = "mb-[18px] text-[.85rem] font-bold uppercase tracking-[.12em] text-accent";
 const footLink =
@@ -9,7 +9,7 @@ const footLink =
 export default function Footer() {
   return (
     <footer className="bg-ink pt-[72px] text-surface">
-      <div className="shell grid gap-10 pb-[52px] sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1.3fr]">
+      <div className="shell grid gap-10 pb-[52px] sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1.3fr]">
         <div data-reveal>
           <Logo />
           <p className="mt-[18px] max-w-[380px] text-[.93rem] text-surface/80">
@@ -22,15 +22,6 @@ export default function Footer() {
           <h4 className={heading}>Navigation</h4>
           <ul className="grid gap-3">
             {mainNav.map((l) => (
-              <li key={l.href}><Link href={l.href} className={footLink}>{l.label}</Link></li>
-            ))}
-          </ul>
-        </div>
-
-        <div data-reveal>
-          <h4 className={heading}>Portals</h4>
-          <ul className="grid gap-3">
-            {portals.map((l) => (
               <li key={l.href}><Link href={l.href} className={footLink}>{l.label}</Link></li>
             ))}
           </ul>

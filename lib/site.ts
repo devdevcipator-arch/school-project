@@ -16,9 +16,3 @@ export const mainNav = [
   { href: "/about", label: "About Us" },
   { href: "/contact", label: "Contact Us" },
 ];
-
-export const portals = [
-  { href: "/login?role=principal", label: "Principal Login" },
-  { href: "/login?role=teacher", label: "Teacher Login" },
-  { href: "/login?role=student", label: "Student Login" },
-];
