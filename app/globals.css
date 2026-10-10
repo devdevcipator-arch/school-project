@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+/* ==========================================================
+   SchoolSphere design tokens
+   Brand palette (only these four core colors):
+   ink #061E29 · primary #1D546D · accent #5F9598 · surface #F3F4F4
+   ========================================================== */
+@theme {
+  --color-ink: #061E29;
+  --color-primary: #1D546D;
+  --color-accent: #5F9598;
+  --color-surface: #F3F4F4;
+
+  /* semantic status (only where meaning requires) */
+  --color-ok: #2e8b57;
+  --color-warn: #c98a16;
+
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+
+  /* motion (platform standard) */
+  --ease-nav: cubic-bezier(.65, 0, .35, 1);
+  --ease-soft: cubic-bezier(.22, 1, .36, 1);
+
+  --animate-marquee: marquee 38s linear infinite;
+  --animate-fade-in: fade-in .45s cubic-bezier(.22, 1, .36, 1);
+
+  @keyframes marquee {
+    to { transform: translateX(-100%); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+/* Page container: wide layout with responsive side gutter */
+@utility shell {
+  width: 100%;
+  max-width: 1400px;
+  margin-inline: auto;
+  padding-inline: clamp(16px, 3.5vw, 40px);
+}
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body { overflow-x: hidden; }
+  :focus-visible { outline: 3px solid var(--color-accent); outline-offset: 3px; border-radius: 6px; }
+}
+
+/* ----------------------------------------------------------
+   Section transition: reveal-up (platform standard)
+   Any element with data-reveal fades/slides in when it enters
+   the viewport. Siblings stagger via --d (set by RevealObserver).
+   ---------------------------------------------------------- */
+.js [data-reveal] {
+  opacity: 0;
+  transform: translateY(40px);
+  filter: blur(6px);
+  transition: opacity .8s var(--ease-soft), transform .8s var(--ease-soft), filter .8s var(--ease-soft);
+  transition-delay: var(--d, 0ms);
+}
+.js [data-reveal].is-visible { opacity: 1; transform: none; filter: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  .js [data-reveal] { opacity: 1; transform: none; filter: none; }
+}
