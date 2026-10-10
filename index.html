@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SchoolSphere — Paperless School Management with AI</title>
+  <title>SchoolSphere | Paperless School Management with AI</title>
   <meta name="description" content="SchoolSphere connects Principals, Teachers and Students in one paperless school management platform with AI-powered tests and quizzes.">
   <meta name="theme-color" content="#061E29">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="preload" as="image" href="images/hero.jpg">
   <link rel="stylesheet" href="css/styles.css">
+  <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
 
@@ -19,9 +20,10 @@
     <div class="container header__inner">
       <a href="index.html" class="logo" aria-label="SchoolSphere home">
         <svg class="logo__mark" viewBox="0 0 40 40" aria-hidden="true">
-          <rect width="40" height="40" rx="10" fill="#1D546D"/>
+          <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1D546D"/><stop offset="1" stop-color="#5F9598"/></linearGradient></defs>
+          <rect width="40" height="40" rx="10" fill="url(#lg)"/>
           <path d="M20 9 6 16l14 7 11-5.5V25h3v-9L20 9Z" fill="#F3F4F4"/>
-          <path d="M12 21.5V27c0 2.2 3.6 4 8 4s8-1.8 8-4v-5.5l-8 4-8-4Z" fill="#5F9598"/>
+          <path d="M12 21.5V27c0 2.2 3.6 4 8 4s8-1.8 8-4v-5.5l-8 4-8-4Z" fill="#061E29" opacity=".55"/>
         </svg>
         <span class="logo__text">School<span>Sphere</span></span>
       </a>
@@ -32,22 +34,13 @@
 
       <nav class="nav" id="nav" aria-label="Main">
         <ul class="nav__links">
+          <li class="nav__indicator" aria-hidden="true"></li>
           <li><a href="index.html" class="is-active" aria-current="page">Home</a></li>
           <li><a href="about.html">About Us</a></li>
           <li><a href="contact.html">Contact Us</a></li>
         </ul>
         <div class="nav__actions">
-          <div class="login-menu">
-            <button class="btn btn--ghost login-menu__btn" aria-haspopup="true" aria-expanded="false">
-              Login
-              <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="m5 7.5 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            </button>
-            <ul class="login-menu__list" role="menu">
-              <li><a role="menuitem" href="login.html?role=principal">Principal Login</a></li>
-              <li><a role="menuitem" href="login.html?role=teacher">Teacher Login</a></li>
-              <li><a role="menuitem" href="login.html?role=student">Student Login</a></li>
-            </ul>
-          </div>
+          <a href="login.html" class="btn btn--dark">Login</a>
           <a href="contact.html#register" class="btn btn--primary">Register School</a>
         </div>
       </nav>
@@ -59,19 +52,19 @@
     <section class="hero bg-image" style="background-image: url('images/hero.jpg')">
       <div class="container hero__inner">
         <div class="hero__copy">
-          <span class="eyebrow eyebrow--light">Paperless · Online · AI-Powered</span>
-          <h1>Run your entire school online — paperless, connected and powered by AI.</h1>
-          <p class="hero__sub">
+          <span class="eyebrow eyebrow--light" data-reveal>Paperless · Online · AI-Powered</span>
+          <h1 data-reveal>Run your entire school online. Paperless, connected and powered by AI.</h1>
+          <p class="hero__sub" data-reveal>
             SchoolSphere brings Principals, Teachers and Students into one unified system.
             Principals monitor attendance and analytics, teachers mark attendance and create
             AI-generated quizzes in seconds, and students take tests, track attendance and
-            download report cards — all from a single dashboard.
+            download report cards, all from a single dashboard.
           </p>
-          <div class="hero__ctas">
-            <a href="contact.html#register" class="btn btn--accent btn--lg">Get Started — Register School</a>
-            <a href="contact.html" class="btn btn--outline-light btn--lg">Contact Us</a>
+          <div class="hero__ctas" data-reveal>
+            <a href="contact.html#register" class="btn btn--primary btn--lg">Get Started: Register School</a>
+            <a href="contact.html" class="btn btn--dark btn--lg">Contact Us</a>
           </div>
-          <ul class="hero__points">
+          <ul class="hero__points" data-reveal>
             <li>Teacher check-in &amp; check-out tracking</li>
             <li>AI test &amp; quiz generator</li>
             <li>Digital report cards</li>
@@ -79,10 +72,11 @@
         </div>
 
         <!-- Dashboard preview -->
-        <div class="preview" aria-label="Dashboard preview">
+        <div class="preview" aria-label="Dashboard preview" data-reveal>
           <div class="preview__bar">
             <span class="dot"></span><span class="dot"></span><span class="dot"></span>
             <div class="preview__tabs" role="tablist">
+              <span class="preview__indicator" aria-hidden="true"></span>
               <button role="tab" class="is-active" data-tab="principal" aria-selected="true">Principal</button>
               <button role="tab" data-tab="teacher" aria-selected="false">Teacher · AI Quiz</button>
               <button role="tab" data-tab="student" aria-selected="false">Student</button>
@@ -106,9 +100,9 @@
             <table class="mini-table">
               <thead><tr><th>Teacher</th><th>Check-in</th><th>Check-out</th><th>Status</th></tr></thead>
               <tbody>
-                <tr><td>Ayesha Khan</td><td>07:52</td><td>—</td><td><span class="status status--ok">Present</span></td></tr>
-                <tr><td>Bilal Ahmed</td><td>08:04</td><td>—</td><td><span class="status status--late">Late</span></td></tr>
-                <tr><td>Sara Malik</td><td>07:45</td><td>—</td><td><span class="status status--ok">Present</span></td></tr>
+                <tr><td>Ayesha Khan</td><td>07:52</td><td>-</td><td><span class="status status--ok">Present</span></td></tr>
+                <tr><td>Bilal Ahmed</td><td>08:04</td><td>-</td><td><span class="status status--late">Late</span></td></tr>
+                <tr><td>Sara Malik</td><td>07:45</td><td>-</td><td><span class="status status--ok">Present</span></td></tr>
               </tbody>
             </table>
             <div class="bars" aria-hidden="true">
@@ -128,7 +122,7 @@
             </div>
             <div class="prompt-box">
               <span class="prompt-label">Topic</span>
-              <p>Grade 7 Science — Photosynthesis · 10 MCQs · Medium</p>
+              <p>Grade 7 Science: Photosynthesis · 10 MCQs · Medium</p>
               <span class="prompt-btn">Generate ✦</span>
             </div>
             <ol class="quiz-list">
@@ -154,7 +148,7 @@
                 <span>92%</span><small>Attendance</small>
               </div>
               <ul class="feed">
-                <li><b>Quiz</b> Photosynthesis — due today <span class="link-like">Start</span></li>
+                <li><b>Quiz</b> Photosynthesis, due today <span class="link-like">Start</span></li>
                 <li><b>Notice</b> Sports day on Friday</li>
                 <li><b>Report</b> Term 1 report card <span class="link-like">Download</span></li>
               </ul>
@@ -166,56 +160,73 @@
 
     <!-- ============ 3. SCHOOLS ============ -->
     <section class="schools" id="schools">
-      <div class="schools__banner bg-image" style="background-image: url('images/schools-bg.jpg')">
-        <div class="container">
-          <span class="eyebrow eyebrow--light">For Schools</span>
-          <h2>Built for schools — designed around the three people who run them.</h2>
-          <p>From one campus to many, schools move their daily operations online and stop chasing paper registers, printed notices and handwritten report cards.</p>
-          <ul class="stats">
-            <li><strong>100%</strong><span>Paperless attendance</span></li>
-            <li><strong>3</strong><span>Connected roles</span></li>
-            <li><strong>Seconds</strong><span>To generate a quiz with AI</span></li>
-            <li><strong>24/7</strong><span>Student portal access</span></li>
-          </ul>
-        </div>
-      </div>
-
       <div class="container">
-        <div class="partners">
-          <p>Trusted by growing schools</p>
-          <ul class="partners__list">
-            <li>Greenfield School</li>
-            <li>Crescent Academy</li>
-            <li>Bright Future High</li>
-            <li>Oakridge Campus</li>
-            <li>Al-Noor Model School</li>
-          </ul>
+        <div class="section-head">
+          <span class="eyebrow" data-reveal>For Schools</span>
+          <h2 data-reveal>Built for schools, designed around the three people who run them.</h2>
+          <p data-reveal>From one campus to many, schools move their daily operations online and stop chasing paper registers, printed notices and handwritten report cards.</p>
         </div>
 
-        <div class="section-head">
-          <span class="eyebrow">Role-based access</span>
-          <h2>One platform. Three dedicated portals.</h2>
-          <p>Every role sees exactly what it needs — nothing more, nothing less.</p>
+        <ul class="stats">
+          <li data-reveal><strong>100%</strong><span>Paperless attendance</span></li>
+          <li data-reveal><strong>3</strong><span>Connected roles</span></li>
+          <li data-reveal><strong>Seconds</strong><span>To generate a quiz with AI</span></li>
+          <li data-reveal><strong>24/7</strong><span>Student portal access</span></li>
+        </ul>
+
+        <!-- Trusted by -->
+        <div class="trusted" data-reveal>
+          <p class="trusted__label">Trusted by growing schools</p>
+          <div class="marquee">
+            <ul class="marquee__track">
+              <li class="school"><span class="school__mono">GS</span><span class="school__name">Greenfield School<small>Lahore</small></span></li>
+              <li class="school"><span class="school__mono">CA</span><span class="school__name">Crescent Academy<small>Karachi</small></span></li>
+              <li class="school"><span class="school__mono">BF</span><span class="school__name">Bright Future High<small>Islamabad</small></span></li>
+              <li class="school"><span class="school__mono">OC</span><span class="school__name">Oakridge Campus<small>Faisalabad</small></span></li>
+              <li class="school"><span class="school__mono">AN</span><span class="school__name">Al-Noor Model School<small>Multan</small></span></li>
+              <li class="school"><span class="school__mono">SP</span><span class="school__name">Summit Public School<small>Rawalpindi</small></span></li>
+            </ul>
+            <ul class="marquee__track" aria-hidden="true">
+              <li class="school"><span class="school__mono">GS</span><span class="school__name">Greenfield School<small>Lahore</small></span></li>
+              <li class="school"><span class="school__mono">CA</span><span class="school__name">Crescent Academy<small>Karachi</small></span></li>
+              <li class="school"><span class="school__mono">BF</span><span class="school__name">Bright Future High<small>Islamabad</small></span></li>
+              <li class="school"><span class="school__mono">OC</span><span class="school__name">Oakridge Campus<small>Faisalabad</small></span></li>
+              <li class="school"><span class="school__mono">AN</span><span class="school__name">Al-Noor Model School<small>Multan</small></span></li>
+              <li class="school"><span class="school__mono">SP</span><span class="school__name">Summit Public School<small>Rawalpindi</small></span></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="section-head section-head--tight">
+          <span class="eyebrow" data-reveal>Role-based access</span>
+          <h2 data-reveal>One platform. Three dedicated portals.</h2>
+          <p data-reveal>Every role sees exactly what it needs, nothing more and nothing less.</p>
         </div>
 
         <div class="roles">
-          <article class="role-card">
-            <div class="role-card__img bg-image" style="background-image: url('images/role-principal.jpg')">
+          <article class="role-card" data-reveal>
+            <div class="role-card__head">
+              <span class="role-card__icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5 M4 19h16 M8 15l3-4 3 2 5-6"/></svg>
+              </span>
               <span class="role-card__tag">Principal / Administrator</span>
             </div>
             <div class="role-card__body">
               <h3>Lead with real-time visibility</h3>
               <ul class="ticks">
-                <li>Real-time teacher monitoring — daily check-in &amp; check-out timestamps</li>
+                <li>Real-time teacher monitoring with daily check-in &amp; check-out timestamps</li>
                 <li>Staff attendance overview at a glance</li>
                 <li>School-level analytics on attendance and academic progress</li>
-                <li>Role-specific announcements — to teachers, students or school-wide</li>
+                <li>Role-specific announcements to teachers, students or school-wide</li>
               </ul>
             </div>
           </article>
 
-          <article class="role-card role-card--featured">
-            <div class="role-card__img bg-image" style="background-image: url('images/role-teacher.jpg')">
+          <article class="role-card role-card--featured" data-reveal>
+            <div class="role-card__head">
+              <span class="role-card__icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.2 5.3L20 9l-4.4 3.8L17 19l-5-3-5 3 1.4-6.2L4 9l5.8-.7z"/></svg>
+              </span>
               <span class="role-card__tag">Teachers</span>
             </div>
             <div class="role-card__body">
@@ -225,13 +236,16 @@
                 <li>Quick student class attendance</li>
                 <li>Upload homework and send progress reports directly</li>
                 <li>Digital report card dispatch to students</li>
-                <li>AI test &amp; quiz generator — ready in seconds</li>
+                <li>AI test &amp; quiz generator, ready in seconds</li>
               </ul>
             </div>
           </article>
 
-          <article class="role-card">
-            <div class="role-card__img bg-image" style="background-image: url('images/role-student.jpg')">
+          <article class="role-card" data-reveal>
+            <div class="role-card__head">
+              <span class="role-card__icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-5 9 5-9 5z M7 11.5V16c0 1.5 2.2 3 5 3s5-1.5 5-3v-4.5"/></svg>
+              </span>
               <span class="role-card__tag">Students</span>
             </div>
             <div class="role-card__body">
@@ -246,26 +260,24 @@
             </div>
           </article>
         </div>
-      </div>
 
-      <div class="benefits bg-image" style="background-image: url('images/benefits-bg.jpg')">
-        <div class="container benefits__grid">
-          <div class="benefit">
+        <div class="benefits">
+          <div class="benefit" data-reveal>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7z M14 3v5h5 M10 13h6 M10 17h6"/></svg>
             <h3>Go fully paperless</h3>
-            <p>Registers, notices, homework and report cards — all digital.</p>
+            <p>Registers, notices, homework and report cards, all digital.</p>
           </div>
-          <div class="benefit">
+          <div class="benefit" data-reveal>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.2 5.3L20 9l-4.4 3.8L17 19l-5-3-5 3 1.4-6.2L4 9l5.8-.7z"/></svg>
             <h3>AI that saves hours</h3>
             <p>Teachers create tests and quizzes instantly instead of writing them by hand.</p>
           </div>
-          <div class="benefit">
+          <div class="benefit" data-reveal>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5 M4 19h16 M8 15l3-4 3 2 5-6"/></svg>
             <h3>Decisions with data</h3>
             <p>Principals see attendance and progress analytics in real time.</p>
           </div>
-          <div class="benefit">
+          <div class="benefit" data-reveal>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l15-6v14L3 13z M7 13v5h3v-4"/></svg>
             <h3>Targeted communication</h3>
             <p>Send the right announcement to the right role, every time.</p>
@@ -275,44 +287,44 @@
     </section>
 
     <!-- ============ 4. FAQ ============ -->
-    <section class="faq bg-image" id="faq" style="background-image: url('images/faq-bg.jpg')">
+    <section class="faq" id="faq">
       <div class="container faq__inner">
         <div class="faq__intro">
-          <span class="eyebrow eyebrow--light">FAQ</span>
-          <h2>Questions schools ask us</h2>
-          <p>Everything about how Principals, Teachers and Students use the platform day to day.</p>
-          <a href="contact.html" class="btn btn--outline-light">Still have questions? Contact Us</a>
+          <span class="eyebrow" data-reveal>FAQ</span>
+          <h2 data-reveal>Questions schools ask us</h2>
+          <p data-reveal>Everything about how Principals, Teachers and Students use the platform day to day.</p>
+          <a href="contact.html" class="btn btn--primary" data-reveal>Still have questions? Contact Us</a>
         </div>
 
         <div class="accordion">
-          <details class="accordion__item" open>
+          <details class="accordion__item" data-reveal open>
             <summary>How does the Principal monitor teacher attendance and daily activity?</summary>
             <div class="accordion__body">
               <p>Every teacher marks their own attendance with a check-in when they arrive and a check-out when they leave. Each action is timestamped and shows up instantly on the Principal's dashboard, where they can see who is present, late or absent, review daily activity, and view attendance trends over time.</p>
             </div>
           </details>
-          <details class="accordion__item">
+          <details class="accordion__item" data-reveal>
             <summary>How does the AI Test &amp; Quiz Generator help teachers?</summary>
             <div class="accordion__body">
-              <p>Teachers enter a topic, grade, number of questions and difficulty, and the AI generates a ready-to-use test or quiz in seconds. Teachers can review and edit the questions, then assign them to a class — removing hours of manual paper-setting each week.</p>
+              <p>Teachers enter a topic, grade, number of questions and difficulty, and the AI generates a ready-to-use test or quiz in seconds. Teachers can review and edit the questions, then assign them to a class, saving hours of manual paper-setting each week.</p>
             </div>
           </details>
-          <details class="accordion__item">
+          <details class="accordion__item" data-reveal>
             <summary>Can the Principal send notices to specific roles (teachers vs. students)?</summary>
             <div class="accordion__body">
-              <p>Yes. When creating an announcement, the Principal chooses the audience — teachers only, students only, or the whole school. Each notice appears in the right portal's notice feed, so everyone only sees what is meant for them.</p>
+              <p>Yes. When creating an announcement, the Principal chooses the audience: teachers only, students only, or the whole school. Each notice appears in the right portal's notice feed, so everyone only sees what is meant for them.</p>
             </div>
           </details>
-          <details class="accordion__item">
+          <details class="accordion__item" data-reveal>
             <summary>How do teachers generate and send digital report cards to students?</summary>
             <div class="accordion__body">
-              <p>Teachers enter or review student marks and progress, and the system builds a digital report card. With one click it is sent directly to the student's portal, where it can be viewed and downloaded — no printing or manual distribution needed.</p>
+              <p>Teachers enter or review student marks and progress, and the system builds a digital report card. With one click it is sent directly to the student's portal, where it can be viewed and downloaded. No printing or manual distribution needed.</p>
             </div>
           </details>
-          <details class="accordion__item">
+          <details class="accordion__item" data-reveal>
             <summary>How do students attempt online tests and access their results?</summary>
             <div class="accordion__body">
-              <p>Assigned tests and quizzes appear on the student's dashboard. Students attempt them online within the given time, submit, and see their results once released — alongside their attendance records, notices and downloadable report cards.</p>
+              <p>Assigned tests and quizzes appear on the student's dashboard. Students attempt them online within the given time, submit, and see their results once released, alongside their attendance records, notices and downloadable report cards.</p>
             </div>
           </details>
         </div>
@@ -320,35 +332,35 @@
     </section>
 
     <!-- ============ 5. CTA ============ -->
-    <section class="cta bg-image" id="register" style="background-image: url('images/cta-bg.jpg')">
+    <section class="cta bg-image" id="register" style="background-image: url('images/cta.jpg')">
       <div class="container cta__inner">
-        <span class="eyebrow eyebrow--light">For School Owners &amp; Principals</span>
-        <h2>Bring your school onto SchoolSphere today.</h2>
-        <p>Register your school in minutes, onboard your teachers and students quickly, and switch to fully paperless management — attendance, notices, AI quizzes and report cards in one place.</p>
-        <div class="cta__actions">
-          <a href="contact.html#register" class="btn btn--accent btn--xl">Register Your School Now</a>
-          <a href="contact.html#demo" class="btn btn--outline-light btn--xl">Book a Demo</a>
+        <span class="eyebrow eyebrow--light" data-reveal>For School Owners &amp; Principals</span>
+        <h2 data-reveal>Bring your school onto SchoolSphere today.</h2>
+        <p data-reveal>Register your school in minutes, onboard your teachers and students quickly, and switch to fully paperless management: attendance, notices, AI quizzes and report cards in one place.</p>
+        <div class="cta__actions" data-reveal>
+          <a href="contact.html#register" class="btn btn--primary btn--xl">Register Your School Now</a>
+          <a href="contact.html#demo" class="btn btn--dark btn--xl">Book a Demo</a>
         </div>
       </div>
     </section>
   </main>
 
   <!-- ============ 6. FOOTER ============ -->
-  <footer class="footer bg-image" style="background-image: url('images/footer-bg.jpg')">
+  <footer class="footer">
     <div class="container footer__grid">
-      <div class="footer__col footer__brand">
-        <a href="index.html" class="logo logo--light" aria-label="SchoolSphere home">
+      <div class="footer__col footer__brand" data-reveal>
+        <a href="index.html" class="logo" aria-label="SchoolSphere home">
           <svg class="logo__mark" viewBox="0 0 40 40" aria-hidden="true">
-            <rect width="40" height="40" rx="10" fill="#1D546D"/>
+            <rect width="40" height="40" rx="10" fill="url(#lg)"/>
             <path d="M20 9 6 16l14 7 11-5.5V25h3v-9L20 9Z" fill="#F3F4F4"/>
-            <path d="M12 21.5V27c0 2.2 3.6 4 8 4s8-1.8 8-4v-5.5l-8 4-8-4Z" fill="#5F9598"/>
+            <path d="M12 21.5V27c0 2.2 3.6 4 8 4s8-1.8 8-4v-5.5l-8 4-8-4Z" fill="#061E29" opacity=".55"/>
           </svg>
           <span class="logo__text">School<span>Sphere</span></span>
         </a>
-        <p>A paperless school management system that connects Principals, Teachers and Students — with attendance tracking, targeted announcements, AI-generated assessments and digital report cards.</p>
+        <p>A paperless school management system that connects Principals, Teachers and Students with attendance tracking, targeted announcements, AI-generated assessments and digital report cards.</p>
       </div>
 
-      <div class="footer__col">
+      <div class="footer__col" data-reveal>
         <h4>Navigation</h4>
         <ul>
           <li><a href="index.html">Home</a></li>
@@ -357,7 +369,7 @@
         </ul>
       </div>
 
-      <div class="footer__col">
+      <div class="footer__col" data-reveal>
         <h4>Portals</h4>
         <ul>
           <li><a href="login.html?role=principal">Principal Login</a></li>
@@ -366,7 +378,7 @@
         </ul>
       </div>
 
-      <div class="footer__col">
+      <div class="footer__col" data-reveal>
         <h4>Contact</h4>
         <ul class="contact-list">
           <li><span>Email</span><a href="mailto:hello@schoolsphere.app">hello@schoolsphere.app</a></li>
