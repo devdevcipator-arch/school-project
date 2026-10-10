@@ -11,7 +11,7 @@ import { mainNav } from "@/lib/site";
 const linkClass =
   "relative z-10 block rounded-full px-[18px] py-[9px] text-[.95rem] font-semibold transition-colors duration-[350ms] ease-nav";
 
-export default function Header({ solid = false }: { solid?: boolean }) {
+export default function Header() {
   const pathname = usePathname();
   const activeIndex = Math.max(0, mainNav.findIndex((l) => l.href === pathname));
   const [scrolled, setScrolled] = useState(false);
@@ -35,8 +35,8 @@ export default function Header({ solid = false }: { solid?: boolean }) {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 border-b transition-[background-color,border-color,backdrop-filter] duration-[350ms] ${
-        solid || scrolled || open
-          ? `border-surface/10 ${solid ? "bg-ink" : "bg-ink/70"} backdrop-blur-[14px] backdrop-saturate-150`
+        scrolled || open
+          ? "border-surface/10 bg-ink/70 backdrop-blur-[14px] backdrop-saturate-150"
           : "border-transparent bg-transparent"
       }`}
     >

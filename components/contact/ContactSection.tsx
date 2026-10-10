@@ -26,6 +26,12 @@ export default function ContactSection() {
       <span id="register" className="absolute top-0" aria-hidden />
       <span id="demo" className="absolute top-0" aria-hidden />
 
+      {/* Same image backdrop as the other pages, sized to sit only behind the transparent header */}
+      <div aria-hidden className="absolute inset-x-0 top-0 isolate h-[76px] overflow-hidden bg-ink">
+        <Image src="/images/contact-hero.jpg" alt="" fill sizes="100vw" className="-z-20 object-cover" />
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(115deg,rgba(6,30,41,.94)_0%,rgba(6,30,41,.82)_50%,rgba(29,84,109,.7)_100%)]" />
+      </div>
+
       <div className="shell pt-[116px] lg:pt-[124px]">
         <div className="relative grid gap-6 lg:grid-cols-[.9fr_1.1fr]">
           {/* Intro + institutional contact details, background image 1 of 2 */}
