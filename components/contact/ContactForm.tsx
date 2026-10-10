@@ -119,7 +119,7 @@ export default function ContactForm() {
   }
 
   return (
-    <form noValidate onSubmit={onSubmit} className="grid gap-5 p-6 sm:p-8 lg:p-10">
+    <form noValidate onSubmit={onSubmit} className="flex h-full flex-col gap-5 p-6 sm:p-8 lg:p-10">
       <div data-reveal>
         <h2 className="text-[1.5rem] font-extrabold tracking-tight">Send us a message</h2>
         <p className="mt-1 text-[.93rem] text-ink/60">Fields marked * are required.</p>
@@ -157,7 +157,7 @@ export default function ContactForm() {
         </Field>
       </div>
 
-      <Field id="message" label="Message / Query" error={errors.message}>
+      <Field id="message" label="Message / Query" error={errors.message} className="flex flex-1 flex-col">
         <textarea
           id="message"
           name="message"
@@ -165,12 +165,12 @@ export default function ContactForm() {
           placeholder="Ask us about onboarding, AI quiz features, system setup, or anything else."
           value={fields.message}
           onChange={update("message")}
-          className={`${fieldClass("message")} resize-y`}
+          className={`${fieldClass("message")} min-h-[140px] flex-1 resize-y`}
           {...aria("message")}
         />
       </Field>
 
-      <div data-reveal className="flex flex-wrap items-center gap-4">
+      <div data-reveal className="flex justify-end">
         <button
           type="submit"
           disabled={status === "sending"}
@@ -188,7 +188,6 @@ export default function ContactForm() {
             </>
           )}
         </button>
-        <p className="text-[.82rem] text-ink/50">We reply within one business day.</p>
       </div>
     </form>
   );
