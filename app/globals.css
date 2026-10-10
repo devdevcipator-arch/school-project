@@ -23,9 +23,17 @@
 
   --animate-marquee: marquee 38s linear infinite;
   --animate-fade-in: fade-in .45s cubic-bezier(.22, 1, .36, 1);
+  --animate-dash: dash 1.4s linear infinite;
+  --animate-float: float 5s ease-in-out infinite;
 
   @keyframes marquee {
     to { transform: translateX(-100%); }
+  }
+  @keyframes dash {
+    to { stroke-dashoffset: -12; }
+  }
+  @keyframes float {
+    50% { translate: 0 -8px; }
   }
   @keyframes fade-in {
     from { opacity: 0; transform: translateY(8px); }

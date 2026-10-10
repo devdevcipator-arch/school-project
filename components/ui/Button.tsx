@@ -6,7 +6,7 @@ type Size = "md" | "lg" | "xl";
 
 // Buttons always use palette gradients; hover slides the gradient.
 const base =
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[10px] border font-semibold text-surface bg-[length:220%_100%] bg-left transition-[background-position,translate,box-shadow] duration-500 ease-nav hover:-translate-y-0.5 hover:bg-right";
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[10px] border font-semibold text-surface bg-[length:220%_100%] bg-left transition-[background-position,translate,box-shadow] duration-500 ease-nav hover:-translate-y-1 hover:bg-right";
 
 const variants: Record<Variant, string> = {
   primary:

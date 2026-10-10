@@ -1,5 +1,6 @@
-import type { ReactNode } from "react";
-import { CheckIcon, Eyebrow } from "@/components/ui/Eyebrow";
+import { CheckIcon } from "@/components/ui/Eyebrow";
+import { Icon, iconPaths } from "@/components/ui/Icon";
+import { SectionHead } from "@/components/ui/SectionHead";
 import TrustedMarquee from "@/components/home/TrustedMarquee";
 
 const stats = [
@@ -8,22 +9,6 @@ const stats = [
   { value: "Seconds", label: "To generate a quiz with AI" },
   { value: "24/7", label: "Student portal access" },
 ];
-
-const iconPaths = {
-  chart: "M4 19V5 M4 19h16 M8 15l3-4 3 2 5-6",
-  star: "M12 3l2.2 5.3L20 9l-4.4 3.8L17 19l-5-3-5 3 1.4-6.2L4 9l5.8-.7z",
-  cap: "M3 9l9-5 9 5-9 5z M7 11.5V16c0 1.5 2.2 3 5 3s5-1.5 5-3v-4.5",
-  doc: "M7 3h7l5 5v13H7z M14 3v5h5 M10 13h6 M10 17h6",
-  megaphone: "M3 11l15-6v14L3 13z M7 13v5h3v-4",
-};
-
-function Icon({ d, className }: { d: string; className: string }) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d={d} />
-    </svg>
-  );
-}
 
 const roles: { tag: string; title: string; icon: string; featured?: boolean; items: string[] }[] = [
   {
@@ -71,15 +56,6 @@ const benefits = [
   { icon: iconPaths.megaphone, title: "Targeted communication", text: "Send the right announcement to the right role, every time." },
 ];
 
-function SectionHead({ eyebrow, title, children, className = "" }: { eyebrow: string; title: string; children: ReactNode; className?: string }) {
-  return (
-    <div className={`mx-auto mb-12 max-w-[760px] text-center ${className}`}>
-      <Eyebrow>{eyebrow}</Eyebrow>
-      <h2 data-reveal className="mb-3 text-[clamp(1.8rem,3.6vw,2.6rem)] font-bold leading-[1.15] tracking-tight">{title}</h2>
-      <p data-reveal className="text-[1.05rem] text-ink/60">{children}</p>
-    </div>
-  );
-}
 
 export default function Schools() {
   return (
@@ -112,7 +88,7 @@ export default function Schools() {
             <article
               key={r.tag}
               data-reveal
-              className={`flex flex-col overflow-hidden rounded-[22px] bg-white shadow-[0_10px_30px_rgba(6,30,41,.08)] transition-[translate,box-shadow] duration-[350ms] ease-soft hover:-translate-y-1.5 hover:shadow-[0_24px_50px_rgba(6,30,41,.16)] ${
+              className={`flex flex-col overflow-hidden rounded-[22px] bg-white shadow-[0_10px_30px_rgba(6,30,41,.08)] transition-[translate,box-shadow] duration-[350ms] ease-soft hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(6,30,41,.16)] ${
                 r.featured ? "border-2 border-accent" : "border border-ink/10"
               }`}
             >

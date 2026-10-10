@@ -14,7 +14,7 @@ function Track({ hidden = false }: { hidden?: boolean }) {
       {schools.map((s) => (
         <li
           key={s.name}
-          className="flex min-w-[210px] items-center gap-3 rounded-[14px] border border-ink/10 bg-white py-3.5 pl-3.5 pr-5 transition-[border-color,translate] duration-300 hover:-translate-y-[3px] hover:border-accent sm:min-w-[240px]"
+          className="flex min-w-[210px] items-center gap-3 rounded-[14px] border border-ink/10 bg-white py-3.5 pl-3.5 pr-5 transition-[border-color,translate] duration-300 hover:-translate-y-1 hover:border-accent sm:min-w-[240px]"
         >
           <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-linear-135 from-ink to-primary text-[.9rem] font-extrabold tracking-[.04em] text-surface">
             {s.mono}

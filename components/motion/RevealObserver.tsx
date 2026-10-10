@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
-const STAGGER_MS = 90;
+const STAGGER_MS = 120;
 const DURATION_MS = 850;
 
 /**
