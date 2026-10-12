@@ -6,10 +6,10 @@ import { buttonClass } from "@/components/ui/Button";
 import { Icon, iconPaths } from "@/components/ui/Icon";
 import { Field, PasswordInput, Spinner, emailPattern, fieldAria, fieldClass } from "@/components/auth/fields";
 
-type Fields = { name: string; email: string; password: string; confirm: string; terms: boolean };
+type Fields = { name: string; email: string; password: string; confirm: string };
 type Errors = Partial<Record<keyof Fields, string>>;
 
-const empty: Fields = { name: "", email: "", password: "", confirm: "", terms: false };
+const empty: Fields = { name: "", email: "", password: "", confirm: "" };
 
 function validate(f: Fields): Errors {
   const e: Errors = {};
@@ -17,7 +17,6 @@ function validate(f: Fields): Errors {
   if (!emailPattern.test(f.email.trim())) e.email = "Please enter a valid email address.";
   if (f.password.length < 8) e.password = "Password must be at least 8 characters.";
   if (!f.confirm || f.confirm !== f.password) e.confirm = "Passwords do not match.";
-  if (!f.terms) e.terms = "Please accept the terms to continue.";
   return e;
 }
 
@@ -85,19 +84,6 @@ export default function SignupForm() {
         <Field id="confirm" label="Confirm Password" error={errors.confirm}>
           <PasswordInput id="confirm" name="confirm" autoComplete="new-password" placeholder="Re-enter password" value={fields.confirm} error={errors.confirm} onChange={(e) => set("confirm", e.target.value)} />
         </Field>
-      </div>
-
-      <div>
-        <label className="flex cursor-pointer items-start gap-2.5 text-[.9rem] text-ink/75">
-          <input id="terms" type="checkbox" checked={fields.terms} onChange={(e) => set("terms", e.target.checked)} className="mt-1 size-4 shrink-0 cursor-pointer accent-primary" {...fieldAria("terms", errors.terms)} />
-          <span>
-            I agree to the <Link href="#" className="font-semibold text-primary hover:text-accent">Terms</Link> and{" "}
-            <Link href="#" className="font-semibold text-primary hover:text-accent">Privacy Policy</Link>.
-          </span>
-        </label>
-        {errors.terms && (
-          <p id="terms-error" role="alert" className="pt-1.5 text-[.8rem] font-medium text-danger">{errors.terms}</p>
-        )}
       </div>
 
       <button type="submit" disabled={status === "sending"} className={buttonClass("primary", "lg", "w-full cursor-pointer disabled:cursor-wait disabled:opacity-90")}>
