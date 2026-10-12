@@ -1,10 +1,6 @@
 "use client";
 
 import { useState, type ComponentProps, type ReactNode } from "react";
-import { pillClass, useSlidingPill } from "@/components/motion/useSlidingPill";
-
-export const roles = ["Admin", "Teacher", "Student"] as const;
-export type Role = (typeof roles)[number];
 
 export const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -57,34 +53,6 @@ export function PasswordInput({ error, className = "", ...props }: ComponentProp
           {show && <path d="M4 4l16 16" />}
         </svg>
       </button>
-    </div>
-  );
-}
-
-/** Role switcher using the platform sliding pill. */
-export function RoleTabs({ value, onChange }: { value: Role; onChange: (r: Role) => void }) {
-  const { listRef, target, setHover } = useSlidingPill(roles.indexOf(value));
-  return (
-    <div role="radiogroup" aria-label="I am a" ref={listRef} onMouseLeave={() => setHover(null)} className="relative grid grid-cols-3 rounded-full bg-ink/5 p-1">
-      <span data-pill aria-hidden className={pillClass} />
-      {roles.map((r, i) => (
-        <button
-          key={r}
-          type="button"
-          role="radio"
-          aria-checked={r === value}
-          data-pill-item
-          onClick={() => onChange(r)}
-          onMouseEnter={() => setHover(i)}
-          onFocus={() => setHover(i)}
-          onBlur={() => setHover(null)}
-          className={`relative z-10 cursor-pointer rounded-full py-2.5 text-[.9rem] font-semibold transition-colors duration-[350ms] ease-nav ${
-            i === target ? "text-surface" : "text-ink/70 hover:text-ink"
-          }`}
-        >
-          {r}
-        </button>
-      ))}
     </div>
   );
 }

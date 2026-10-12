@@ -5,7 +5,7 @@ import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: `Sign Up | ${site.name}`,
-  description: `Create your ${site.name} account as an Admin, Teacher or Student.`,
+  description: `Register your school on ${site.name}.`,
 };
 
 export default function SignupPage() {
@@ -15,7 +15,7 @@ export default function SignupPage() {
       eyebrow="Get started"
       title="Create your account in a minute"
       text="Join your school on one paperless platform built for Principals, Teachers and Students."
-      points={["Simple setup, no paperwork", "Role-based dashboards for everyone", "Secure and private by default"]}
+      points={["Simple setup, no paperwork", "Dashboards for your whole school", "Secure and private by default"]}
     >
       <SignupForm />
     </AuthShell>

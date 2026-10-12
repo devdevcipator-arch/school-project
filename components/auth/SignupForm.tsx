@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon, iconPaths } from "@/components/ui/Icon";
-import { Field, PasswordInput, RoleTabs, Spinner, emailPattern, fieldAria, fieldClass, type Role } from "@/components/auth/fields";
+import { Field, PasswordInput, Spinner, emailPattern, fieldAria, fieldClass } from "@/components/auth/fields";
 
 type Fields = { name: string; email: string; password: string; confirm: string; terms: boolean };
 type Errors = Partial<Record<keyof Fields, string>>;
@@ -22,7 +22,6 @@ function validate(f: Fields): Errors {
 }
 
 export default function SignupForm() {
-  const [role, setRole] = useState<Role>("Admin");
   const [fields, setFields] = useState<Fields>(empty);
   const [errors, setErrors] = useState<Errors>({});
   const [touched, setTouched] = useState(false);
@@ -57,7 +56,7 @@ export default function SignupForm() {
         </span>
         <h2 className="text-[1.4rem] font-extrabold">Account created!</h2>
         <p className="max-w-[340px] text-ink/70">
-          Welcome, {fields.name.split(" ")[0]}. Your {role.toLowerCase()} account for <strong className="text-primary">{fields.email}</strong> is ready.
+          Welcome, {fields.name.split(" ")[0]}. Your account for <strong className="text-primary">{fields.email}</strong> is ready.
         </p>
         <Link href="/login" className={buttonClass("primary", "md", "mt-2")}>Go to login</Link>
       </div>
@@ -68,10 +67,8 @@ export default function SignupForm() {
     <form noValidate onSubmit={onSubmit} className="flex flex-col gap-5">
       <div>
         <h2 className="text-[1.6rem] font-extrabold tracking-tight">Create account</h2>
-        <p className="mt-1 text-[.93rem] text-ink/60">Choose your role and fill in your details.</p>
+        <p className="mt-1 text-[.93rem] text-ink/60">Fill in your details to get started.</p>
       </div>
-
-      <RoleTabs value={role} onChange={setRole} />
 
       <Field id="name" label="Full Name" error={errors.name}>
         <input id="name" name="name" autoComplete="name" placeholder="Your full name" value={fields.name} onChange={(e) => set("name", e.target.value)} className={fieldClass(errors.name)} {...fieldAria("name", errors.name)} />

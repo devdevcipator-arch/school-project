@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon, iconPaths } from "@/components/ui/Icon";
-import { Field, PasswordInput, RoleTabs, Spinner, emailPattern, fieldAria, fieldClass, type Role } from "@/components/auth/fields";
+import { Field, PasswordInput, Spinner, emailPattern, fieldAria, fieldClass } from "@/components/auth/fields";
 
 type Errors = { email?: string; password?: string };
 
@@ -16,7 +16,6 @@ function validate(email: string, password: string): Errors {
 }
 
 export default function LoginForm() {
-  const [role, setRole] = useState<Role>("Admin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
@@ -47,7 +46,7 @@ export default function LoginForm() {
         </span>
         <h2 className="text-[1.4rem] font-extrabold">Welcome back!</h2>
         <p className="max-w-[340px] text-ink/70">
-          Signed in as <strong className="text-primary">{role}</strong>. The {role.toLowerCase()} dashboard is coming soon.
+          Signed in as <strong className="text-primary">{email}</strong>. Your dashboard is coming soon.
         </p>
         <button type="button" onClick={() => setStatus("idle")} className={buttonClass("dark", "md", "mt-2 cursor-pointer")}>
           Back to login
@@ -60,10 +59,8 @@ export default function LoginForm() {
     <form noValidate onSubmit={onSubmit} className="flex flex-col gap-5">
       <div>
         <h2 className="text-[1.6rem] font-extrabold tracking-tight">Login</h2>
-        <p className="mt-1 text-[.93rem] text-ink/60">Choose your role and sign in to your account.</p>
+        <p className="mt-1 text-[.93rem] text-ink/60">Sign in to your account to continue.</p>
       </div>
-
-      <RoleTabs value={role} onChange={setRole} />
 
       <Field id="email" label="Email Address" error={errors.email}>
         <input
@@ -114,7 +111,7 @@ export default function LoginForm() {
             Signing in...
           </>
         ) : (
-          `Login as ${role}`
+          "Login"
         )}
       </button>
 

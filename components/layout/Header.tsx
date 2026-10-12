@@ -65,7 +65,7 @@ export default function Header() {
           </ul>
           <div className="flex items-center gap-3">
             <ButtonLink href="/login" variant="dark">Login</ButtonLink>
-            <ButtonLink href="/contact#register">Register School</ButtonLink>
+            <ButtonLink href="/signup">Register School</ButtonLink>
           </div>
         </nav>
 
@@ -118,7 +118,7 @@ export default function Header() {
             className={`flex flex-col gap-3 transition-[opacity,translate] duration-[400ms] ease-soft ${open ? "translate-x-0 opacity-100" : "-translate-x-[18px] opacity-0"}`}
           >
             <ButtonLink href="/login" variant="dark" className="w-full" onClick={() => setOpen(false)}>Login</ButtonLink>
-            <ButtonLink href="/contact#register" className="w-full" onClick={() => setOpen(false)}>Register School</ButtonLink>
+            <ButtonLink href="/signup" className="w-full" onClick={() => setOpen(false)}>Register School</ButtonLink>
           </div>
         </div>
       </nav>

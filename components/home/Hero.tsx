@@ -23,7 +23,7 @@ export default function Hero() {
             {site.name} connects principals, teachers and students in one simple, paperless dashboard.
           </p>
           <div data-reveal className="mb-8 flex flex-wrap gap-3.5">
-            <ButtonLink href="/contact#register" size="lg" className="max-sm:w-full max-sm:whitespace-normal">
+            <ButtonLink href="/signup" size="lg" className="max-sm:w-full max-sm:whitespace-normal">
               Get Started: Register School
             </ButtonLink>
             <ButtonLink href="/contact" variant="dark" size="lg" className="max-sm:w-full">

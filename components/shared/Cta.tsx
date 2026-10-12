@@ -21,7 +21,7 @@ export default function Cta() {
           management: attendance, notices, AI quizzes and report cards in one place.
         </p>
         <div data-reveal className="flex flex-wrap justify-center gap-3.5">
-          <ButtonLink href="/contact#register" size="xl" className="max-sm:w-full max-sm:whitespace-normal">
+          <ButtonLink href="/signup" size="xl" className="max-sm:w-full max-sm:whitespace-normal">
             Register Your School Now
           </ButtonLink>
           <ButtonLink href="/contact#demo" variant="dark" size="xl" className="max-sm:w-full">

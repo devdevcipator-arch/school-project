@@ -25,7 +25,7 @@ export default function AboutHero() {
             attendance, announcements, assessments and report cards simply flow.
           </p>
           <div data-reveal className="mb-8 flex flex-wrap gap-3.5">
-            <ButtonLink href="/contact#register" size="lg" className="max-sm:w-full">
+            <ButtonLink href="/signup" size="lg" className="max-sm:w-full">
               Register School
             </ButtonLink>
             <ButtonLink href="/contact" variant="dark" size="lg" className="max-sm:w-full">
