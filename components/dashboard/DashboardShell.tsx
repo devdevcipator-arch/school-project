@@ -8,15 +8,18 @@ import { Icon } from "@/components/ui/Icon";
 import { pillClass, useSlidingPill } from "@/components/motion/useSlidingPill";
 
 type NavItem = { href: string; label: string; icon: string };
+type PageTitle = { eyebrow: string; title: string; description?: string };
 
 /**
  * Dashboard shell: dark sidebar with the platform sliding pill (vertical),
- * off-canvas drawer on small screens, and a top bar with greeting + profile.
+ * off-canvas drawer on small screens, and a top bar with the page title + profile.
  * Shared by every role portal.
  */
-export default function DashboardShell({ nav, footer, greeting, profile, banner, children }: { nav: NavItem[]; footer?: ReactNode; greeting?: ReactNode; profile?: ReactNode; banner?: ReactNode; children: ReactNode }) {
+export default function DashboardShell({ nav, titles = {}, footer, profile, banner, children }: { nav: NavItem[]; titles?: Record<string, PageTitle>; footer?: ReactNode; profile?: ReactNode; banner?: ReactNode; children: ReactNode }) {
   const pathname = usePathname();
   const activeIndex = Math.max(0, nav.findIndex((l) => l.href === pathname));
+  const navItem = nav.find((l) => l.href === pathname);
+  const page = titles[pathname] ?? (navItem && { eyebrow: navItem.label, title: navItem.label });
   const [open, setOpen] = useState(false);
   const { listRef, target, setHover } = useSlidingPill(activeIndex);
 
@@ -93,10 +96,18 @@ export default function DashboardShell({ nav, footer, greeting, profile, banner,
 
       <div className="lg:pl-[268px]">
         {banner}
-        {/* Top bar on every page: greeting (left) and signed-in user (right) */}
-        {(greeting || profile) && (
+        {/* Top bar on every page: page title (left) and signed-in user (right), on one line */}
+        {(page || profile) && (
           <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4 px-[clamp(16px,3vw,36px)] pt-4 lg:pt-6">
-            {greeting ?? <span />}
+            {page ? (
+              <div className="min-w-0">
+                <p className="text-[.78rem] font-bold uppercase tracking-[.14em] text-accent">{page.eyebrow}</p>
+                <h1 className="mt-1 text-[clamp(1.3rem,2.6vw,2.1rem)] font-extrabold leading-tight tracking-tight">{page.title}</h1>
+                {page.description && <p className="mt-1.5 max-w-[640px] text-[.95rem] text-ink/60 max-sm:hidden">{page.description}</p>}
+              </div>
+            ) : (
+              <span />
+            )}
             {profile}
           </div>
         )}

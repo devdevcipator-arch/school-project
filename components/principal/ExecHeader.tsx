@@ -41,11 +41,8 @@ export default function ExecHeader() {
   const close = () => setMenu(null);
 
   return (
-    <header data-reveal className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      {/* The greeting lives in the portal top bar; this is the page title for assistive tech. */}
-      <h1 className="sr-only">Principal Overview</h1>
-      <p className="text-[.95rem] text-ink/60">Here is what is happening across your school today.</p>
-
+    <header data-reveal className="flex justify-end">
+      {/* The page title lives in the portal top bar; this row keeps the quick actions. */}
       <div className="flex flex-wrap items-center gap-2.5">
         <ButtonLink href="/principal/announcements?compose=1" className="max-sm:flex-1">
           <svg viewBox="0 0 24 24" aria-hidden className="size-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

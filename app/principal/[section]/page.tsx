@@ -21,7 +21,7 @@ export default async function SectionPage({ params }: PageProps<"/principal/[sec
         <span className="grid size-16 place-items-center rounded-2xl bg-linear-135 from-primary to-accent text-surface">
           <Icon d={item.icon} className="size-8" />
         </span>
-        <h1 className="text-[1.5rem] font-extrabold tracking-tight">{item.label}</h1>
+        <h2 className="text-[1.5rem] font-extrabold tracking-tight">{item.label}</h2>
         <p className="text-ink/65">This section is coming soon. It is next on the principal portal roadmap.</p>
         <ButtonLink href="/principal" variant="dark">Back to Overview</ButtonLink>
       </div>

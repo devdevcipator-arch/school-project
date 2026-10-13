@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import DashboardShell from "@/components/dashboard/DashboardShell";
-import Greeting from "@/components/dashboard/Greeting";
 import { EmergencyBanner } from "@/components/announcements/emergency";
-import { principal, principalNav } from "@/lib/principal";
+import { principal, principalNav, principalTitles } from "@/lib/principal";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -16,7 +15,7 @@ export default function PrincipalLayout({ children }: LayoutProps<"/principal">)
     <DashboardShell
       nav={principalNav}
       banner={<EmergencyBanner />}
-      greeting={<Greeting name={principal.name} />}
+      titles={principalTitles}
       profile={
         <div className="flex shrink-0 items-center gap-3 rounded-2xl border border-ink/8 bg-white p-2 shadow-[0_10px_30px_rgba(6,30,41,.05)]">
           <span className="grid size-10 shrink-0 place-items-center rounded-full bg-linear-135 from-primary to-accent text-[.85rem] font-bold text-surface">

@@ -284,12 +284,8 @@ export default function TeachersBoard({ startAdding = false }: { startAdding?: b
 
   return (
     <main className="mx-auto flex max-w-[1500px] flex-col gap-5 px-[clamp(16px,3vw,36px)] py-6 lg:gap-6 lg:py-8">
-      <header data-reveal className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="min-w-0">
-          <p className="text-[.78rem] font-bold uppercase tracking-[.14em] text-accent">Faculty</p>
-          <h1 className="mt-1 text-[clamp(1.5rem,2.6vw,2.1rem)] font-extrabold leading-tight tracking-tight">Faculty & Teachers Management</h1>
-          <p className="mt-1.5 max-w-[640px] text-[.95rem] text-ink/60">Onboard new teachers, assign academic classes, and manage faculty records.</p>
-        </div>
+      {/* The page title lives in the portal top bar; this row keeps the page action. */}
+      <header data-reveal className="flex justify-end">
         <button type="button" onClick={() => setForm({ initial: null })} className={buttonClass("primary", "lg", "cursor-pointer max-sm:w-full")}>
           <Icon d="M12 5v14 M5 12h14" className="size-5" />
           Add New Teacher

@@ -12,6 +12,25 @@ export const principalNav = [
   { href: "/principal/ai", label: "AI Assistant", icon: "M12 3v4 M12 17v4 M3 12h4 M17 12h4 M6 6l2.5 2.5 M15.5 15.5 18 18 M6 18l2.5-2.5 M15.5 8.5 18 6" },
 ];
 
+/** Title block shown in the portal top bar, opposite the profile card. Unlisted routes fall back to the nav label. */
+export const principalTitles: Record<string, { eyebrow: string; title: string; description: string }> = {
+  "/principal": {
+    eyebrow: "Overview",
+    title: "Principal Overview",
+    description: "Here is what is happening across your school today.",
+  },
+  "/principal/announcements": {
+    eyebrow: "Announcements",
+    title: "Institutional Announcements & Circulars",
+    description: "Create, manage, and dispatch broadcasts across staff, students, and departments.",
+  },
+  "/principal/teachers": {
+    eyebrow: "Faculty",
+    title: "Faculty & Teachers Management",
+    description: "Onboard new teachers, assign academic classes, and manage faculty records.",
+  },
+};
+
 export const principal = {
   name: "Dr. Sara Ahmed",
   initials: "SA",
