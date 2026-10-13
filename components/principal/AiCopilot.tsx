@@ -42,7 +42,6 @@ export default function AiCopilot() {
 
   return (
     <section
-      data-reveal
       aria-label="Principal AI Copilot"
       className="relative isolate overflow-hidden rounded-[22px] bg-linear-135 from-ink via-ink to-primary p-5 text-surface shadow-[0_24px_60px_rgba(6,30,41,.25)] sm:p-7"
     >

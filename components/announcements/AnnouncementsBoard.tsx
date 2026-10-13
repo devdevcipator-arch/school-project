@@ -44,7 +44,7 @@ const field = fieldClass;
 
 function Metric({ label, value, icon, tone = "brand", note }: { label: string; value: number; icon: string; tone?: "brand" | "danger"; note: string }) {
   return (
-    <div data-reveal className="flex items-center gap-4 rounded-[20px] border border-ink/8 bg-white p-5 shadow-[0_10px_30px_rgba(6,30,41,.05)] transition-[translate,box-shadow] duration-300 ease-soft hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(6,30,41,.1)]">
+    <div className="flex items-center gap-4 rounded-[20px] border border-ink/8 bg-white p-5 shadow-[0_10px_30px_rgba(6,30,41,.05)] transition-[translate,box-shadow] duration-300 ease-soft hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(6,30,41,.1)]">
       <span className={`grid size-12 shrink-0 place-items-center rounded-2xl text-surface ${tone === "danger" ? "bg-danger" : "bg-linear-135 from-primary to-accent"}`}>
         <Icon d={icon} className="size-6" />
       </span>
@@ -67,7 +67,6 @@ function EmergencyController() {
 
   return (
     <section
-      data-reveal
       className={`relative overflow-hidden rounded-[20px] border p-5 transition-colors duration-500 sm:p-6 ${live ? "border-danger/40 bg-danger/5" : "border-ink/8 bg-white shadow-[0_10px_30px_rgba(6,30,41,.05)]"}`}
     >
       <span aria-hidden className="absolute inset-y-0 left-0 w-1.5 bg-danger" />
@@ -422,7 +421,7 @@ export default function AnnouncementsBoard({ startComposing = false }: { startCo
   return (
     <main className="mx-auto flex max-w-[1500px] flex-col gap-5 px-[clamp(16px,3vw,36px)] py-6 lg:gap-6 lg:py-8">
       {/* The page title lives in the portal top bar; this row keeps the page action. */}
-      <header data-reveal className="flex justify-end">
+      <header className="flex justify-end">
         <button type="button" onClick={() => setComposer({ initial: null })} className={buttonClass("primary", "lg", "cursor-pointer max-sm:w-full")}>
           <Icon d="M12 5v14 M5 12h14" className="size-5" />
           Create New Announcement
@@ -438,7 +437,7 @@ export default function AnnouncementsBoard({ startComposing = false }: { startCo
 
       <EmergencyController />
 
-      <section data-reveal className="flex min-w-0 flex-col gap-4 rounded-[20px] border border-ink/8 bg-white p-4 shadow-[0_10px_30px_rgba(6,30,41,.05)] sm:p-6">
+      <section className="flex min-w-0 flex-col gap-4 rounded-[20px] border border-ink/8 bg-white p-4 shadow-[0_10px_30px_rgba(6,30,41,.05)] sm:p-6">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="-mx-1 overflow-x-auto px-1 pb-1">
             <ul ref={listRef} role="tablist" aria-label="Notice filter" className="relative flex w-max gap-1 rounded-full bg-surface p-1" onMouseLeave={() => setHover(null)}>

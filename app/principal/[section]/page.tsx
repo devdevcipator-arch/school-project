@@ -17,7 +17,7 @@ export default async function SectionPage({ params }: PageProps<"/principal/[sec
 
   return (
     <main className="grid min-h-[calc(100dvh-8.5rem)] place-items-center p-6 lg:min-h-[calc(100dvh-5rem)]">
-      <div data-reveal className="grid max-w-[440px] justify-items-center gap-4 rounded-[22px] border border-ink/10 bg-white p-10 text-center shadow-[0_20px_50px_rgba(6,30,41,.08)]">
+      <div className="grid max-w-[440px] justify-items-center gap-4 rounded-[22px] border border-ink/10 bg-white p-10 text-center shadow-[0_20px_50px_rgba(6,30,41,.08)]">
         <span className="grid size-16 place-items-center rounded-2xl bg-linear-135 from-primary to-accent text-surface">
           <Icon d={item.icon} className="size-8" />
         </span>

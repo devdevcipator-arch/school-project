@@ -6,7 +6,6 @@ import { kpis } from "@/lib/principal";
 function Kpi({ label, icon, footer, children }: { label: string; icon: string; footer: ReactNode; children: ReactNode }) {
   return (
     <section
-      data-reveal
       className="flex min-w-0 flex-col rounded-[20px] border border-ink/8 bg-white p-5 shadow-[0_10px_30px_rgba(6,30,41,.05)] transition-[translate,box-shadow] duration-300 ease-soft hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(6,30,41,.1)]"
     >
       <div className="flex items-center justify-between gap-3">

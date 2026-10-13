@@ -80,7 +80,6 @@ export function Card({
 }) {
   return (
     <section
-      data-reveal
       className={`flex min-w-0 flex-col rounded-[20px] border border-ink/8 bg-white p-5 shadow-[0_10px_30px_rgba(6,30,41,.05)] transition-shadow duration-300 hover:shadow-[0_18px_40px_rgba(6,30,41,.09)] sm:p-6 ${className}`}
     >
       {(title || action) && (

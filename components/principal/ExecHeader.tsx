@@ -41,7 +41,7 @@ export default function ExecHeader() {
   const close = () => setMenu(null);
 
   return (
-    <header data-reveal className="flex justify-end">
+    <header className="flex justify-end">
       {/* The page title lives in the portal top bar; this row keeps the quick actions. */}
       <div className="flex flex-wrap items-center gap-2.5">
         <ButtonLink href="/principal/announcements?compose=1" className="max-sm:flex-1">
