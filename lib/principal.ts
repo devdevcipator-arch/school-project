@@ -4,8 +4,8 @@
 export const principalNav = [
   { href: "/principal", label: "Overview", icon: "M4 4h7v7H4z M13 4h7v4h-7z M13 10h7v10h-7z M4 13h7v7H4z" },
   { href: "/principal/announcements", label: "Announcements", icon: "M3 11l15-6v14L3 13z M7 13v5h3v-4" },
-  { href: "/principal/teachers", label: "Add Teachers", icon: "M9 11a4 4 0 1 0 0-8a4 4 0 1 0 0 8z M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7 M19 8v6 M16 11h6" },
-  { href: "/principal/students", label: "Add Students", icon: "M2 9l9-5 9 5-9 5z M6 11.5V16c0 1.5 2.2 3 5 3 M19 14v6 M16 17h6" },
+  { href: "/principal/teachers", label: "Teachers", icon: "M9 11a4 4 0 1 0 0-8a4 4 0 1 0 0 8z M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7 M19 8v6 M16 11h6" },
+  { href: "/principal/students", label: "Students", icon: "M2 9l9-5 9 5-9 5z M6 11.5V16c0 1.5 2.2 3 5 3 M19 14v6 M16 17h6" },
   { href: "/principal/teacher-attendance", label: "Teacher Attendance", icon: "M8 3v3 M16 3v3 M4 7h16v13H4z M8 14l2.5 2.5L16 11" },
   { href: "/principal/student-attendance", label: "Student Attendance", icon: "M3 9l9-5 9 5-9 5z M7 11.5V16c0 1.5 2.2 3 5 3s5-1.5 5-3v-4.5" },
   { href: "/principal/fees", label: "Student Fees", icon: "M3 6h18v12H3z M3 10h18 M7 15h3" },
