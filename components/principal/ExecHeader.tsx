@@ -88,13 +88,13 @@ export default function ExecHeader() {
             className={buttonClass("dark", "md", "w-full cursor-pointer")}
           >
             <svg viewBox="0 0 20 20" aria-hidden className="size-4"><path d="M10 4v12M4 10h12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" /></svg>
-            Add Teacher / School
+            Add Teacher / Student
           </button>
           <Popover open={menu === "add"} onClose={close} className="w-56">
             <div role="menu">
               {[
                 { href: "/principal/teachers", label: "Add Teacher" },
-                { href: "/principal/schools", label: "Add School" },
+                { href: "/principal/students", label: "Add Student" },
               ].map((l) => (
                 <Link key={l.href} role="menuitem" href={l.href} onClick={close} className="block rounded-xl px-3.5 py-2.5 text-[.9rem] font-semibold text-ink transition-colors hover:bg-primary/8 hover:text-primary">
                   {l.label}
