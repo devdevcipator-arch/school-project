@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import DashboardShell from "@/components/dashboard/DashboardShell";
+import Greeting from "@/components/dashboard/Greeting";
 import { EmergencyBanner } from "@/components/announcements/emergency";
 import { principal, principalNav } from "@/lib/principal";
 import { site } from "@/lib/site";
@@ -15,12 +16,13 @@ export default function PrincipalLayout({ children }: LayoutProps<"/principal">)
     <DashboardShell
       nav={principalNav}
       banner={<EmergencyBanner />}
+      greeting={<Greeting name={principal.name} />}
       profile={
-        <div className="flex items-center gap-3 rounded-2xl border border-ink/8 bg-white py-2 pl-2 pr-5 shadow-[0_10px_30px_rgba(6,30,41,.05)]">
+        <div className="flex shrink-0 items-center gap-3 rounded-2xl border border-ink/8 bg-white p-2 shadow-[0_10px_30px_rgba(6,30,41,.05)]">
           <span className="grid size-10 shrink-0 place-items-center rounded-full bg-linear-135 from-primary to-accent text-[.85rem] font-bold text-surface">
             {principal.initials}
           </span>
-          <span className="grid min-w-0">
+          <span className="grid min-w-0 pr-3 max-sm:hidden">
             <strong className="truncate text-[.9rem]">{principal.name}</strong>
             <span className="truncate text-[.78rem] text-ink/55">Principal</span>
           </span>

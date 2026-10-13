@@ -11,10 +11,10 @@ type NavItem = { href: string; label: string; icon: string };
 
 /**
  * Dashboard shell: dark sidebar with the platform sliding pill (vertical),
- * off-canvas drawer on small screens, and a profile slot at the top right.
+ * off-canvas drawer on small screens, and a top bar with greeting + profile.
  * Shared by every role portal.
  */
-export default function DashboardShell({ nav, footer, profile, banner, children }: { nav: NavItem[]; footer?: ReactNode; profile?: ReactNode; banner?: ReactNode; children: ReactNode }) {
+export default function DashboardShell({ nav, footer, greeting, profile, banner, children }: { nav: NavItem[]; footer?: ReactNode; greeting?: ReactNode; profile?: ReactNode; banner?: ReactNode; children: ReactNode }) {
   const pathname = usePathname();
   const activeIndex = Math.max(0, nav.findIndex((l) => l.href === pathname));
   const [open, setOpen] = useState(false);
@@ -93,8 +93,13 @@ export default function DashboardShell({ nav, footer, profile, banner, children 
 
       <div className="lg:pl-[268px]">
         {banner}
-        {/* Signed-in user, top right of every page */}
-        {profile && <div className="mx-auto flex max-w-[1500px] justify-end px-[clamp(16px,3vw,36px)] pt-4 lg:pt-6">{profile}</div>}
+        {/* Top bar on every page: greeting (left) and signed-in user (right) */}
+        {(greeting || profile) && (
+          <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4 px-[clamp(16px,3vw,36px)] pt-4 lg:pt-6">
+            {greeting ?? <span />}
+            {profile}
+          </div>
+        )}
         {children}
       </div>
     </div>

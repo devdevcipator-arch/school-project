@@ -1,28 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ButtonLink, buttonClass } from "@/components/ui/Button";
-import { notifications, principal } from "@/lib/principal";
-
-// Date and greeting come from the viewer's clock, so they render on the client only.
-const noop = () => () => {};
-function useToday() {
-  // Snapshot must be a primitive so React sees a stable value between renders.
-  const snap = useSyncExternalStore(
-    noop,
-    () => {
-      const now = new Date();
-      const h = now.getHours();
-      const greeting = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
-      return `${greeting}|${now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}`;
-    },
-    () => "",
-  );
-  if (!snap) return null;
-  const [greeting, date] = snap.split("|");
-  return { greeting, date };
-}
+import { notifications } from "@/lib/principal";
 
 /** Small popover that closes on outside click or Escape. */
 function Popover({ open, onClose, children, className = "" }: { open: boolean; onClose: () => void; children: ReactNode; className?: string }) {
@@ -56,20 +37,14 @@ function Popover({ open, onClose, children, className = "" }: { open: boolean; o
 const toneDot = { danger: "bg-danger", warn: "bg-warn" };
 
 export default function ExecHeader() {
-  const today = useToday();
   const [menu, setMenu] = useState<"add" | "bell" | null>(null);
   const close = () => setMenu(null);
 
   return (
-    <header data-reveal className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-      <div className="min-w-0">
-        <p className="text-[.88rem] font-semibold text-ink/55" suppressHydrationWarning>
-          {today?.date ?? " "}
-        </p>
-        <h1 className="mt-1 text-[clamp(1.5rem,2.6vw,2.1rem)] font-extrabold leading-tight tracking-tight">
-          {today?.greeting ?? "Welcome"}, {principal.name}
-        </h1>
-      </div>
+    <header data-reveal className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* The greeting lives in the portal top bar; this is the page title for assistive tech. */}
+      <h1 className="sr-only">Principal Overview</h1>
+      <p className="text-[.95rem] text-ink/60">Here is what is happening across your school today.</p>
 
       <div className="flex flex-wrap items-center gap-2.5">
         <ButtonLink href="/principal/announcements?compose=1" className="max-sm:flex-1">
