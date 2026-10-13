@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Icon } from "@/components/ui/Icon";
 
 export type Tone = "ok" | "warn" | "serious" | "danger" | "neutral";
 
@@ -117,6 +118,22 @@ export function Bar({ value, max = 100, fill = "bg-primary", label }: { value: n
   return (
     <div role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={max} aria-valuenow={value} className="h-2.5 w-full overflow-hidden rounded-r-full bg-ink/6">
       <div className={`h-full rounded-r-full ${fill}`} style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
+
+/** KPI tile with a gradient icon, used at the top of portal list pages. */
+export function StatCard({ label, value, icon, note }: { label: string; value: ReactNode; icon: string; note: string }) {
+  return (
+    <div className="flex items-center gap-4 rounded-[20px] border border-ink/8 bg-white p-5 shadow-[0_10px_30px_rgba(6,30,41,.05)] transition-[translate,box-shadow] duration-300 ease-soft hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(6,30,41,.1)]">
+      <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-linear-135 from-primary to-accent text-surface">
+        <Icon d={icon} className="size-6" />
+      </span>
+      <div className="min-w-0">
+        <p className="text-[.8rem] font-bold text-ink/55">{label}</p>
+        <p className="text-[1.7rem] font-extrabold leading-tight tracking-tight">{value}</p>
+        <p className="truncate text-[.74rem] text-ink/50">{note}</p>
+      </div>
     </div>
   );
 }

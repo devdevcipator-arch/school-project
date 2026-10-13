@@ -149,3 +149,76 @@ export function Chip({ type, name, checked, onChange, children }: { type: "radio
     </label>
   );
 }
+
+/** Page numbers to show: first, last and a window around the current page, with gaps as null. */
+function pageWindow(page: number, pages: number): (number | null)[] {
+  const keep = [...new Set([1, page - 1, page, page + 1, pages])].filter((p) => p >= 1 && p <= pages).sort((a, b) => a - b);
+  return keep.flatMap((p, i) => (i > 0 && p - keep[i - 1] > 1 ? [null, p] : [p]));
+}
+
+/** "Showing 1 to 12 of 30 teachers" plus page buttons. */
+export function Pagination({ page, pages, total, size, noun, onPage }: { page: number; pages: number; total: number; size: number; noun: string; onPage: (p: number) => void }) {
+  const from = total ? (page - 1) * size + 1 : 0;
+  const to = Math.min(total, page * size);
+  return (
+    <nav aria-label="Pagination" className="flex flex-wrap items-center justify-between gap-3">
+      <p className="text-[.8rem] text-ink/55">
+        Showing <strong className="text-ink">{from}</strong> to <strong className="text-ink">{to}</strong> of <strong className="text-ink">{total}</strong> {noun}
+      </p>
+      {pages > 1 && (
+        <div className="flex items-center gap-1">
+          <button type="button" disabled={page === 1} onClick={() => onPage(page - 1)} aria-label="Previous page" className={`${ghostSm} disabled:pointer-events-none disabled:opacity-40`}>
+            <Icon d="M15 18l-6-6 6-6" className="size-4" />
+          </button>
+          {pageWindow(page, pages).map((p, i) =>
+            p === null ? (
+              <span key={`gap${i}`} aria-hidden className="px-1 text-ink/40">
+                ...
+              </span>
+            ) : (
+              <button
+                key={p}
+                type="button"
+                onClick={() => onPage(p)}
+                aria-current={p === page ? "page" : undefined}
+                className={`grid size-9 cursor-pointer place-items-center rounded-lg text-[.84rem] font-bold transition-colors ${p === page ? "bg-primary text-surface" : "text-ink/65 hover:bg-primary/8 hover:text-primary"}`}
+              >
+                {p}
+              </button>
+            ),
+          )}
+          <button type="button" disabled={page === pages} onClick={() => onPage(page + 1)} aria-label="Next page" className={`${ghostSm} disabled:pointer-events-none disabled:opacity-40`}>
+            <Icon d="M9 6l6 6-6 6" className="size-4" />
+          </button>
+        </div>
+      )}
+    </nav>
+  );
+}
+
+export type DirectoryView = "table" | "cards";
+
+/** Table / Cards switch for directory pages (desktop only; smaller screens always get cards). */
+export function ViewToggle({ view, onChange }: { view: DirectoryView; onChange: (v: DirectoryView) => void }) {
+  return (
+    <div role="group" aria-label="Layout" className="hidden rounded-xl border border-ink/10 p-1 lg:flex">
+      {(
+        [
+          ["table", "Table", "M4 5h16v14H4z M4 10h16 M4 15h16 M10 5v14"],
+          ["cards", "Cards", "M4 4h7v7H4z M13 4h7v7h-7z M4 13h7v7H4z M13 13h7v7h-7z"],
+        ] as const
+      ).map(([v, l, ic]) => (
+        <button
+          key={v}
+          type="button"
+          aria-pressed={view === v}
+          onClick={() => onChange(v)}
+          className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-[.82rem] font-semibold transition-colors ${view === v ? "bg-primary text-surface" : "text-ink/60 hover:text-primary"}`}
+        >
+          <Icon d={ic} className="size-4" />
+          {l}
+        </button>
+      ))}
+    </div>
+  );
+}

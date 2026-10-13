@@ -27,6 +27,11 @@ export const principalTitles: Record<string, { eyebrow: string; title: string; d
     title: "Faculty & Teachers Management",
     description: "Onboard new teachers, assign academic classes, and manage faculty records.",
   },
+  "/principal/students": {
+    eyebrow: "Students",
+    title: "Student Management & Class Directory",
+    description: "Inspect student profiles, monitor class rosters, and review student attendance trends.",
+  },
 };
 
 export const principal = {

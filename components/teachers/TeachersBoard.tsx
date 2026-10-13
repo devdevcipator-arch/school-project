@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
-import { Dialog, Select, Toast, fieldClass, ghostBtn, ghostSm, type ToastData } from "@/components/dashboard/controls";
+import { Dialog, Pagination, Select, Toast, ViewToggle, fieldClass, ghostBtn, ghostSm, type DirectoryView, type ToastData } from "@/components/dashboard/controls";
+import { StatCard } from "@/components/dashboard/ui";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { grades, teachers as seed, teachesGrade, type Teacher } from "@/lib/teachers";
@@ -11,23 +12,6 @@ import TeacherProfile, { type ProfileTab } from "./TeacherProfile";
 
 const PAGE_SIZE = 12;
 const noop = () => () => {};
-
-/* ---------------- Stats ---------------- */
-
-function Stat({ label, value, icon, note }: { label: string; value: number; icon: string; note: string }) {
-  return (
-    <div className="flex items-center gap-4 rounded-[20px] border border-ink/8 bg-white p-5 shadow-[0_10px_30px_rgba(6,30,41,.05)] transition-[translate,box-shadow] duration-300 ease-soft hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(6,30,41,.1)]">
-      <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-linear-135 from-primary to-accent text-surface">
-        <Icon d={icon} className="size-6" />
-      </span>
-      <div className="min-w-0">
-        <p className="text-[.8rem] font-bold text-ink/55">{label}</p>
-        <p className="text-[1.7rem] font-extrabold leading-tight tracking-tight">{value}</p>
-        <p className="truncate text-[.74rem] text-ink/50">{note}</p>
-      </div>
-    </div>
-  );
-}
 
 /* ---------------- Actions ---------------- */
 
@@ -170,39 +154,6 @@ function TeacherTable({ list, ...actions }: Actions & { list: Teacher[] }) {
   );
 }
 
-function Pagination({ page, pages, total, onPage }: { page: number; pages: number; total: number; onPage: (p: number) => void }) {
-  const from = total ? (page - 1) * PAGE_SIZE + 1 : 0;
-  const to = Math.min(total, page * PAGE_SIZE);
-  return (
-    <nav aria-label="Pagination" className="flex flex-wrap items-center justify-between gap-3">
-      <p className="text-[.8rem] text-ink/55">
-        Showing <strong className="text-ink">{from}</strong> to <strong className="text-ink">{to}</strong> of <strong className="text-ink">{total}</strong> teachers
-      </p>
-      {pages > 1 && (
-        <div className="flex items-center gap-1">
-          <button type="button" disabled={page === 1} onClick={() => onPage(page - 1)} aria-label="Previous page" className={`${ghostSm} disabled:pointer-events-none disabled:opacity-40`}>
-            <Icon d="M15 18l-6-6 6-6" className="size-4" />
-          </button>
-          {Array.from({ length: pages }, (_, i) => i + 1).map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => onPage(p)}
-              aria-current={p === page ? "page" : undefined}
-              className={`grid size-9 cursor-pointer place-items-center rounded-lg text-[.84rem] font-bold transition-colors ${p === page ? "bg-primary text-surface" : "text-ink/65 hover:bg-primary/8 hover:text-primary"}`}
-            >
-              {p}
-            </button>
-          ))}
-          <button type="button" disabled={page === pages} onClick={() => onPage(page + 1)} aria-label="Next page" className={`${ghostSm} disabled:pointer-events-none disabled:opacity-40`}>
-            <Icon d="M9 6l6 6-6 6" className="size-4" />
-          </button>
-        </div>
-      )}
-    </nav>
-  );
-}
-
 /* ---------------- Board ---------------- */
 
 export default function TeachersBoard({ startAdding = false }: { startAdding?: boolean }) {
@@ -210,7 +161,7 @@ export default function TeachersBoard({ startAdding = false }: { startAdding?: b
   const [query, setQuery] = useState("");
   const [grade, setGrade] = useState("all");
   const [status, setStatus] = useState("all");
-  const [view, setView] = useState<"table" | "cards">("table");
+  const [view, setView] = useState<DirectoryView>("table");
   const [page, setPage] = useState(1);
   const [form, setForm] = useState<{ initial: Teacher | null } | null>(startAdding ? { initial: null } : null);
   const [profile, setProfile] = useState<{ t: Teacher; tab: ProfileTab } | null>(null);
@@ -296,10 +247,10 @@ export default function TeachersBoard({ startAdding = false }: { startAdding?: b
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat label="Total Faculty" value={stats.faculty} icon="M9 11a4 4 0 1 0 0-8a4 4 0 1 0 0 8z M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7 M16 3.5a4 4 0 0 1 0 7.5 M18 14c2.4.8 4 3.2 4 7" note={`${stats.inactive} inactive not counted`} />
-        <Stat label="Checked In Today" value={stats.checkedIn} icon="M8 3v3 M16 3v3 M4 7h16v13H4z M8 14l2.5 2.5L16 11" note={`${stats.late} arrived late`} />
-        <Stat label="On Leave" value={stats.leave} icon="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z M12 7v5l3 2" note="Approved leave today" />
-        <Stat label="Class Teachers" value={stats.classTeachers} icon="M12 3l2.2 5.3L20 9l-4.4 3.8L17 19l-5-3-5 3 1.4-6.2L4 9l5.8-.7z" note="Sections with an assigned lead" />
+        <StatCard label="Total Faculty" value={stats.faculty} icon="M9 11a4 4 0 1 0 0-8a4 4 0 1 0 0 8z M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7 M16 3.5a4 4 0 0 1 0 7.5 M18 14c2.4.8 4 3.2 4 7" note={`${stats.inactive} inactive not counted`} />
+        <StatCard label="Checked In Today" value={stats.checkedIn} icon="M8 3v3 M16 3v3 M4 7h16v13H4z M8 14l2.5 2.5L16 11" note={`${stats.late} arrived late`} />
+        <StatCard label="On Leave" value={stats.leave} icon="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z M12 7v5l3 2" note="Approved leave today" />
+        <StatCard label="Class Teachers" value={stats.classTeachers} icon="M12 3l2.2 5.3L20 9l-4.4 3.8L17 19l-5-3-5 3 1.4-6.2L4 9l5.8-.7z" note="Sections with an assigned lead" />
       </div>
 
       <section className="flex min-w-0 flex-col gap-4 rounded-[20px] border border-ink/8 bg-white p-4 shadow-[0_10px_30px_rgba(6,30,41,.05)] sm:p-6">
@@ -325,25 +276,7 @@ export default function TeachersBoard({ startAdding = false }: { startAdding?: b
               <option value="inactive">Inactive</option>
             </Select>
           </div>
-          <div role="group" aria-label="Layout" className="hidden rounded-xl border border-ink/10 p-1 lg:flex">
-            {(
-              [
-                ["table", "Table", "M4 5h16v14H4z M4 10h16 M4 15h16 M10 5v14"],
-                ["cards", "Cards", "M4 4h7v7H4z M13 4h7v7h-7z M4 13h7v7H4z M13 13h7v7h-7z"],
-              ] as const
-            ).map(([v, l, ic]) => (
-              <button
-                key={v}
-                type="button"
-                aria-pressed={view === v}
-                onClick={() => setView(v)}
-                className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-[.82rem] font-semibold transition-colors ${view === v ? "bg-primary text-surface" : "text-ink/60 hover:text-primary"}`}
-              >
-                <Icon d={ic} className="size-4" />
-                {l}
-              </button>
-            ))}
-          </div>
+          <ViewToggle view={view} onChange={setView} />
         </div>
 
         {filtersOn && (
@@ -390,7 +323,7 @@ export default function TeachersBoard({ startAdding = false }: { startAdding?: b
           </>
         )}
 
-        <Pagination page={current} pages={pages} total={filtered.length} onPage={setPage} />
+        <Pagination page={current} pages={pages} total={filtered.length} size={PAGE_SIZE} noun="teachers" onPage={setPage} />
       </section>
 
       {hydrated && form && <TeacherForm key={form.initial?.id ?? "new"} initial={form.initial} roster={list} onClose={() => setForm(null)} onSave={save} />}
