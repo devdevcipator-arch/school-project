@@ -14,7 +14,7 @@ type NavItem = { href: string; label: string; icon: string };
  * off-canvas drawer on small screens, and a profile slot at the top right.
  * Shared by every role portal.
  */
-export default function DashboardShell({ nav, footer, profile, children }: { nav: NavItem[]; footer?: ReactNode; profile?: ReactNode; children: ReactNode }) {
+export default function DashboardShell({ nav, footer, profile, banner, children }: { nav: NavItem[]; footer?: ReactNode; profile?: ReactNode; banner?: ReactNode; children: ReactNode }) {
   const pathname = usePathname();
   const activeIndex = Math.max(0, nav.findIndex((l) => l.href === pathname));
   const [open, setOpen] = useState(false);
@@ -92,6 +92,7 @@ export default function DashboardShell({ nav, footer, profile, children }: { nav
       </aside>
 
       <div className="lg:pl-[268px]">
+        {banner}
         {/* Signed-in user, top right of every page */}
         {profile && <div className="mx-auto flex max-w-[1500px] justify-end px-[clamp(16px,3vw,36px)] pt-4 lg:pt-6">{profile}</div>}
         {children}

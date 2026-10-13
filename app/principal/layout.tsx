@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import DashboardShell from "@/components/dashboard/DashboardShell";
+import { EmergencyBanner } from "@/components/announcements/emergency";
 import { principal, principalNav } from "@/lib/principal";
 import { site } from "@/lib/site";
 
@@ -13,6 +14,7 @@ export default function PrincipalLayout({ children }: LayoutProps<"/principal">)
   return (
     <DashboardShell
       nav={principalNav}
+      banner={<EmergencyBanner />}
       profile={
         <div className="flex items-center gap-3 rounded-2xl border border-ink/8 bg-white py-2 pl-2 pr-5 shadow-[0_10px_30px_rgba(6,30,41,.05)]">
           <span className="grid size-10 shrink-0 place-items-center rounded-full bg-linear-135 from-primary to-accent text-[.85rem] font-bold text-surface">

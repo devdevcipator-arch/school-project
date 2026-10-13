@@ -66,7 +66,7 @@ function Announcements() {
       title="Recent Announcements"
       subtitle="Latest targeted broadcasts"
       action={
-        <Link href="/principal/announcements" className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3.5 py-2 text-[.82rem] font-bold text-primary transition-colors hover:bg-primary hover:text-surface">
+        <Link href="/principal/announcements?compose=1" className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3.5 py-2 text-[.82rem] font-bold text-primary transition-colors hover:bg-primary hover:text-surface">
           <svg viewBox="0 0 20 20" aria-hidden className="size-3.5"><path d="M10 4v12M4 10h12" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" /></svg>
           Compose
         </Link>

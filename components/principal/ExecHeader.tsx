@@ -72,7 +72,7 @@ export default function ExecHeader() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2.5">
-        <ButtonLink href="/principal/announcements" className="max-sm:flex-1">
+        <ButtonLink href="/principal/announcements?compose=1" className="max-sm:flex-1">
           <svg viewBox="0 0 24 24" aria-hidden className="size-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 11l15-6v14L3 13z M7 13v5h3v-4" />
           </svg>
