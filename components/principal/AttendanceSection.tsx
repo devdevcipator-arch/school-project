@@ -1,4 +1,4 @@
-import { Badge, Card, CardLink, toneText, type Tone } from "@/components/dashboard/ui";
+import { Badge, Card, toneText, type Tone } from "@/components/dashboard/ui";
 import { LOW_ATTENDANCE, classAttendance, teacherCheckins } from "@/lib/principal";
 
 const statusTiles: { label: string; key: "present" | "late" | "absent" | "onLeave"; tone: Tone }[] = [
@@ -44,7 +44,6 @@ function TeacherAttendance() {
           </li>
         ))}
       </ul>
-      <CardLink href="/principal/teacher-attendance">View Full Teacher Attendance Logs</CardLink>
     </Card>
   );
 }
@@ -88,7 +87,6 @@ function StudentAttendance() {
         <span aria-hidden className="h-3 w-px bg-ink/40" />
         Line marks the {LOW_ATTENDANCE}% threshold. Classes below it are flagged in red.
       </p>
-      <CardLink href="/principal/student-attendance">View Class-Wise Attendance</CardLink>
     </Card>
   );
 }
