@@ -93,7 +93,7 @@ export default function ExecHeader() {
           <Popover open={menu === "add"} onClose={close} className="w-56">
             <div role="menu">
               {[
-                { href: "/principal/teachers", label: "Add Teacher" },
+                { href: "/principal/teachers?add=1", label: "Add Teacher" },
                 { href: "/principal/students", label: "Add Student" },
               ].map((l) => (
                 <Link key={l.href} role="menuitem" href={l.href} onClick={close} className="block rounded-xl px-3.5 py-2.5 text-[.9rem] font-semibold text-ink transition-colors hover:bg-primary/8 hover:text-primary">

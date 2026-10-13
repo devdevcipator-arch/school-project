@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { pillClass, useSlidingPill } from "@/components/motion/useSlidingPill";
@@ -15,6 +15,7 @@ import {
   type Notice,
   type Priority,
 } from "@/lib/announcements";
+import { Select, Toast, fieldClass, ghostSm, type ToastData } from "@/components/dashboard/controls";
 import Composer, { type ComposerResult } from "./Composer";
 import { setEmergency, useEmergency } from "./emergency";
 import { AudienceTag, PriorityBadge, PriorityDot } from "./tags";
@@ -37,9 +38,7 @@ function inTab(n: Notice, t: Tab) {
   return true;
 }
 
-const ghostSm =
-  "inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[.8rem] font-semibold text-ink/65 transition-colors hover:bg-primary/8 hover:text-primary";
-const field = "rounded-xl border border-ink/12 bg-white px-3.5 py-2.5 text-[.86rem] outline-none transition-colors hover:border-accent focus:border-primary";
+const field = fieldClass;
 
 /* ---------------- Metrics ---------------- */
 
@@ -334,38 +333,6 @@ function FilePreview({ file, onClose }: { file: Attachment; onClose: () => void 
   );
 }
 
-function Toast({ text, action, onDone }: { text: string; action?: { label: string; run: () => void }; onDone: () => void }) {
-  useEffect(() => {
-    const t = setTimeout(onDone, 5000);
-    return () => clearTimeout(t);
-  }, [text, onDone]);
-  return (
-    <div role="status" className="fixed bottom-5 left-1/2 z-50 flex w-[min(460px,calc(100vw-32px))] -translate-x-1/2 animate-fade-in items-center gap-3 rounded-2xl bg-ink px-4 py-3.5 text-[.88rem] text-surface shadow-[0_20px_50px_rgba(6,30,41,.35)]">
-      <Icon d="M5 12l4 4 10-10" className="size-5 shrink-0 text-accent" />
-      <span className="min-w-0 flex-1">{text}</span>
-      {action && (
-        <button type="button" onClick={action.run} className="cursor-pointer rounded-lg px-2.5 py-1 font-bold text-accent hover:bg-surface/10">
-          {action.label}
-        </button>
-      )}
-    </div>
-  );
-}
-
-function Select({ label, value, onChange, children }: { label: string; value: string; onChange: (v: string) => void; children: ReactNode }) {
-  return (
-    <label className="relative">
-      <span className="sr-only">{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className={`${field} w-full cursor-pointer appearance-none pr-9 font-semibold`}>
-        {children}
-      </select>
-      <svg viewBox="0 0 20 20" aria-hidden className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-primary">
-        <path d="m5 7.5 5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      </svg>
-    </label>
-  );
-}
-
 /* ---------------- Board ---------------- */
 
 // "This month" follows the viewer's clock, so it is read on the client only.
@@ -386,7 +353,7 @@ export default function AnnouncementsBoard({ startComposing = false }: { startCo
   const [view, setView] = useState<"feed" | "table">("feed");
   const [composer, setComposer] = useState<{ initial: Notice | null } | null>(startComposing ? { initial: null } : null);
   const [file, setFile] = useState<Attachment | null>(null);
-  const [toast, setToast] = useState<{ text: string; action?: { label: string; run: () => void } } | null>(null);
+  const [toast, setToast] = useState<ToastData | null>(null);
 
   const closeToast = useCallback(() => setToast(null), []);
   const closeFile = useCallback(() => setFile(null), []);

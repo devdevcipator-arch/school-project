@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { Chip } from "@/components/dashboard/controls";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import {
@@ -56,18 +57,6 @@ function FieldError({ id, children }: { id: string; children?: string }) {
     <p id={id} className="mt-2 text-[.8rem] font-semibold text-danger">
       {children}
     </p>
-  );
-}
-
-/** Pill-shaped checkbox/radio used for audiences, grades, categories and channels. */
-function Chip({ type, name, checked, onChange, children }: { type: "radio" | "checkbox"; name: string; checked: boolean; onChange: () => void; children: ReactNode }) {
-  return (
-    <label className="cursor-pointer">
-      <input type={type} name={name} checked={checked} onChange={onChange} className="peer sr-only" />
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-ink/12 bg-white px-3.5 py-2 text-[.84rem] font-semibold text-ink/75 transition-[background-color,border-color,color] duration-200 hover:border-accent peer-checked:border-primary peer-checked:bg-primary peer-checked:text-surface peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent">
-        {children}
-      </span>
-    </label>
   );
 }
 
