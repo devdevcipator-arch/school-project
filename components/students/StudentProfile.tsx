@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Drawer, ghostBtn } from "@/components/dashboard/controls";
 import { Badge } from "@/components/dashboard/ui";
 import { Avatar, SubjectPills } from "@/components/teachers/parts";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { AS_OF, DEFAULTER_BELOW, TERM_LABEL, classTeacherOf, sectionLabel, subjectsFor, type Student } from "@/lib/students";
+import { AS_OF, DEFAULTER_BELOW, TERM_LABEL, attendanceLogs, classTeacherOf, sectionLabel, subjectsFor, tally, type Student } from "@/lib/students";
 import AttendanceLogs from "./AttendanceLogs";
 import { AttendanceMeter, StatusBadge } from "./parts";
 
@@ -35,6 +35,7 @@ const tabs: [StudentTab, string, string][] = [
 
 export default function StudentProfile({ s, tab: initialTab = "profile", onClose }: { s: Student; tab?: StudentTab; onClose: () => void }) {
   const [tab, setTab] = useState(initialTab);
+  const lifetime = useMemo(() => tally(attendanceLogs(s, s.enrolled)), [s]);
   const other = tab === "profile" ? tabs[1] : tabs[0];
 
   return (
@@ -146,6 +147,15 @@ export default function StudentProfile({ s, tab: initialTab = "profile", onClose
                     ))}
                   </dl>
                   <AttendanceMeter rate={s.termRate} name={s.name} />
+                  <p className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-ink/8 pt-3.5 text-[.82rem] text-ink/60">
+                    <strong className="text-ink">Since enrollment ({longDate(s.enrolled)}):</strong>
+                    <span>{lifetime.rate}% over {lifetime.total} school days</span>
+                    <span>{lifetime.absent} absences</span>
+                    <span>{lifetime.leave} leaves</span>
+                    <button type="button" onClick={() => setTab("attendance")} className="cursor-pointer font-bold text-primary hover:text-accent">
+                      View all records
+                    </button>
+                  </p>
                 </div>
               </section>
             </>

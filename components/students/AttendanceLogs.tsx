@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Chip, Select, ghostSm } from "@/components/dashboard/controls";
+import { Chip, Select, ghostBtn, ghostSm } from "@/components/dashboard/controls";
 import { Icon } from "@/components/ui/Icon";
 import { AS_OF, attendanceLogs, isSchoolDay, tally, type DayStatus, type Student } from "@/lib/students";
 import { StatusBadge, statusMeta } from "./parts";
@@ -32,26 +32,37 @@ function monthsBetween(from: string, to: string) {
   return out.reverse();
 }
 
-/** Monthly calendar heatmap + date-wise log for one student, from enrollment to today. */
+const PAGE = 25;
+
+/** Monthly calendar heatmap, or every record since enrollment, plus a date-wise log for one student. */
 export default function AttendanceLogs({ s }: { s: Student }) {
   const months = useMemo(() => monthsBetween(s.enrolled, AS_OF), [s.enrolled]);
+  const years = useMemo(() => [...new Set(months.map((ym) => ym.slice(0, 4)))], [months]);
+  const [range, setRange] = useState<"month" | "all">("month");
   const [month, setMonth] = useState(months[0]);
+  const [year, setYear] = useState("all");
   const [filter, setFilter] = useState<Filter>("all");
   const [picked, setPicked] = useState<string | null>(null);
+  const [shown, setShown] = useState(PAGE);
 
+  const history = useMemo(() => attendanceLogs(s, s.enrolled), [s]);
   const logs = useMemo(() => {
-    const [y, m] = month.split("-").map(Number);
-    const first = `${month}-01`;
-    const last = `${month}-${pad(new Date(Date.UTC(y, m, 0)).getUTCDate())}`;
-    return attendanceLogs(s, first < s.enrolled ? s.enrolled : first, last < AS_OF ? last : AS_OF);
-  }, [s, month]);
+    if (range === "all") return year === "all" ? history : history.filter((l) => l.date.startsWith(year));
+    return history.filter((l) => l.date.startsWith(month));
+  }, [history, range, month, year]);
   const byDate = useMemo(() => new Map(logs.map((l) => [l.date, l])), [logs]);
   const stats = tally(logs);
   const rows = logs.filter((l) => filter === "all" || l.status === filter).reverse();
+  const periodLabel = range === "month" ? monthLabel(month) : year === "all" ? "since enrollment" : year;
   const at = months.indexOf(month);
+  // Changing the period resets the selection and list length.
+  const reset = () => {
+    setPicked(null);
+    setShown(PAGE);
+  };
   const go = (ym: string) => {
     setMonth(ym);
-    setPicked(null);
+    reset();
   };
 
   // Monday-first grid: blank cells before the 1st, then every date of the month.
@@ -63,6 +74,54 @@ export default function AttendanceLogs({ s }: { s: Student }) {
 
   return (
     <div className="grid gap-5">
+      <div role="group" aria-label="Range" className="flex rounded-xl border border-ink/10 p-1">
+        {(
+          [
+            ["month", "Monthly calendar"],
+            ["all", `All records since ${longDate(s.enrolled)}`],
+          ] as const
+        ).map(([k, label]) => (
+          <button
+            key={k}
+            type="button"
+            aria-pressed={range === k}
+            onClick={() => {
+              setRange(k);
+              reset();
+            }}
+            className={`flex-1 cursor-pointer rounded-lg px-3 py-1.5 text-[.8rem] font-semibold transition-colors ${range === k ? "bg-primary text-surface" : "text-ink/60 hover:text-primary"}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {range === "all" ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="text-[1rem] font-extrabold tracking-tight">Attendance records</h3>
+            <p className="text-[.8rem] text-ink/55">
+              Showing {periodLabel}. Enrolled {longDate(s.enrolled)}.
+            </p>
+          </div>
+          <Select
+            label="Year"
+            value={year}
+            onChange={(v) => {
+              setYear(v);
+              reset();
+            }}
+            className="w-[150px]"
+          >
+            <option value="all">All years</option>
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </Select>
+        </div>
+      ) : (
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1">
           <button type="button" disabled={at === months.length - 1} onClick={() => go(months[at + 1])} aria-label="Previous month" className={`${ghostSm} disabled:pointer-events-none disabled:opacity-40`}>
@@ -83,6 +142,7 @@ export default function AttendanceLogs({ s }: { s: Student }) {
           ))}
         </Select>
       </div>
+      )}
 
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
@@ -98,6 +158,7 @@ export default function AttendanceLogs({ s }: { s: Student }) {
         ))}
       </dl>
 
+      {range === "month" && (
       <section aria-label={`${monthLabel(month)} calendar`} className="rounded-2xl border border-ink/8 p-3 sm:p-4">
         <div className="grid grid-cols-7 gap-1 text-center text-[.7rem] font-bold uppercase tracking-[.08em] text-ink/45">
           {weekdays.map((d) => (
@@ -148,8 +209,9 @@ export default function AttendanceLogs({ s }: { s: Student }) {
           <span className="text-ink/40">Faded dates: weekend, holiday or upcoming</span>
         </div>
       </section>
+      )}
 
-      {pickedLog && (
+      {range === "month" && pickedLog && (
         <p className="flex animate-fade-in flex-wrap items-center gap-2 rounded-2xl bg-surface p-3.5 text-[.86rem]">
           <strong>
             {dayNames[weekday(pickedLog.date)]}, {longDate(pickedLog.date)}
@@ -167,7 +229,16 @@ export default function AttendanceLogs({ s }: { s: Student }) {
             ["leave", "Leaves", stats.leave],
           ] as const
         ).map(([k, label, n]) => (
-          <Chip key={k} type="radio" name={`log-filter-${s.id}`} checked={filter === k} onChange={() => setFilter(k)}>
+          <Chip
+            key={k}
+            type="radio"
+            name={`log-filter-${s.id}`}
+            checked={filter === k}
+            onChange={() => {
+              setFilter(k);
+              setShown(PAGE);
+            }}
+          >
             {label}
             <span className="rounded-full bg-current/12 px-1.5 text-[.72rem] font-bold">{n}</span>
           </Chip>
@@ -176,7 +247,9 @@ export default function AttendanceLogs({ s }: { s: Student }) {
 
       {rows.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-ink/15 p-8 text-center text-[.9rem] text-ink/55">
-          {logs.length === 0 ? "No school days recorded this month." : `No ${filter === "absent" ? "absences" : "leaves"} in ${monthLabel(month)}.`}
+          {logs.length === 0
+            ? `No school days recorded ${range === "month" ? "this month" : "in this period"}.`
+            : `No ${filter === "absent" ? "absences" : "leaves"} ${range === "month" ? "in " : ""}${periodLabel}.`}
         </p>
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-ink/8">
@@ -190,7 +263,7 @@ export default function AttendanceLogs({ s }: { s: Student }) {
               </tr>
             </thead>
             <tbody>
-              {rows.map((l) => (
+              {rows.slice(0, shown).map((l) => (
                 <tr key={l.date} className={`border-t border-ink/8 transition-colors ${picked === l.date ? "bg-accent/12" : ""}`}>
                   <th scope="row" className="whitespace-nowrap px-3 py-2.5 font-semibold">
                     {longDate(l.date)}
@@ -204,6 +277,19 @@ export default function AttendanceLogs({ s }: { s: Student }) {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {rows.length > PAGE && (
+        <div className="flex flex-wrap items-center justify-between gap-3 text-[.8rem] text-ink/55">
+          <span aria-live="polite">
+            Showing {Math.min(shown, rows.length)} of {rows.length} records
+          </span>
+          {shown < rows.length && (
+            <button type="button" onClick={() => setShown((n) => n + PAGE)} className={ghostBtn}>
+              Show more
+            </button>
+          )}
         </div>
       )}
     </div>
