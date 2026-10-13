@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { ButtonLink, buttonClass } from "@/components/ui/Button";
-import { Badge } from "@/components/dashboard/ui";
 import { notifications, principal } from "@/lib/principal";
 
 // Date and greeting come from the viewer's clock, so they render on the client only.
@@ -58,7 +57,6 @@ const toneDot = { danger: "bg-danger", warn: "bg-warn" };
 
 export default function ExecHeader() {
   const today = useToday();
-  const [campus, setCampus] = useState(principal.campuses[0]);
   const [menu, setMenu] = useState<"add" | "bell" | null>(null);
   const close = () => setMenu(null);
 
@@ -71,25 +69,6 @@ export default function ExecHeader() {
         <h1 className="mt-1 text-[clamp(1.5rem,2.6vw,2.1rem)] font-extrabold leading-tight tracking-tight">
           {today?.greeting ?? "Welcome"}, {principal.name}
         </h1>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <label className="relative">
-            <span className="sr-only">Campus</span>
-            <select
-              value={campus}
-              onChange={(e) => setCampus(e.target.value)}
-              className="cursor-pointer appearance-none rounded-full border border-ink/12 bg-white py-1.5 pl-3.5 pr-9 text-[.84rem] font-semibold text-ink outline-none transition-colors hover:border-accent focus:border-primary"
-            >
-              {principal.campuses.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
-            <svg viewBox="0 0 20 20" aria-hidden className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-primary">
-              <path d="m5 7.5 5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </label>
-          <Badge tone="neutral">{principal.term}</Badge>
-          <Badge tone="ok">Session Active</Badge>
-        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2.5">

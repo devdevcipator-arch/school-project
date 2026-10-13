@@ -16,15 +16,13 @@ export const principal = {
   name: "Dr. Sara Ahmed",
   initials: "SA",
   school: "Greenfield Public School",
-  campuses: ["Main Campus", "City Branch", "Model Town Branch"],
-  term: "Fall Term 2026",
 };
 
 export const kpis = {
   teachers: { total: 30, onDuty: 28, onLeave: 2, trend: 3.4 },
   students: { total: 642, boys: 338, girls: 304, grades: 10, trend: 2.1 },
   attendance: { percent: 94.2, present: 605, total: 642, trend: 1.3 },
-  fees: { expected: 3_210_000, collected: 2_486_000, overdue: 412_000, trend: -4.8 },
+  fees: { total: 642, paid: 518, pending: 83, overdue: 41, trend: -4.8 },
 };
 
 export const teacherCheckins = {
@@ -57,19 +55,20 @@ export const classAttendance = [
 
 export const LOW_ATTENDANCE = 80;
 
+// Fee status is tracked by student count only (paid vs not paid), never by amount.
 export const feeOverview = {
-  monthTarget: 1_070_000,
-  monthCollected: 812_000,
+  monthTotal: 642,
+  monthPaid: 518,
   aging: [
-    { bucket: "30 days", count: 24, amount: 186_000, tone: "warn" as const },
-    { bucket: "60 days", count: 11, amount: 132_000, tone: "serious" as const },
-    { bucket: "90+ days", count: 6, amount: 94_000, tone: "danger" as const },
+    { bucket: "30 days", count: 24, tone: "warn" as const },
+    { bucket: "60 days", count: 11, tone: "serious" as const },
+    { bucket: "90+ days", count: 6, tone: "danger" as const },
   ],
   topPending: [
-    { grade: "Grade 9", students: 9, amount: 96_500 },
-    { grade: "Grade 7", students: 8, amount: 81_000 },
-    { grade: "Grade 10", students: 7, amount: 78_000 },
-    { grade: "Grade 4", students: 6, amount: 52_500 },
+    { grade: "Grade 9", unpaid: 9, total: 66 },
+    { grade: "Grade 7", unpaid: 8, total: 64 },
+    { grade: "Grade 10", unpaid: 7, total: 64 },
+    { grade: "Grade 4", unpaid: 6, total: 62 },
   ],
 };
 
@@ -93,15 +92,9 @@ export const aiSuggestions = ["Who delayed fees this month?", "Show attendance s
 // Canned answers for the front-end preview of the AI copilot.
 export const aiMockAnswers: Record<string, string> = {
   "Who delayed fees this month?":
-    "41 students have pending fees this month. 6 are 90+ days overdue (Rs 94,000). Highest pending class: Grade 9, with 9 students owing Rs 96,500.",
+    "124 of 642 students have not paid this month. 41 are overdue, and 6 of them are 90+ days late. Grade 9 has the most unpaid students (9 of 66).",
   "Show attendance summary for Grade 10":
     "Grade 10 attendance today is 91% (58 of 64 present). This week's average is 92.4%, slightly above the school average.",
   "Register a new teacher":
-    "Sure. Tell me the teacher's full name, email, subject and campus, and I will create the account after your confirmation.",
+    "Sure. Tell me the teacher's full name, email, and subject, and I will create the account after your confirmation.",
 };
-
-export function formatRs(n: number) {
-  if (n >= 1_000_000) return `Rs ${(n / 1_000_000).toFixed(2)}M`;
-  if (n >= 1_000) return `Rs ${Math.round(n / 1_000)}K`;
-  return `Rs ${n}`;
-}
