@@ -7,7 +7,7 @@ import { Icon } from "@/components/ui/Icon";
 import { grades, teachers as seed, teachesGrade, type Teacher } from "@/lib/teachers";
 import { Avatar, CheckInChip, ScopeBadges, StatusBadge, SubjectPills } from "./parts";
 import TeacherForm from "./TeacherForm";
-import TeacherProfile from "./TeacherProfile";
+import TeacherProfile, { type ProfileTab } from "./TeacherProfile";
 
 const PAGE_SIZE = 12;
 const noop = () => () => {};
@@ -31,17 +31,19 @@ function Stat({ label, value, icon, note }: { label: string; value: number; icon
 
 /* ---------------- Actions ---------------- */
 
-type Actions = { onView: (t: Teacher) => void; onEdit: (t: Teacher) => void; onRemove: (t: Teacher) => void };
+type Actions = { onView: (t: Teacher) => void; onAttendance: (t: Teacher) => void; onEdit: (t: Teacher) => void; onRemove: (t: Teacher) => void };
 
 const actionIcons = {
   view: "M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z M12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6z",
+  attendance: "M8 3v3 M16 3v3 M4 7h16v13H4z M8 14l2.5 2.5L16 11",
   edit: "M4 20h4L19 9l-4-4L4 16z M13 7l4 4",
   remove: "M5 7h14 M10 7V4h4v3 M7 7l1 13h8l1-13",
 };
 
-function RowActions({ t, onView, onEdit, onRemove, compact = false }: Actions & { t: Teacher; compact?: boolean }) {
+function RowActions({ t, onView, onAttendance, onEdit, onRemove, compact = false }: Actions & { t: Teacher; compact?: boolean }) {
   const items = [
     { key: "view", label: "View Profile & Schedule", short: "Profile", run: () => onView(t) },
+    { key: "attendance", label: "Attendance Records", short: "Attendance", run: () => onAttendance(t) },
     { key: "edit", label: "Edit Details / Class Assignment", short: "Edit", run: () => onEdit(t) },
     { key: "remove", label: "Deactivate / Delete", short: "Remove", run: () => onRemove(t) },
   ] as const;
@@ -211,7 +213,7 @@ export default function TeachersBoard({ startAdding = false }: { startAdding?: b
   const [view, setView] = useState<"table" | "cards">("table");
   const [page, setPage] = useState(1);
   const [form, setForm] = useState<{ initial: Teacher | null } | null>(startAdding ? { initial: null } : null);
-  const [profile, setProfile] = useState<Teacher | null>(null);
+  const [profile, setProfile] = useState<{ t: Teacher; tab: ProfileTab } | null>(null);
   const [removing, setRemoving] = useState<Teacher | null>(null);
   const [toast, setToast] = useState<ToastData | null>(null);
   // Drawers render after hydration only (the form generates a random password).
@@ -252,7 +254,8 @@ export default function TeachersBoard({ startAdding = false }: { startAdding?: b
   const filtersOn = query || grade !== "all" || status !== "all";
 
   const actions: Actions = {
-    onView: setProfile,
+    onView: (t) => setProfile({ t, tab: "profile" }),
+    onAttendance: (t) => setProfile({ t, tab: "attendance" }),
     onEdit: (t) => setForm({ initial: t }),
     onRemove: setRemoving,
   };
@@ -393,10 +396,11 @@ export default function TeachersBoard({ startAdding = false }: { startAdding?: b
       {hydrated && form && <TeacherForm key={form.initial?.id ?? "new"} initial={form.initial} roster={list} onClose={() => setForm(null)} onSave={save} />}
       {hydrated && profile && (
         <TeacherProfile
-          t={profile}
+          t={profile.t}
+          tab={profile.tab}
           onClose={() => setProfile(null)}
           onEdit={() => {
-            setForm({ initial: profile });
+            setForm({ initial: profile.t });
             setProfile(null);
           }}
         />

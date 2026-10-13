@@ -1,10 +1,11 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Drawer, ghostBtn } from "@/components/dashboard/controls";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { days, periods, weeklySchedule, type Teacher } from "@/lib/teachers";
+import AttendanceHistory from "./AttendanceHistory";
 import { Avatar, CheckInChip, ScopeBadges, StatusBadge, SubjectPills } from "./parts";
 
 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -22,14 +23,32 @@ function Info({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-export default function TeacherProfile({ t, onClose, onEdit }: { t: Teacher; onClose: () => void; onEdit: () => void }) {
+export type ProfileTab = "profile" | "attendance";
+
+const tabs: [ProfileTab, string, string][] = [
+  ["profile", "Profile & Schedule", "M9 11a4 4 0 1 0 0-8a4 4 0 1 0 0 8z M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7"],
+  ["attendance", "Attendance Records", "M8 3v3 M16 3v3 M4 7h16v13H4z M8 14l2.5 2.5L16 11"],
+];
+
+export default function TeacherProfile({
+  t,
+  tab: initialTab = "profile",
+  onClose,
+  onEdit,
+}: {
+  t: Teacher;
+  tab?: ProfileTab;
+  onClose: () => void;
+  onEdit: () => void;
+}) {
+  const [tab, setTab] = useState(initialTab);
   const schedule = weeklySchedule(t);
   const load = schedule.flat().filter(Boolean).length;
 
   return (
     <Drawer
       width="max-w-[760px]"
-      title="Profile & Schedule"
+      title={tabs.find(([k]) => k === tab)![1]}
       subtitle={`${t.name} · ${t.empId}`}
       onClose={onClose}
       footer={(close) => (
@@ -60,6 +79,26 @@ export default function TeacherProfile({ t, onClose, onEdit }: { t: Teacher; onC
             </div>
           </div>
 
+          <div role="tablist" aria-label="Profile sections" className="flex rounded-xl border border-ink/10 p-1">
+            {tabs.map(([k, label, ic]) => (
+              <button
+                key={k}
+                type="button"
+                role="tab"
+                aria-selected={tab === k}
+                onClick={() => setTab(k)}
+                className={`inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[.84rem] font-semibold transition-colors ${tab === k ? "bg-primary text-surface" : "text-ink/60 hover:text-primary"}`}
+              >
+                <Icon d={ic} className="size-4" />
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {tab === "attendance" ? (
+            <AttendanceHistory t={t} />
+          ) : (
+            <>
           <dl className="grid gap-4 rounded-2xl border border-ink/8 bg-surface/50 p-5 sm:grid-cols-2">
             <Info label="Official email">
               <a href={`mailto:${t.email}`} className="break-all text-primary hover:underline">
@@ -124,6 +163,8 @@ export default function TeacherProfile({ t, onClose, onEdit }: { t: Teacher; onC
             </div>
             <p className="mt-2 text-[.76rem] text-ink/45">Preview timetable. Final schedules come from the timetable module.</p>
           </section>
+            </>
+          )}
         </div>
       )}
     </Drawer>
