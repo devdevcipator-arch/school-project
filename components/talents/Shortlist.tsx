@@ -6,12 +6,12 @@ import { Avatar } from "@/components/teachers/parts";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { sectionLabel } from "@/lib/students";
-import { categoryOf, competitionFor, competitions, shortDate, skillOf, type Talent } from "@/lib/talents";
+import { categoryIcon, competitionFor, competitions, shortDate, type Talent } from "@/lib/talents";
 import { LevelBadge, PrimaryTalent, categoryTone } from "./parts";
 
 /** Pick the competition a student is being shortlisted for. */
 export function ShortlistDialog({ t, onPick, onClose }: { t: Talent; onPick: (event: string) => void; onClose: () => void }) {
-  const [event, setEvent] = useState(competitionFor(skillOf(t.primary.skill).category).id);
+  const [event, setEvent] = useState(competitionFor(t.primary.category).id);
   return (
     <Dialog label={`Shortlist ${t.student.name}`} onClose={onClose}>
       <h2 className="text-[1.15rem] font-extrabold tracking-tight">Shortlist for event</h2>
@@ -26,8 +26,8 @@ export function ShortlistDialog({ t, onPick, onClose }: { t: Talent; onPick: (ev
             className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 transition-colors ${event === c.id ? "border-primary bg-primary/6" : "border-ink/10 hover:border-accent"}`}
           >
             <input type="radio" name="shortlist-event" checked={event === c.id} onChange={() => setEvent(c.id)} className="size-4 accent-[#1D546D]" />
-            <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${categoryTone[c.category].soft}`}>
-              <Icon d={categoryOf(c.category).icon} className="size-[18px]" />
+            <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${categoryTone(c.category).soft}`}>
+              <Icon d={categoryIcon(c.category)} className="size-[18px]" />
             </span>
             <span className="min-w-0">
               <span className="block text-[.9rem] font-bold">{c.title}</span>

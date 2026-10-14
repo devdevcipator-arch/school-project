@@ -1,11 +1,14 @@
-// Student talent & co-curricular directory: categories, skills, honor levels and a
-// deterministic mock roster built on top of the student directory.
+// Student talent & co-curricular directory: honor levels, a starter catalog of
+// categories/skills and a deterministic mock roster built on top of the student directory.
+// Categories and skills are free text: the principal can type any new one, and every
+// filter is derived from the records. The catalog below only seeds data and suggestions.
 // Replace with real API data in the backend phase.
 
 import { AS_OF, gradeNum, hash, students, type Student } from "./students";
 
-export type CategoryKey = "sports" | "debate" | "arts" | "writing" | "stem";
+type CategoryKey = "sports" | "debate" | "arts" | "writing" | "stem";
 
+/** Starter categories (suggestions + seed data). Talents store the category label. */
 export const categories: { key: CategoryKey; label: string; short: string; icon: string }[] = [
   { key: "sports", label: "Sports & Athletics", short: "Sports", icon: "M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z M12 3c2.5 2.5 3.5 5.5 3.5 9s-1 6.5-3.5 9 M12 3C9.5 5.5 8.5 8.5 8.5 12s1 6.5 3.5 9 M3.5 9h17 M3.5 15h17" },
   { key: "debate", label: "Debate & Public Speaking", short: "Debate", icon: "M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z M5 11a7 7 0 0 0 14 0 M12 18v3 M8 21h8" },
@@ -14,7 +17,22 @@ export const categories: { key: CategoryKey; label: string; short: string; icon:
   { key: "stem", label: "STEM & Robotics", short: "STEM", icon: "M9 3h6 M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3 M7.5 15h9" },
 ];
 
-export const categoryOf = (key: CategoryKey) => categories.find((c) => c.key === key)!;
+const labelOf = (key: CategoryKey) => categories.find((c) => c.key === key)!.label;
+
+export const SPORTS = labelOf("sports");
+export const DEBATE = labelOf("debate");
+
+const sameText = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+
+/** Icon for a category label; custom categories get a star. */
+export const categoryIcon = (label: string) =>
+  categories.find((c) => sameText(c.label, label))?.icon ?? "M12 3l2.2 5.3L20 9l-4.4 3.8L17 19l-5-3-5 3 1.4-6.2L4 9l5.8-.7z";
+
+/** Tidies typed text and reuses the casing of an existing entry, so "cricket" joins "Cricket". */
+export function canonical(input: string, existing: string[]) {
+  const clean = input.trim().replace(/\s+/g, " ");
+  return existing.find((e) => sameText(e, clean)) ?? clean;
+}
 
 export type Skill = {
   name: string;
@@ -52,7 +70,16 @@ export const skills: Skill[] = [
   { name: "Math Olympiad", category: "stem", roles: ["Olympiad Team", "Problem Solver"], event: "Pakistan Math Olympiad", minGrade: 4 },
 ];
 
-export const skillOf = (name: string) => skills.find((s) => s.name === name)!;
+const skillOf = (name: string) => skills.find((s) => s.name === name)!;
+
+/** Suggested positions for a skill from the starter catalog (empty for custom skills). */
+export const rolesFor = (name: string) => skills.find((s) => sameText(s.name, name))?.roles ?? [];
+
+/** Suggested category for a skill typed by the principal, if the catalog knows it. */
+export const catalogCategoryOf = (name: string) => {
+  const k = skills.find((s) => sameText(s.name, name));
+  return k ? labelOf(k.category) : undefined;
+};
 
 export type Level = "beginner" | "intermediate" | "team" | "interschool" | "champion";
 
@@ -75,39 +102,51 @@ export type TalentEvent = {
   scope: "School" | "District" | "Regional" | "National";
   result: string;
   skill: string;
+  category: string;
 };
 
 export type MentorRemark = { by: string; role: string; date: string; text: string };
 
+/** A skill as recorded on a profile: free-text name plus its free-text category. */
+export type SkillTag = { skill: string; category: string };
+
 export type Talent = {
   id: string;
   student: Student;
-  primary: { skill: string; role: string };
-  extra: string[];
+  primary: SkillTag & { role: string };
+  extra: SkillTag[];
   level: Level;
   achievement: string;
   history: TalentEvent[];
   remarks: MentorRemark[];
 };
 
-export type Competition = { id: string; title: string; date: string; category: CategoryKey };
+export type Competition = { id: string; title: string; date: string; category: string };
 
 /** Competitions the principal can shortlist candidates for. */
 export const competitions: Competition[] = [
-  { id: "c1", title: "Inter-School Sports Gala 2026", date: "2026-11-06", category: "sports" },
-  { id: "c2", title: "Punjab Youth Debate Championship", date: "2026-11-14", category: "debate" },
-  { id: "c3", title: "Lahore Arts & Literary Festival", date: "2026-11-28", category: "arts" },
-  { id: "c4", title: "National Robotics & Coding Olympiad", date: "2026-12-05", category: "stem" },
+  { id: "c1", title: "Inter-School Sports Gala 2026", date: "2026-11-06", category: SPORTS },
+  { id: "c2", title: "Punjab Youth Debate Championship", date: "2026-11-14", category: DEBATE },
+  { id: "c3", title: "Lahore Arts & Literary Festival", date: "2026-11-28", category: labelOf("arts") },
+  { id: "c4", title: "National Robotics & Coding Olympiad", date: "2026-12-05", category: labelOf("stem") },
 ];
 
-export const competitionFor = (cat: CategoryKey) => competitions.find((c) => c.category === (cat === "writing" ? "arts" : cat))!;
+/** Default competition for a category; writing goes to the literary festival, custom ones to the first event. */
+export const competitionFor = (category: string) =>
+  competitions.find((c) => sameText(c.category, sameText(category, labelOf("writing")) ? labelOf("arts") : category)) ?? competitions[0];
 
-export const mentors: Record<CategoryKey, { name: string; role: string }> = {
+const mentors: Record<CategoryKey, { name: string; role: string }> = {
   sports: { name: "Waqas Anwar", role: "Head Sports Coach" },
   debate: { name: "Rabia Saeed", role: "Debating Society Coordinator" },
   arts: { name: "Kamran Haider", role: "Arts & Music Coordinator" },
   writing: { name: "Nazia Rauf", role: "Literary Society Coordinator" },
   stem: { name: "Faisal Mehmood", role: "STEM Club Mentor" },
+};
+
+/** Coordinator for a category label; custom categories go to the co-curricular office. */
+export const mentorFor = (category: string) => {
+  const key = categories.find((c) => sameText(c.label, category))?.key;
+  return key ? mentors[key] : { name: "Co-Curricular Office", role: "Activities Coordinator" };
 };
 
 const remarkText: Record<Level, string[]> = {
@@ -173,6 +212,7 @@ function buildHistory(seed: number, level: Level, primary: Skill, extra: string[
       scope,
       result: pick(resultFor[lv], hash(seed, 90 + k)),
       skill: skill.name,
+      category: labelOf(skill.category),
     });
   }
   return out.sort((a, b) => b.date.localeCompare(a.date));
@@ -194,18 +234,19 @@ function build(): Talent[] {
     const level = levels[lv].key;
     const history = buildHistory(s.seed, level, primary, extra);
     const mentor = mentors[primary.category];
+    const second = extra.length ? mentors[skillOf(extra[0]).category] : mentor;
     out.push({
       id: `t${s.seed}`,
       student: s,
-      primary: { skill: primary.name, role: pick(primary.roles, r(9)) },
-      extra,
+      primary: { skill: primary.name, category: labelOf(primary.category), role: pick(primary.roles, r(9)) },
+      extra: extra.map((n) => ({ skill: n, category: labelOf(skillOf(n).category) })),
       level,
       achievement: headline(level, primary, r(10), Number(history[0].date.slice(0, 4))),
       history,
       remarks: [
         { by: mentor.name, role: mentor.role, date: `2026-${pad(8 + Math.floor(r(11) * 2))}-${pad(2 + Math.floor(r(12) * 26))}`, text: pick(remarkText[level], r(13)) },
         ...(extra.length && r(14) < 0.6
-          ? [{ by: mentors[skillOf(extra[0]).category].name, role: mentors[skillOf(extra[0]).category].role, date: `2026-0${3 + Math.floor(r(15) * 5)}-${pad(2 + Math.floor(r(16) * 26))}`, text: pick(remarkText[levels[Math.max(0, lv - 1)].key], r(17)) }]
+          ? [{ by: second.name, role: second.role, date: `2026-0${3 + Math.floor(r(15) * 5)}-${pad(2 + Math.floor(r(16) * 26))}`, text: pick(remarkText[levels[Math.max(0, lv - 1)].key], r(17)) }]
           : []),
       ],
     });
@@ -219,12 +260,39 @@ export const talents = build();
 export const initialShortlist: Record<string, string> = Object.fromEntries(
   talents
     .filter((t) => levelRank(t.level) >= 3 && gradeNum(t.student.section) >= 6 && hash(t.student.seed, 123) < 0.55)
-    .map((t) => [t.id, competitionFor(skillOf(t.primary.skill).category).id]),
+    .map((t) => [t.id, competitionFor(t.primary.category).id]),
 );
 
-/** Every skill a talent profile covers. */
-export const skillsOf = (t: Talent) => [t.primary.skill, ...t.extra];
-export const categoriesOf = (t: Talent) => [...new Set(skillsOf(t).map((n) => skillOf(n).category))];
+/** Every skill a talent profile covers, primary first. */
+export const tagsOf = (t: Talent): SkillTag[] => [t.primary, ...t.extra];
+export const skillsOf = (t: Talent) => tagsOf(t).map((g) => g.skill);
+export const categoriesOf = (t: Talent) => [...new Set(tagsOf(t).map((g) => g.category))];
+
+/**
+ * Categories and skills currently in use, built from the records themselves so anything the
+ * principal types shows up in the filters. Starter categories come first, then by popularity.
+ */
+export function catalogFrom(list: Talent[]) {
+  const cats = new Map<string, number>();
+  const skillMap = new Map<string, { skill: string; category: string; count: number }>();
+  for (const t of list) {
+    for (const c of categoriesOf(t)) cats.set(c, (cats.get(c) ?? 0) + 1);
+    for (const g of tagsOf(t)) {
+      const key = `${g.category}|${g.skill}`;
+      const hit = skillMap.get(key);
+      if (hit) hit.count++;
+      else skillMap.set(key, { ...g, count: 1 });
+    }
+  }
+  const rank = (label: string) => {
+    const i = categories.findIndex((c) => c.label === label);
+    return i < 0 ? categories.length : i;
+  };
+  return {
+    categories: [...cats].map(([label, count]) => ({ label, count })).sort((a, b) => rank(a.label) - rank(b.label) || b.count - a.count || a.label.localeCompare(b.label)),
+    skills: [...skillMap.values()].sort((a, b) => a.skill.localeCompare(b.skill)),
+  };
+}
 
 
 /** Snapshot date for documents, e.g. "13 Oct 2026". */

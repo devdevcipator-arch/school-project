@@ -1,14 +1,19 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import { Chip, Drawer, Select, ghostBtn } from "@/components/dashboard/controls";
+import { Chip, Drawer, ghostBtn } from "@/components/dashboard/controls";
 import { Avatar } from "@/components/teachers/parts";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { sectionLabel, students, type Student } from "@/lib/students";
-import { categories, levels, skillOf, skills, type CategoryKey, type Level, type Talent } from "@/lib/talents";
+import { canonical, catalogCategoryOf, catalogFrom, categories, levels, rolesFor, skills, type Level, type Talent } from "@/lib/talents";
+import { categoryTone } from "./parts";
 
-export type Endorsement = { student: Student; skill: string; role: string; level: Level; achievement: string; remark: string };
+export type Endorsement = { student: Student; category: string; skill: string; role: string; level: Level; achievement: string; remark: string };
+type Errors = Partial<Record<"student" | "category" | "skill", string>>;
+
+const uniq = (list: string[]) => [...new Map(list.map((v) => [v.toLowerCase(), v])).values()];
+const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
 function Field({ id, label, hint, error, children }: { id: string; label: string; hint?: string; error?: string; children: ReactNode }) {
   return (
@@ -26,19 +31,28 @@ function Field({ id, label, hint, error, children }: { id: string; label: string
   );
 }
 
+function NewTag({ label, tone, kind }: { label: string; tone: string; kind: "category" | "skill" }) {
+  return (
+    <p className="mt-2 flex flex-wrap items-center gap-1.5 text-[.78rem] text-ink/55">
+      <span className={`rounded-full border px-2.5 py-0.5 font-bold ${tone}`}>{label}</span>
+      New {kind}: it will be created when you save.
+    </p>
+  );
+}
+
 const input = (bad?: string) =>
   `w-full rounded-xl border bg-white px-4 py-3 text-[.92rem] outline-none transition-colors hover:border-accent focus:border-primary ${bad ? "border-danger" : "border-ink/12"}`;
 
 export default function EndorseForm({ talents, onSave, onClose }: { talents: Talent[]; onSave: (e: Endorsement) => void; onClose: () => void }) {
   const [query, setQuery] = useState("");
   const [student, setStudent] = useState<Student | null>(null);
-  const [category, setCategory] = useState<CategoryKey>("sports");
-  const [skill, setSkill] = useState(skills.find((k) => k.category === "sports")!.name);
-  const [role, setRole] = useState(skillOf(skill).roles[0]);
+  const [category, setCategory] = useState("");
+  const [skill, setSkill] = useState("");
+  const [role, setRole] = useState("");
   const [level, setLevel] = useState<Level>("team");
   const [achievement, setAchievement] = useState("");
   const [remark, setRemark] = useState("");
-  const [error, setError] = useState<string>();
+  const [errors, setErrors] = useState<Errors>({});
 
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -48,11 +62,46 @@ export default function EndorseForm({ talents, onSave, onClose }: { talents: Tal
 
   const existing = student && talents.find((t) => t.student.id === student.id);
 
-  const pickCategory = (c: CategoryKey) => {
-    setCategory(c);
-    const first = skills.find((k) => k.category === c)!;
-    setSkill(first.name);
-    setRole(first.roles[0]);
+  // Suggestions mix the starter catalog with everything already typed into the directory.
+  const catalog = useMemo(() => catalogFrom(talents), [talents]);
+  const categoryList = useMemo(() => uniq([...categories.map((c) => c.label), ...catalog.categories.map((c) => c.label)]), [catalog]);
+  const allSkills = useMemo(() => [...skills.map((k) => ({ skill: k.name, category: categories.find((c) => c.key === k.category)!.label })), ...catalog.skills], [catalog]);
+  const skillList = useMemo(() => {
+    const inCat = category.trim() ? allSkills.filter((k) => same(k.category, category)) : [];
+    return uniq((inCat.length ? inCat : allSkills).map((k) => k.skill)).sort((a, b) => a.localeCompare(b));
+  }, [allSkills, category]);
+  const roleList = useMemo(
+    () => uniq([...rolesFor(skill), ...talents.filter((t) => same(t.primary.skill, skill)).map((t) => t.primary.role)].filter(Boolean)),
+    [talents, skill],
+  );
+  const isNewCategory = category.trim() !== "" && !categoryList.some((c) => same(c, category));
+  const isNewSkill = skill.trim() !== "" && !allSkills.some((k) => same(k.skill, skill));
+
+  /** Typing a known skill with no category fills the category in for the principal. */
+  const fillCategory = () => {
+    if (category.trim() || !skill.trim()) return;
+    const known = catalogCategoryOf(skill) ?? allSkills.find((k) => same(k.skill, skill))?.category;
+    if (known) setCategory(known);
+  };
+
+  const submit = (close: () => void) => {
+    const next: Errors = {};
+    if (!student) next.student = "Choose the student you are endorsing.";
+    if (!category.trim()) next.category = "Type a talent category, e.g. Sports & Athletics or Swimming.";
+    if (!skill.trim()) next.skill = "Type the specific skill, e.g. Cricket or Quran Recitation.";
+    setErrors(next);
+    if (!student || Object.keys(next).length) return;
+    const cat = canonical(category, categoryList);
+    onSave({
+      student,
+      category: cat,
+      skill: canonical(skill, allSkills.filter((k) => same(k.category, cat)).map((k) => k.skill)),
+      role: role.trim().replace(/\s+/g, " "),
+      level,
+      achievement: achievement.trim(),
+      remark: remark.trim(),
+    });
+    close();
   };
 
   return (
@@ -67,11 +116,7 @@ export default function EndorseForm({ talents, onSave, onClose }: { talents: Tal
           </button>
           <button
             type="button"
-            onClick={() => {
-              if (!student) return setError("Choose the student you are endorsing.");
-              onSave({ student, skill, role, level, achievement: achievement.trim(), remark: remark.trim() });
-              close();
-            }}
+            onClick={() => submit(close)}
             className={buttonClass("primary", "md", "cursor-pointer max-sm:flex-1 sm:ml-auto")}
           >
             <Icon d="M5 12l4 4 10-10" className="size-[18px]" />
@@ -82,7 +127,7 @@ export default function EndorseForm({ talents, onSave, onClose }: { talents: Tal
     >
       {() => (
         <div className="grid gap-6 px-5 py-6 sm:px-7">
-          <Field id="endorse-student" label="Student" error={error}>
+          <Field id="endorse-student" label="Student" error={errors.student}>
             {student ? (
               <div className="flex items-center gap-3 rounded-2xl border border-primary/25 bg-primary/5 p-3">
                 <Avatar name={student.name} />
@@ -108,9 +153,9 @@ export default function EndorseForm({ talents, onSave, onClose }: { talents: Tal
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Search by name, roll no., registration ID or class"
-                    aria-invalid={!!error}
-                    aria-describedby={error ? "endorse-student-error" : undefined}
-                    className={`${input(error)} pl-10`}
+                    aria-invalid={!!errors.student}
+                    aria-describedby={errors.student ? "endorse-student-error" : undefined}
+                    className={`${input(errors.student)} pl-10`}
                   />
                 </div>
                 {matches.length > 0 && (
@@ -121,7 +166,7 @@ export default function EndorseForm({ talents, onSave, onClose }: { talents: Tal
                           type="button"
                           onClick={() => {
                             setStudent(s);
-                            setError(undefined);
+                            setErrors((e) => ({ ...e, student: undefined }));
                           }}
                           className="flex w-full cursor-pointer items-center justify-between gap-3 px-4 py-2.5 text-left transition-colors hover:bg-primary/6"
                         >
@@ -142,46 +187,67 @@ export default function EndorseForm({ talents, onSave, onClose }: { talents: Tal
             )}
           </Field>
 
-          <fieldset>
-            <legend className="mb-2 text-[.84rem] font-bold">Talent category</legend>
-            <div className="flex flex-wrap gap-2">
-              {categories.map((c) => (
-                <Chip key={c.key} type="radio" name="endorse-category" checked={category === c.key} onChange={() => pickCategory(c.key)}>
-                  <Icon d={c.icon} className="size-4" />
-                  {c.label}
-                </Chip>
-              ))}
-            </div>
-          </fieldset>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field id="endorse-skill" label="Specific skill">
-              <Select
-                label="Specific skill"
-                value={skill}
-                onChange={(v) => {
-                  setSkill(v);
-                  setRole(skillOf(v).roles[0]);
-                }}
-              >
-                {skills
-                  .filter((k) => k.category === category)
-                  .map((k) => (
-                    <option key={k.name} value={k.name}>
-                      {k.name}
-                    </option>
-                  ))}
-              </Select>
-            </Field>
-            <Field id="endorse-role" label="Position / specialisation">
-              <Select label="Position / specialisation" value={role} onChange={setRole}>
-                {skillOf(skill).roles.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
+          <div className="grid gap-4 rounded-2xl border border-ink/8 bg-surface/50 p-4 sm:p-5">
+            <p className="text-[.8rem] text-ink/60">
+              Type any category, skill and position. Suggestions appear as you type, and anything new is added to the directory filters automatically.
+            </p>
+            <Field id="endorse-category" label="Talent category" error={errors.category}>
+              <input
+                id="endorse-category"
+                list="endorse-category-list"
+                autoComplete="off"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder="e.g. Sports & Athletics, Islamic Studies, Swimming"
+                aria-invalid={!!errors.category}
+                aria-describedby={errors.category ? "endorse-category-error" : undefined}
+                className={input(errors.category)}
+              />
+              <datalist id="endorse-category-list">
+                {categoryList.map((c) => (
+                  <option key={c} value={c} />
                 ))}
-              </Select>
+              </datalist>
+              {isNewCategory && <NewTag label={category.trim()} tone={categoryTone(category).chip} kind="category" />}
             </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field id="endorse-skill" label="Specific skill" error={errors.skill}>
+                <input
+                  id="endorse-skill"
+                  list="endorse-skill-list"
+                  autoComplete="off"
+                  value={skill}
+                  onChange={(e) => setSkill(e.target.value)}
+                  onBlur={fillCategory}
+                  placeholder="e.g. Cricket, Naat, Swimming"
+                  aria-invalid={!!errors.skill}
+                  aria-describedby={errors.skill ? "endorse-skill-error" : undefined}
+                  className={input(errors.skill)}
+                />
+                <datalist id="endorse-skill-list">
+                  {skillList.map((k) => (
+                    <option key={k} value={k} />
+                  ))}
+                </datalist>
+                {isNewSkill && <NewTag label={skill.trim()} tone="border-ink/12 bg-white text-ink/70" kind="skill" />}
+              </Field>
+              <Field id="endorse-role" label="Position / specialisation" hint="(optional)">
+                <input
+                  id="endorse-role"
+                  list="endorse-role-list"
+                  autoComplete="off"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  placeholder="e.g. Captain, Goalkeeper, Lead Vocalist"
+                  className={input()}
+                />
+                <datalist id="endorse-role-list">
+                  {roleList.map((r) => (
+                    <option key={r} value={r} />
+                  ))}
+                </datalist>
+              </Field>
+            </div>
           </div>
 
           <fieldset>

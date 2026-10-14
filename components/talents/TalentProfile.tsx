@@ -7,7 +7,7 @@ import { Avatar, SubjectPills } from "@/components/teachers/parts";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { TERM_LABEL, classTeacherOf, sectionLabel, subjectsFor } from "@/lib/students";
-import { categoryOf, competitions, shortDate, skillOf, type Talent } from "@/lib/talents";
+import { competitions, shortDate, type Talent } from "@/lib/talents";
 import { LevelBadge, PrimaryTalent, SkillChips, categoryTone, trophyIcon } from "./parts";
 
 function Info({ label, children, wide = false }: { label: string; children: ReactNode; wide?: boolean }) {
@@ -89,9 +89,9 @@ export default function TalentProfile({
             <h3 className="mb-3 text-[1rem] font-extrabold tracking-tight">Talent overview</h3>
             <dl className="grid gap-4 rounded-2xl border border-ink/8 bg-surface/50 p-5 sm:grid-cols-2">
               <Info label="Primary talent">
-                {t.primary.skill} <span className="font-normal text-ink/55">({t.primary.role})</span>
+                {t.primary.skill} {t.primary.role && <span className="font-normal text-ink/55">({t.primary.role})</span>}
               </Info>
-              <Info label="Category">{categoryOf(skillOf(t.primary.skill).category).label}</Info>
+              <Info label="Category">{t.primary.category}</Info>
               <Info label="Key achievement" wide>
                 <span className="inline-flex items-start gap-2">
                   <Icon d={trophyIcon} className="mt-0.5 size-4 shrink-0 text-[#b8860b]" />
@@ -114,7 +114,7 @@ export default function TalentProfile({
             <ol className="relative grid gap-3 before:absolute before:inset-y-2 before:left-[11px] before:w-px before:bg-ink/10">
               {t.history.map((h, i) => (
                 <li key={`${h.date}-${i}`} className="relative grid grid-cols-[24px_1fr] gap-3">
-                  <span className={`relative z-10 mt-4 size-[11px] justify-self-center rounded-full ring-4 ring-white ${categoryTone[skillOf(h.skill).category].dot}`} />
+                  <span className={`relative z-10 mt-4 size-[11px] justify-self-center rounded-full ring-4 ring-white ${categoryTone(h.category).dot}`} />
                   <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-2xl border border-ink/8 bg-white p-3.5">
                     <div className="min-w-0">
                       <p className="font-bold">{h.title}</p>

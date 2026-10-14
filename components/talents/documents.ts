@@ -13,7 +13,7 @@ export function printCertificate(t: Talent) {
       <p>This is proudly presented to</p>
       <div class="name">${e(s.name)}</div>
       <p class="muted">${e(sectionLabel(s.section))} &middot; Roll No. ${s.rollNo} &middot; ${e(s.regId)}</p>
-      <p>in recognition of outstanding ability in <strong>${e(t.primary.skill)} (${e(t.primary.role)})</strong>,<br/>
+      <p>in recognition of outstanding ability in <strong>${e(t.primary.skill)}${t.primary.role ? ` (${e(t.primary.role)})` : ""}</strong>,<br/>
       endorsed at the level of <strong>${e(levelOf(t.level).label)}</strong>.</p>
       <p><em>${e(t.achievement)}</em></p>
       <div class="sign">
@@ -37,7 +37,7 @@ export function printShortlist(pool: { t: Talent; event: string }[]) {
         ${rows
           .map(
             ({ t }, i) => `<tr><td>${i + 1}</td><td><strong>${e(t.student.name)}</strong><br/><span class="muted">${e(t.student.regId)}</span></td>
-            <td>${e(sectionLabel(t.student.section))}</td><td>${e(t.primary.skill)} - ${e(t.primary.role)}</td>
+            <td>${e(sectionLabel(t.student.section))}</td><td>${e(t.primary.skill)}${t.primary.role ? ` - ${e(t.primary.role)}` : ""}<br/><span class="muted">${e(t.primary.category)}</span></td>
             <td>${e(levelOf(t.level).label)}</td><td>${e(t.achievement)}</td></tr>`,
           )
           .join("")}

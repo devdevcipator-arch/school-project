@@ -9,20 +9,21 @@ import { Icon } from "@/components/ui/Icon";
 import { principal } from "@/lib/principal";
 import { AS_OF, gradeNum, sectionLabel, sections, students } from "@/lib/students";
 import {
-  categories,
+  DEBATE,
+  SPORTS,
+  catalogFrom,
   categoriesOf,
+  categoryIcon,
   competitions,
   initialShortlist,
   levelOf,
   levelRank,
   levels,
-  mentors,
+  mentorFor,
   shortDate,
-  skillOf,
-  skills,
   skillsOf,
+  tagsOf,
   talents as seed,
-  type CategoryKey,
   type Talent,
 } from "@/lib/talents";
 import { printCertificate, printShortlist } from "./documents";
@@ -183,9 +184,11 @@ function TalentTable({ list, ...actions }: Actions & { list: Talent[] }) {
 
 /* ---------------- Board ---------------- */
 
-const topSkills = (list: Talent[], cat: CategoryKey, n = 3) => {
+const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
+
+const topSkills = (list: Talent[], cat: string, n = 3) => {
   const count = new Map<string, number>();
-  for (const t of list) for (const k of skillsOf(t)) if (skillOf(k).category === cat) count.set(k, (count.get(k) ?? 0) + 1);
+  for (const t of list) for (const g of tagsOf(t)) if (g.category === cat) count.set(g.skill, (count.get(g.skill) ?? 0) + 1);
   return [...count].sort((a, b) => b[1] - a[1]).slice(0, n);
 };
 
@@ -193,7 +196,7 @@ export default function TalentsBoard() {
   const [list, setList] = useState<Talent[]>(seed);
   const [shortlist, setShortlist] = useState<Record<string, string>>(initialShortlist);
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState<CategoryKey | "all">("all");
+  const [category, setCategory] = useState("all");
   const [skillSel, setSkillSel] = useState<string[]>([]);
   const [gradeSel, setGradeSel] = useState<string[]>([]);
   const [letter, setLetter] = useState("all");
@@ -211,15 +214,15 @@ export default function TalentsBoard() {
   const closePick = useCallback(() => setPicking(null), []);
 
   const stats = useMemo(() => {
-    const sports = list.filter((t) => categoriesOf(t).includes("sports"));
-    const debate = list.filter((t) => categoriesOf(t).includes("debate"));
+    const sports = list.filter((t) => categoriesOf(t).includes(SPORTS));
+    const debate = list.filter((t) => categoriesOf(t).includes(DEBATE));
     const next = competitions[0];
     return {
       total: list.length,
       share: Math.round((list.length / students.length) * 100),
       multi: list.filter((t) => t.extra.length).length,
       sports: sports.length,
-      sportsNote: topSkills(sports, "sports").map(([k, n]) => `${k} ${n}`).join(" · "),
+      sportsNote: topSkills(sports, SPORTS).map(([k, n]) => `${k} ${n}`).join(" · "),
       debate: debate.length,
       mun: list.filter((t) => skillsOf(t).includes("Model UN")).length,
       orators: list.filter((t) => skillsOf(t).some((k) => k === "Urdu Speech" || k === "English Speech")).length,
@@ -228,17 +231,19 @@ export default function TalentsBoard() {
     };
   }, [list, shortlist]);
 
-  const skillOptions = useMemo(
-    () =>
-      skills
-        .filter((k) => category === "all" || k.category === category)
-        .map((k) => ({
-          value: k.name,
-          label: k.name,
-          hint: <span aria-hidden className={`size-2 shrink-0 rounded-full ${categoryTone[k.category].dot}`} />,
-        })),
-    [category],
-  );
+  const catalog = useMemo(() => catalogFrom(list), [list]);
+
+  const skillOptions = useMemo(() => {
+    const seen = new Set<string>();
+    return catalog.skills
+      .filter((k) => category === "all" || k.category === category)
+      .filter((k) => !seen.has(k.skill) && !!seen.add(k.skill))
+      .map((k) => ({
+        value: k.skill,
+        label: k.skill,
+        hint: <span aria-hidden title={k.category} className={`size-2 shrink-0 rounded-full ${categoryTone(k.category).dot}`} />,
+      }));
+  }, [catalog, category]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -247,7 +252,7 @@ export default function TalentsBoard() {
       .filter((t) => {
         if (!q) return true;
         const s = t.student;
-        const hay = `${s.name} ${s.regId} ${t.primary.skill} ${t.primary.role} ${t.extra.join(" ")} ${t.achievement} ${levelOf(t.level).label}`.toLowerCase();
+        const hay = `${s.name} ${s.regId} ${t.primary.skill} ${t.primary.role} ${t.primary.category} ${t.extra.map((g) => `${g.skill} ${g.category}`).join(" ")} ${t.achievement} ${levelOf(t.level).label}`.toLowerCase();
         return hay.includes(q) || (digits !== "" && digits === q && String(s.rollNo) === digits);
       })
       .filter((t) => category === "all" || categoriesOf(t).includes(category))
@@ -258,7 +263,6 @@ export default function TalentsBoard() {
       .sort((a, b) => order(a) - order(b) || a.student.name.localeCompare(b.student.name));
   }, [list, query, category, skillSel, gradeSel, letter, level]);
 
-  const counts = useMemo(() => Object.fromEntries(categories.map((c) => [c.key, list.filter((t) => categoriesOf(t).includes(c.key)).length])), [list]);
 
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const current = Math.min(page, pages);
@@ -279,10 +283,10 @@ export default function TalentsBoard() {
     setPage(1);
   };
 
-  const pickCategory = (c: CategoryKey | "all") => {
+  const pickCategory = (c: string) => {
     setCategory(c);
     // Drop selected skills that fall outside the new category.
-    setSkillSel((sel) => (c === "all" ? sel : sel.filter((k) => skillOf(k).category === c)));
+    setSkillSel((sel) => (c === "all" ? sel : sel.filter((k) => catalog.skills.some((x) => x.skill === k && x.category === c))));
     setPage(1);
   };
 
@@ -324,19 +328,20 @@ export default function TalentsBoard() {
 
   const endorse = (e: Endorsement) => {
     const existing = list.find((t) => t.student.id === e.student.id);
-    const cat = skillOf(e.skill).category;
+    const tag = { skill: e.skill, category: e.category };
     const event = e.achievement
-      ? [{ date: AS_OF, title: e.achievement, scope: levelRank(e.level) >= 3 ? ("District" as const) : ("School" as const), result: levelOf(e.level).short, skill: e.skill }]
+      ? [{ date: AS_OF, title: e.achievement, scope: levelRank(e.level) >= 3 ? ("District" as const) : ("School" as const), result: levelOf(e.level).short, ...tag }]
       : [];
     const remark = e.remark ? [{ by: principal.name, role: "Principal", date: AS_OF, text: e.remark }] : [];
 
     if (existing) {
-      const isPrimary = existing.primary.skill === e.skill;
+      const isPrimary = same(existing.primary.skill, e.skill);
+      const hasExtra = existing.extra.some((g) => same(g.skill, e.skill));
       const raised = levelRank(e.level) > levelRank(existing.level);
       const updated: Talent = {
         ...existing,
-        primary: isPrimary ? { skill: e.skill, role: e.role } : existing.primary,
-        extra: isPrimary || existing.extra.includes(e.skill) ? existing.extra : [...existing.extra, e.skill],
+        primary: isPrimary ? { ...tag, role: e.role || existing.primary.role } : existing.primary,
+        extra: isPrimary ? existing.extra : hasExtra ? existing.extra.map((g) => (same(g.skill, e.skill) ? tag : g)) : [...existing.extra, tag],
         level: raised ? e.level : existing.level,
         achievement: e.achievement && (raised || isPrimary) ? e.achievement : existing.achievement,
         history: [...event, ...existing.history],
@@ -349,12 +354,12 @@ export default function TalentsBoard() {
       const fresh: Talent = {
         id,
         student: e.student,
-        primary: { skill: e.skill, role: e.role },
+        primary: { ...tag, role: e.role },
         extra: [],
         level: e.level,
         achievement: e.achievement || `Endorsed in ${e.skill} by the principal, ${AS_OF.slice(0, 4)}`,
         history: event,
-        remarks: remark.length ? remark : [{ by: mentors[cat].name, role: mentors[cat].role, date: AS_OF, text: "Newly profiled talent. Progress will be reviewed at the end of term." }],
+        remarks: remark.length ? remark : [{ by: mentorFor(e.category).name, role: mentorFor(e.category).role, date: AS_OF, text: "Newly profiled talent. Progress will be reviewed at the end of term." }],
       };
       setList((l) => [fresh, ...l]);
       setToast({ text: `${e.student.name} added to the talent directory for ${e.skill}.`, action: { label: "View", run: () => (setProfileId(id), setToast(null)) } });
@@ -380,8 +385,8 @@ export default function TalentsBoard() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Total Profiled Talents" value={stats.total} icon="M12 3l2.2 5.3L20 9l-4.4 3.8L17 19l-5-3-5 3 1.4-6.2L4 9l5.8-.7z" note={`${stats.share}% of students · ${stats.multi} multi-talented`} />
-        <StatCard label="Active Sports Talents" value={stats.sports} icon={categories[0].icon} note={stats.sportsNote} />
-        <StatCard label="Public Speaking & Debates" value={stats.debate} icon={categories[1].icon} note={`${stats.orators} orators · ${stats.mun} MUN delegates`} />
+        <StatCard label="Active Sports Talents" value={stats.sports} icon={categoryIcon(SPORTS)} note={stats.sportsNote} />
+        <StatCard label="Public Speaking & Debates" value={stats.debate} icon={categoryIcon(DEBATE)} note={`${stats.orators} orators · ${stats.mun} MUN delegates`} />
         <StatCard label="Upcoming Competition Pool" value={stats.pool} icon={trophyIcon} note={stats.next} />
       </div>
 
@@ -402,7 +407,7 @@ export default function TalentsBoard() {
         </div>
 
         <div role="group" aria-label="Talent categories" className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
-          {[{ key: "all" as const, label: "All Talents", icon: "M12 3l2.2 5.3L20 9l-4.4 3.8L17 19l-5-3-5 3 1.4-6.2L4 9l5.8-.7z" }, ...categories].map((c) => {
+          {[{ key: "all", label: "All Talents", count: list.length }, ...catalog.categories.map((c) => ({ key: c.label, ...c }))].map((c) => {
             const on = category === c.key;
             return (
               <button
@@ -414,9 +419,9 @@ export default function TalentsBoard() {
                   on ? "border-primary bg-primary text-surface" : "border-ink/12 text-ink/70 hover:border-accent hover:text-primary"
                 }`}
               >
-                {c.key === "all" ? <Icon d={c.icon} className="size-4" /> : <span aria-hidden className={`size-2.5 rounded-full ${categoryTone[c.key].dot}`} />}
+                {c.key === "all" ? <Icon d={categoryIcon("")} className="size-4" /> : <span aria-hidden className={`size-2.5 rounded-full ${categoryTone(c.key).dot}`} />}
                 {c.label}
-                <span className={`text-[.72rem] ${on ? "text-surface/70" : "text-ink/40"}`}>{c.key === "all" ? list.length : counts[c.key]}</span>
+                <span className={`text-[.72rem] ${on ? "text-surface/70" : "text-ink/40"}`}>{c.count}</span>
               </button>
             );
           })}

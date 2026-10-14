@@ -1,39 +1,59 @@
 import { Icon } from "@/components/ui/Icon";
-import { categoryOf, levelOf, levelRank, skillOf, type CategoryKey, type Level } from "@/lib/talents";
+import { categories, categoryIcon, levelOf, levelRank, type Level, type SkillTag } from "@/lib/talents";
+
+type Tone = { pill: string; chip: string; dot: string; soft: string };
 
 /**
  * Category accent colors, used only on talent badges so clusters scan at a glance:
  * emerald sports, amber debate, indigo arts, rose writing, cyan STEM.
  */
-export const categoryTone: Record<CategoryKey, { pill: string; chip: string; dot: string; soft: string }> = {
-  sports: { pill: "bg-emerald-600 text-white", chip: "border-emerald-600/25 bg-emerald-50 text-emerald-800", dot: "bg-emerald-500", soft: "bg-emerald-50 text-emerald-700" },
-  debate: { pill: "bg-amber-500 text-ink", chip: "border-amber-500/30 bg-amber-50 text-amber-800", dot: "bg-amber-500", soft: "bg-amber-50 text-amber-700" },
-  arts: { pill: "bg-indigo-600 text-white", chip: "border-indigo-600/25 bg-indigo-50 text-indigo-800", dot: "bg-indigo-500", soft: "bg-indigo-50 text-indigo-700" },
-  writing: { pill: "bg-rose-600 text-white", chip: "border-rose-600/25 bg-rose-50 text-rose-800", dot: "bg-rose-500", soft: "bg-rose-50 text-rose-700" },
-  stem: { pill: "bg-cyan-600 text-white", chip: "border-cyan-600/25 bg-cyan-50 text-cyan-800", dot: "bg-cyan-500", soft: "bg-cyan-50 text-cyan-700" },
-};
+const starterTones: Tone[] = [
+  { pill: "bg-emerald-600 text-white", chip: "border-emerald-600/25 bg-emerald-50 text-emerald-800", dot: "bg-emerald-500", soft: "bg-emerald-50 text-emerald-700" },
+  { pill: "bg-amber-500 text-ink", chip: "border-amber-500/30 bg-amber-50 text-amber-800", dot: "bg-amber-500", soft: "bg-amber-50 text-amber-700" },
+  { pill: "bg-indigo-600 text-white", chip: "border-indigo-600/25 bg-indigo-50 text-indigo-800", dot: "bg-indigo-500", soft: "bg-indigo-50 text-indigo-700" },
+  { pill: "bg-rose-600 text-white", chip: "border-rose-600/25 bg-rose-50 text-rose-800", dot: "bg-rose-500", soft: "bg-rose-50 text-rose-700" },
+  { pill: "bg-cyan-600 text-white", chip: "border-cyan-600/25 bg-cyan-50 text-cyan-800", dot: "bg-cyan-500", soft: "bg-cyan-50 text-cyan-700" },
+];
+
+/** Custom categories typed by the principal get a stable color picked by name. */
+const customTones: Tone[] = [
+  { pill: "bg-violet-600 text-white", chip: "border-violet-600/25 bg-violet-50 text-violet-800", dot: "bg-violet-500", soft: "bg-violet-50 text-violet-700" },
+  { pill: "bg-teal-600 text-white", chip: "border-teal-600/25 bg-teal-50 text-teal-800", dot: "bg-teal-500", soft: "bg-teal-50 text-teal-700" },
+  { pill: "bg-orange-600 text-white", chip: "border-orange-600/25 bg-orange-50 text-orange-800", dot: "bg-orange-500", soft: "bg-orange-50 text-orange-700" },
+  { pill: "bg-sky-600 text-white", chip: "border-sky-600/25 bg-sky-50 text-sky-800", dot: "bg-sky-500", soft: "bg-sky-50 text-sky-700" },
+  { pill: "bg-fuchsia-600 text-white", chip: "border-fuchsia-600/25 bg-fuchsia-50 text-fuchsia-800", dot: "bg-fuchsia-500", soft: "bg-fuchsia-50 text-fuchsia-700" },
+  { pill: "bg-lime-600 text-white", chip: "border-lime-600/25 bg-lime-50 text-lime-800", dot: "bg-lime-500", soft: "bg-lime-50 text-lime-700" },
+];
+
+export function categoryTone(label: string): Tone {
+  const i = categories.findIndex((c) => c.label.toLowerCase() === label.trim().toLowerCase());
+  if (i >= 0) return starterTones[i];
+  let h = 0;
+  for (const ch of label.toLowerCase()) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return customTones[h % customTones.length];
+}
 
 /** Prominent primary talent tag, e.g. "Cricket - Captain". */
-export function PrimaryTalent({ skill, role }: { skill: string; role: string }) {
-  const cat = skillOf(skill).category;
+export function PrimaryTalent({ skill, category, role }: SkillTag & { role: string }) {
   return (
-    <span className={`inline-flex max-w-full items-center gap-1.5 rounded-full px-3 py-1 text-[.76rem] font-bold ${categoryTone[cat].pill}`}>
-      <Icon d={categoryOf(cat).icon} className="size-3.5 shrink-0" />
+    <span title={category} className={`inline-flex max-w-full items-center gap-1.5 rounded-full px-3 py-1 text-[.76rem] font-bold ${categoryTone(category).pill}`}>
+      <Icon d={categoryIcon(category)} className="size-3.5 shrink-0" />
       <span className="truncate">
-        {skill} - {role}
+        {skill}
+        {role && ` - ${role}`}
       </span>
     </span>
   );
 }
 
 /** Secondary skill chips for multi-talented students, e.g. "+ Chess". */
-export function SkillChips({ list }: { list: string[] }) {
+export function SkillChips({ list }: { list: SkillTag[] }) {
   if (!list.length) return null;
   return (
     <span className="flex flex-wrap gap-1.5">
-      {list.map((n) => (
-        <span key={n} className={`whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[.72rem] font-bold ${categoryTone[skillOf(n).category].chip}`}>
-          + {n}
+      {list.map((g) => (
+        <span key={`${g.category}|${g.skill}`} title={g.category} className={`whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[.72rem] font-bold ${categoryTone(g.category).chip}`}>
+          + {g.skill}
         </span>
       ))}
     </span>
