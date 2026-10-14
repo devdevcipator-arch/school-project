@@ -16,21 +16,18 @@ import {
   planOf,
   plans,
   recordFor,
-  saveChallan,
   settle,
   shortDate,
   unpaidMonths,
   type Behavior,
   type FeeAccount,
   type FeeRecord,
-  type ChallanSettings,
   type FeeStatus,
   type Installment,
   type Payment,
 } from "@/lib/fees";
 import { sectionLabel, sections } from "@/lib/students";
-import { downloadFeeCsv, printChallan, printFeeReport, printReceipt } from "./documents";
-import ChallanEditor, { type ChallanEdits } from "./ChallanEditor";
+import { downloadFeeCsv, printFeeReport, printPaymentHistory, printReceipt } from "./documents";
 import FeeLedger, { type LedgerTab } from "./FeeLedger";
 import { Aging, BehaviorBadge, FeeStatusBadge, Legend, Timeline } from "./parts";
 import ReminderPanel, { type Channel } from "./ReminderPanel";
@@ -76,24 +73,23 @@ function Kpi({ label, value, icon, note, tone = "from-primary to-accent", childr
 type Actions = {
   alerted: Set<string>;
   onLedger: (a: FeeAccount, tab?: LedgerTab) => void;
-  onEditChallan: (a: FeeAccount) => void;
   onAlert: (r: Row) => void;
 };
 
 const icons = {
   records: "M3 6h18v12H3z M3 10h18 M7 15h3",
-  challan: "M4 20h4L19 9l-4-4L4 16z M13.5 6.5l4 4",
+  history: "M8 3v3 M16 3v3 M4 7h16v13H4z M8 14l2.5 2.5L16 11",
   alert: "M6 16V11a6 6 0 0 1 12 0v5l2 2H4z M10 20a2 2 0 0 0 4 0",
   sent: "M5 12l4 4 10-10",
 };
 
-function RowActions({ r, alerted, onLedger, onEditChallan, onAlert, compact = false }: Actions & { r: Row; compact?: boolean }) {
+function RowActions({ r, alerted, onLedger, onAlert, compact = false }: Actions & { r: Row; compact?: boolean }) {
   const s = r.account.student;
   const sent = alerted.has(s.id);
   const open = r.status !== "paid";
   const items = [
     { key: "records", label: "View Payment Records", short: "Payments", run: () => onLedger(r.account, "payments"), off: false },
-    { key: "challan", label: "Edit Challan", short: "Challan", run: () => onEditChallan(r.account), off: false },
+    { key: "history", label: "View Installment History", short: "History", run: () => onLedger(r.account, "installments"), off: false },
     { key: sent ? "sent" : "alert", label: sent ? "Fee alert sent today" : "Send Fee Alert", short: sent ? "Alert Sent" : "Send Alert", run: () => onAlert(r), off: !open || sent },
   ] as const;
   return (
@@ -116,7 +112,6 @@ function PlanCell({ r }: { r: Row }) {
     <div className="grid gap-0.5 text-[.78rem]">
       <span className="font-bold text-ink">{r.current.length > 1 ? `${r.current.length} installments` : (i?.label ?? "None")}</span>
       <span className="text-ink/55">{planOf(r.account.plan).label}</span>
-      {i && <span className="text-ink/45">{r.current.length > 1 ? `${r.current[0].challan} ...` : i.challan}</span>}
       {r.arrears.length > 0 && (
         <span className="font-semibold text-danger">
           + {r.arrears.length} earlier {r.arrears.length === 1 ? "installment" : "installments"} unpaid
@@ -126,16 +121,17 @@ function PlanCell({ r }: { r: Row }) {
   );
 }
 
-function BehaviorCell({ b }: { b: Behavior }) {
+/** Behavior since enrollment, with the current year's month strip. */
+function BehaviorCell({ b, since }: { b: Behavior; since: string }) {
   return (
-    <div className="grid min-w-[190px] gap-1.5">
+    <div className="grid min-w-[200px] gap-1.5">
       <div className="flex items-center justify-between gap-2">
         <BehaviorBadge k={b.key} />
         <span className="text-[.74rem] font-bold text-ink/60">{b.rate}% on time</span>
       </div>
       <Timeline b={b} />
       <span className="text-[.72rem] text-ink/50">
-        {b.onTime} on time · {b.late} late{b.avgDelay ? ` (avg ${b.avgDelay}d)` : ""}
+        Since {since.slice(0, 4)}: {b.onTime} on time · {b.late} late{b.avgDelay ? ` (avg ${b.avgDelay}d)` : ""}
         {b.partials ? ` · ${b.partials} in parts` : ""}
       </span>
     </div>
@@ -162,7 +158,7 @@ function FeeCard({ r, ...actions }: Actions & { r: Row }) {
         <Aging r={r} />
       </div>
       <div className="mt-3 rounded-xl bg-surface/70 p-3">
-        <BehaviorCell b={r.behavior} />
+        <BehaviorCell b={r.behavior} since={r.account.student.enrolled} />
       </div>
       <div className="mb-4 mt-3 grid gap-1 text-[.8rem] text-ink/65">
         <span className="truncate">
@@ -197,7 +193,7 @@ function FeeTable({ list, ...actions }: Actions & { list: Row[] }) {
             <th scope="col" className="px-3 py-3.5">Guardian contact</th>
             <th scope="col" className="px-3 py-3.5">Installment plan</th>
             <th scope="col" className="px-3 py-3.5">Due date & aging</th>
-            <th scope="col" className="px-3 py-3.5">Installment behavior</th>
+            <th scope="col" className="px-3 py-3.5">Behavior since enrollment</th>
             <th scope="col" className="px-3 py-3.5">Status</th>
             <th scope="col" className="px-3 py-3.5 text-right">
               <span className="sr-only">Actions</span>
@@ -237,7 +233,7 @@ function FeeTable({ list, ...actions }: Actions & { list: Row[] }) {
                   <Aging r={r} />
                 </td>
                 <td className="px-3 py-3.5">
-                  <BehaviorCell b={r.behavior} />
+                  <BehaviorCell b={r.behavior} since={r.account.student.enrolled} />
                 </td>
                 <td className="px-3 py-3.5">
                   <FeeStatusBadge r={r} />
@@ -298,7 +294,8 @@ function ExportMenu({ onPdf, onCsv }: { onPdf: () => void; onCsv: () => void }) 
 /* ---------------- Board ---------------- */
 
 export default function FeesBoard() {
-  const [list, setList] = useState<FeeAccount[]>(seed);
+  // Records are read-only on this page: payments come from the accounts office and parent portal.
+  const list = seed;
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState<(typeof tabs)[number]["key"]>("all");
   const [section, setSection] = useState("all");
@@ -307,7 +304,6 @@ export default function FeesBoard() {
   const [habit, setHabit] = useState("all");
   const [page, setPage] = useState(1);
   const [ledger, setLedger] = useState<{ id: string; tab: LedgerTab } | null>(null);
-  const [challanId, setChallanId] = useState<string | null>(null);
   const [reminding, setReminding] = useState(false);
   const [alerted, setAlerted] = useState<Set<string>>(() => new Set());
   const [toast, setToast] = useState<ToastData | null>(null);
@@ -316,7 +312,8 @@ export default function FeesBoard() {
   const closeToast = useCallback(() => setToast(null), []);
   const period = periods.find((p) => p.key === periodKey)!;
 
-  const rows = useMemo<Row[]>(() => list.map((a) => ({ ...recordFor(a, period), behavior: behaviorFor(a) })), [list, period]);
+  const behaviorById = useMemo(() => new Map(list.map((a) => [a.student.id, behaviorFor(a)])), [list]);
+  const rows = useMemo<Row[]>(() => list.map((a) => ({ ...recordFor(a, period), behavior: behaviorById.get(a.student.id)! })), [list, period, behaviorById]);
 
   const kpi = useMemo(() => {
     const dueIn = list.flatMap((a) => a.installments.filter((i) => period.months.includes(i.due.slice(0, 7))));
@@ -326,7 +323,7 @@ export default function FeesBoard() {
     const onTime = rows.reduce((n, r) => n + r.behavior.onTime, 0);
     const billed = rows.reduce((n, r) => n + r.behavior.due, 0);
     return {
-      challans: dueIn.length,
+      installments: dueIn.length,
       cleared,
       pct: dueIn.length ? Math.round((cleared / dueIn.length) * 1000) / 10 : 0,
       late: late.length,
@@ -347,7 +344,7 @@ export default function FeesBoard() {
       if (habit !== "all" && r.behavior.key !== habit) return false;
       if (!q) return true;
       if (`${s.name} ${s.regId} ${s.guardian}`.toLowerCase().includes(q)) return true;
-      if (r.account.installments.some((i) => i.challan.toLowerCase().includes(q) || i.payments.some((p) => p.receipt.toLowerCase().includes(q)))) return true;
+      if (r.account.installments.some((i) => i.payments.some((p) => p.receipt.toLowerCase().includes(q)))) return true;
       return digits !== "" && (String(s.rollNo) === digits || (digits.length >= 4 && s.phone.replace(/\D/g, "").includes(digits)));
     });
   }, [rows, query, section, plan, habit]);
@@ -385,22 +382,10 @@ export default function FeesBoard() {
   const actions: Actions = {
     alerted,
     onLedger: (a, tab = "payments") => setLedger({ id: a.student.id, tab }),
-    onEditChallan: (a) => setChallanId(a.student.id),
     onAlert: (r) => {
       setAlerted((s) => new Set(s).add(r.account.student.id));
       setToast({ text: `Fee alert sent to ${r.account.student.guardian} (${r.account.student.phone}).` });
     },
-  };
-
-  const storeChallan = (a: FeeAccount, settings: ChallanSettings, edits: ChallanEdits, print: boolean) => {
-    const updated = saveChallan(a, settings, edits);
-    setList((l) => l.map((x) => (x.student.id === a.student.id ? updated : x)));
-    const extended = Object.entries(edits).filter(([c, e]) => e.due !== (a.installments.find((i) => i.challan === c)?.originalDue ?? a.installments.find((i) => i.challan === c)?.due)).length;
-    if (print) popup(printChallan(updated));
-    setToast({
-      text: `Challan saved for ${a.student.name}${extended ? ` with ${extended} due date ${extended === 1 ? "extension" : "extensions"}` : ""}.`,
-      action: { label: "View records", run: () => (setLedger({ id: a.student.id, tab: "installments" }), setToast(null)) },
-    });
   };
 
   const sendReminders = (to: FeeRecord[], via: Channel[]) => {
@@ -413,7 +398,6 @@ export default function FeesBoard() {
   };
 
   const ledgerAccount = ledger ? list.find((a) => a.student.id === ledger.id) : undefined;
-  const challanAccount = challanId ? list.find((a) => a.student.id === challanId) : undefined;
   const overdueInScope = scoped.filter((r) => r.overdueDays > 0).length;
 
   return (
@@ -428,8 +412,8 @@ export default function FeesBoard() {
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Kpi label="Installments Due" value={String(kpi.challans)} icon="M7 3h7l5 5v13H7z M14 3v5h5 M10 13h6 M10 17h6" note={`${period.label} · challans issued`} />
-        <Kpi label="Installments Cleared" value={`${kpi.cleared}`} icon="M5 12l4 4 10-10" note={`${kpi.pct}% cleared · ${kpi.onTimeRate}% of all installments this year paid on time`}>
+        <Kpi label="Installments Due" value={String(kpi.installments)} icon="M7 3h7l5 5v13H7z M14 3v5h5 M10 13h6 M10 17h6" note={`${period.label} · across all installment plans`} />
+        <Kpi label="Installments Cleared" value={`${kpi.cleared}`} icon="M5 12l4 4 10-10" note={`${kpi.pct}% cleared · ${kpi.onTimeRate}% of all installments paid on time since enrollment`}>
           <Bar value={kpi.pct} fill="bg-ok" label={`${kpi.pct}% of installments cleared`} />
         </Kpi>
         <Kpi label="Delayed & Overdue" value={String(kpi.late)} icon="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z M12 7v5l3 2" tone="from-[#a84f12] to-serious" note={kpi.late ? `Students past the due date · oldest ${kpi.oldest} days` : "No one is past the due date"} />
@@ -444,7 +428,7 @@ export default function FeesBoard() {
             type="search"
             value={query}
             onChange={(e) => filter(setQuery)(e.target.value)}
-            placeholder="Search by student name, roll no., registration / challan ID or parent phone"
+            placeholder="Search by student name, roll no., registration ID, receipt no. or parent phone"
             className={`${fieldClass} w-full pl-10`}
           />
         </label>
@@ -526,7 +510,7 @@ export default function FeesBoard() {
               <Icon d="M7 3h7l5 5v13H7z M14 3v5h5 M10 13h6 M10 17h6" className="size-7" />
             </span>
             <p className="font-bold">No fee records match these filters</p>
-            <p className="max-w-[380px] text-[.86rem] text-ink/55">Try another class, period, plan or behavior, or search by challan ID or parent phone.</p>
+            <p className="max-w-[380px] text-[.86rem] text-ink/55">Try another class, period, plan or behavior, or search by receipt no. or parent phone.</p>
             <button type="button" onClick={reset} className={ghostBtn}>
               Reset filters
             </button>
@@ -553,14 +537,10 @@ export default function FeesBoard() {
           account={ledgerAccount}
           record={recordFor(ledgerAccount, period)}
           tab={ledger.tab}
-          onEditChallan={() => setChallanId(ledgerAccount.student.id)}
-          onChallan={(items?: Installment[]) => popup(printChallan(ledgerAccount, items))}
+          onHistory={() => popup(printPaymentHistory(ledgerAccount))}
           onReceipt={(i: Installment, p: Payment) => popup(printReceipt(ledgerAccount, i, p))}
           onClose={() => setLedger(null)}
         />
-      )}
-      {hydrated && challanAccount && (
-        <ChallanEditor key={challanAccount.student.id} account={challanAccount} onSave={(settings, edits, print) => storeChallan(challanAccount, settings, edits, print)} onClose={() => setChallanId(null)} />
       )}
       {hydrated && reminding && <ReminderPanel records={scoped} scope={scope} onSend={sendReminders} onClose={() => setReminding(false)} />}
       {toast && <Toast {...toast} onDone={closeToast} />}

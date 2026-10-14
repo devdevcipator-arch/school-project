@@ -1,5 +1,5 @@
 // Student fee tracking: installment plans, due dates, payment records and each student's
-// installment behavior, with a deterministic mock ledger for every student.
+// installment behavior from the day they enrolled, with a deterministic mock ledger.
 // Platform rule: fees are tracked by status, dates and behavior only. No amounts or currency.
 // Replace with real API data in the backend phase.
 
@@ -7,9 +7,6 @@ import { AS_OF, hash, students, type Student } from "./students";
 
 /* ---------------- Calendar ---------------- */
 
-/** Academic year runs April to March. */
-export const ACADEMIC_YEAR = "2026-27";
-export const MONTHS = ["2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10", "2026-11", "2026-12", "2027-01", "2027-02", "2027-03"];
 /** Fees fall due on this day of the month. */
 export const DUE_DAY = 15;
 /** Two or more unpaid months makes a critical defaulter. */
@@ -17,6 +14,17 @@ export const DEFAULTER_MONTHS = 2;
 
 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const shortMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const pad = (n: number, w = 2) => String(n).padStart(w, "0");
+
+/** Academic years run April to March, e.g. 2026 gives "2026-27". */
+export const yearLabel = (start: number) => `${start}-${pad((start + 1) % 100)}`;
+/** The twelve months (yyyy-mm) of the academic year starting in April of `start`. */
+export const academicMonths = (start: number) => Array.from({ length: 12 }, (_, k) => `${start + (k >= 9 ? 1 : 0)}-${pad(((3 + k) % 12) + 1)}`);
+
+const CURRENT_START = Number(AS_OF.slice(0, 4)) - (Number(AS_OF.slice(5, 7)) < 4 ? 1 : 0);
+export const ACADEMIC_YEAR = yearLabel(CURRENT_START);
+/** Months of the current academic year. */
+export const MONTHS = academicMonths(CURRENT_START);
 
 /** "2026-10" to "October 2026". */
 export const monthLabel = (ym: string) => `${monthNames[Number(ym.slice(5, 7)) - 1]} ${ym.slice(0, 4)}`;
@@ -27,7 +35,7 @@ export const shortDate = (iso: string) => `${Number(iso.slice(8, 10))} ${shortMo
 /** "2026-10-05T10:24" to "5 Oct 2026, 10:24 AM". */
 export function stamp(iso: string) {
   const [h, m] = iso.slice(11, 16).split(":").map(Number);
-  return `${shortDate(iso)}, ${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+  return `${shortDate(iso)}, ${((h + 11) % 12) + 1}:${pad(m)} ${h < 12 ? "AM" : "PM"}`;
 }
 
 const DAY = 86_400_000;
@@ -37,13 +45,13 @@ export const daysBetween = (from: string, to: string) => toDay(to) - toDay(from)
 
 export type Period = { key: string; label: string; months: string[] };
 
-/** Month and term choices for the period selector, newest first; months stop at the current one. */
+/** Month and term choices for the period selector (current year), newest first; months stop at the current one. */
 export const periods: Period[] = [
   ...MONTHS.filter((m) => m <= AS_OF.slice(0, 7))
     .reverse()
     .map((m) => ({ key: m, label: monthLabel(m), months: [m] })),
-  { key: "term1", label: "First Term (Apr - Sep 2026)", months: MONTHS.slice(0, 6) },
-  { key: "term2", label: "Second Term (Oct 2026 - Mar 2027)", months: MONTHS.slice(6) },
+  { key: "term1", label: `First Term (Apr - Sep ${CURRENT_START})`, months: MONTHS.slice(0, 6) },
+  { key: "term2", label: `Second Term (Oct ${CURRENT_START} - Mar ${CURRENT_START + 1})`, months: MONTHS.slice(6) },
 ];
 export const CURRENT_PERIOD = AS_OF.slice(0, 7);
 
@@ -70,34 +78,29 @@ export type Payment = {
   kind: "part" | "final";
   /** Bank slip / transaction reference. */
   ref?: string;
-  note?: string;
 };
 
 export type Installment = {
-  /** Challan number, e.g. "CH-2610-0042". */
-  challan: string;
+  id: string;
+  /** Academic year, e.g. "2026-27". */
+  year: string;
   label: string;
   /** Months (yyyy-mm) this installment covers. */
   months: string[];
   due: string;
-  /** Original due date when the principal has granted an extension on the challan. */
-  originalDue?: string;
   payments: Payment[];
 };
 
-/** Per-student challan customisation set by the principal. */
-export type ChallanSettings = {
-  /** Challan numbers of the installments printed on the challan. */
-  include: string[];
-  issued: string;
-  validUntil: string;
-  instructions: string;
-  note: string;
-  /** Last edit, ISO date-time; undefined until the principal edits the challan. */
-  editedAt?: string;
+export type FeeAccount = {
+  student: Student;
+  /** Plan for the current academic year. */
+  plan: Plan;
+  /** Plan chosen in each academic year since enrollment. */
+  plans: Record<string, Plan>;
+  /** Academic years on record, oldest first. */
+  years: string[];
+  installments: Installment[];
 };
-
-export type FeeAccount = { student: Student; plan: Plan; installments: Installment[]; challan?: ChallanSettings };
 
 export type InstallmentStatus = "ontime" | "late" | "partial" | "overdue" | "due" | "upcoming";
 
@@ -127,7 +130,7 @@ export function settle(i: Installment, on = AS_OF) {
         : late >= -15
           ? "due"
           : "upcoming";
-  return { cleared: !!clearedAt, clearedAt, late, delay, status, open: !clearedAt && (late >= -31 || i.payments.length > 0) };
+  return { cleared: !!clearedAt, clearedAt, late, delay, status };
 }
 
 /* ---------------- Student status for a period ---------------- */
@@ -147,7 +150,7 @@ export function unpaidMonths(a: FeeAccount, on = AS_OF) {
   let n = 0;
   for (const i of a.installments) {
     const s = settle(i, on);
-    if (!s.cleared && s.late > 0) n += a.plan === "monthly" ? 1 : Math.min(i.months.length, 1 + Math.floor(s.late / 30));
+    if (!s.cleared && s.late > 0) n += i.months.length === 1 ? 1 : Math.min(i.months.length, 1 + Math.floor(s.late / 30));
   }
   return n;
 }
@@ -202,16 +205,20 @@ export const behaviors: { key: BehaviorKey; label: string; hint: string }[] = [
   { key: "punctual", label: "Always on time", hint: "Every installment cleared by the due date" },
   { key: "mostly", label: "Mostly on time", hint: "75% or more cleared by the due date" },
   { key: "late", label: "Frequently late", hint: "Under 75% cleared by the due date" },
-  { key: "parts", label: "Pays in parts", hint: "Two or more installments paid in parts" },
-  { key: "defaulter", label: "Chronic defaulter", hint: `${DEFAULTER_MONTHS}+ months unpaid` },
+  { key: "parts", label: "Pays in parts", hint: "Paid one installment in five or more in parts" },
+  { key: "defaulter", label: "Chronic defaulter", hint: `${DEFAULTER_MONTHS}+ months unpaid right now` },
 ];
 export const behaviorOf = (k: BehaviorKey) => behaviors.find((b) => b.key === k)!;
 
 export type MonthState = InstallmentStatus | "covered";
 
-/** A student's full installment behavior record for the year so far. */
-export function behaviorFor(a: FeeAccount, on = AS_OF) {
-  const billed = a.installments.filter((i) => i.due <= on || i.payments.length > 0).map((i) => ({ i, s: settle(i, on) }));
+/**
+ * A student's installment behavior record. With no `year` it covers every year since enrollment;
+ * the month strip always shows one academic year (the given one, or the current one).
+ */
+export function behaviorFor(a: FeeAccount, year?: string, on = AS_OF) {
+  const pool = year ? a.installments.filter((i) => i.year === year) : a.installments;
+  const billed = pool.filter((i) => i.due <= on || i.payments.length > 0).map((i) => ({ i, s: settle(i, on) }));
   const onTime = billed.filter((x) => x.s.status === "ontime").length;
   const late = billed.filter((x) => x.s.status === "late");
   const partials = billed.filter((x) => x.i.payments.some((p) => p.kind === "part")).length;
@@ -226,13 +233,15 @@ export function behaviorFor(a: FeeAccount, on = AS_OF) {
     if (x.s.status === "ontime") streak++;
     else if (x.s.late > 0 || x.s.cleared) break;
   }
-  const key: BehaviorKey = months >= DEFAULTER_MONTHS ? "defaulter" : partials >= 2 ? "parts" : rate >= 95 && !unpaid ? "punctual" : rate >= 75 ? "mostly" : "late";
+  const key: BehaviorKey = months >= DEFAULTER_MONTHS ? "defaulter" : due && partials / due >= 0.2 ? "parts" : rate >= 95 && !unpaid ? "punctual" : rate >= 75 ? "mostly" : "late";
   // Month-by-month record; months inside an upfront installment share its state.
-  const timeline = MONTHS.map((m) => {
-    const i = a.installments.find((x) => x.months.includes(m))!;
+  const stripYear = year ?? ACADEMIC_YEAR;
+  const timeline = academicMonths(Number(stripYear.slice(0, 4))).map((m) => {
+    const i = a.installments.find((x) => x.months.includes(m));
+    if (!i) return { month: m, state: null, delay: 0 };
     const s = settle(i, on);
     const state: MonthState = i.months[0] !== m && s.cleared ? "covered" : s.status;
-    return { month: m, state, delay: s.delay, challan: i.challan };
+    return { month: m, state, delay: s.delay };
   });
   return {
     key,
@@ -247,14 +256,23 @@ export function behaviorFor(a: FeeAccount, on = AS_OF) {
     streak,
     due,
     timeline,
+    stripYear,
   };
 }
 
 export type Behavior = ReturnType<typeof behaviorFor>;
 
-/* ---------------- Mock ledger ---------------- */
+/** One row per academic year since enrollment, newest first. */
+export const yearSummaries = (a: FeeAccount) => [...a.years].reverse().map((y) => ({ year: y, plan: a.plans[y], b: behaviorFor(a, y) }));
 
-const pad = (n: number, w = 2) => String(n).padStart(w, "0");
+/** Every payment the student has made since enrollment, newest first, with its installment and timing. */
+export function paymentRecords(a: FeeAccount) {
+  return a.installments
+    .flatMap((i) => i.payments.map((p) => ({ i, p, late: Math.max(0, daysBetween(i.due, p.at)) })))
+    .sort((x, y) => y.p.at.localeCompare(x.p.at));
+}
+
+/* ---------------- Mock ledger ---------------- */
 
 type Habit = "prompt" | "late" | "partial" | "lapse" | "defaulter";
 
@@ -262,7 +280,7 @@ function payment(seed: number, k: number, date: string, kind: Payment["kind"]): 
   const r = (n: number) => hash(seed * 97 + k, n);
   const method: PaymentMethod = r(1) < 0.45 ? "Online Gateway" : r(1) < 0.86 ? "Bank Slip" : "Cash";
   return {
-    receipt: `RCP-${date.slice(2, 4)}${date.slice(5, 7)}-${pad(seed, 4)}${k % 10}`,
+    receipt: `RCP-${date.slice(2, 4)}${date.slice(5, 7)}-${pad(seed, 4)}-${pad(k % 1000, 3)}`,
     at: `${date}T${pad(9 + Math.floor(r(2) * 7))}:${pad(Math.floor(r(3) * 60))}`,
     method,
     kind,
@@ -270,91 +288,69 @@ function payment(seed: number, k: number, date: string, kind: Payment["kind"]): 
   };
 }
 
+function planFor(seed: number, start: number): Plan {
+  const r = start === CURRENT_START ? hash(seed * 7 + 5, 211) : hash(seed * 11 + start, 523);
+  return r < 0.06 ? "annual" : r < 0.18 ? "biannual" : "monthly";
+}
+
 function buildAccount(s: Student): FeeAccount {
   const r = (n: number) => hash(s.seed * 7 + n, 211);
-  const plan: Plan = r(5) < 0.06 ? "annual" : r(5) < 0.18 ? "biannual" : "monthly";
-  // Upfront payers are reliable; monthly payers vary.
   const b = r(6);
-  const habit: Habit = plan !== "monthly" ? (b < 0.85 ? "prompt" : "late") : b < 0.62 ? "prompt" : b < 0.8 ? "late" : b < 0.88 ? "partial" : b < 0.94 ? "lapse" : "defaulter";
-  const groups = plan === "monthly" ? MONTHS.map((m) => [m]) : plan === "biannual" ? [MONTHS.slice(0, 6), MONTHS.slice(6)] : [MONTHS];
-
-  const installments: Installment[] = groups.map((months, gi) => ({
-    challan: `CH-${months[0].slice(2, 4)}${months[0].slice(5, 7)}-${pad(s.seed, 4)}`,
-    label: plan === "monthly" ? monthLabel(months[0]) : plan === "biannual" ? `Installment ${gi + 1} (${monthShort(months[0])} - ${monthShort(months.at(-1)!)})` : `Full Annual ${ACADEMIC_YEAR}`,
-    months,
-    due: `${months[0]}-${DUE_DAY}`,
-    payments: [],
-  }));
-
-  // Index of the latest installment already past due, for defaulter / lapse patterns.
-  const lastDue = installments.reduce((idx, i, k) => (i.due < AS_OF ? k : idx), -1);
-  const stopped = habit === "defaulter" ? 2 + Math.floor(r(7) * 3) : habit === "lapse" ? 1 : 0;
+  // A student's habit is stable across years; upfront payers are reliable.
+  const habitFor = (plan: Plan): Habit =>
+    plan !== "monthly" ? (b < 0.85 ? "prompt" : "late") : b < 0.62 ? "prompt" : b < 0.8 ? "late" : b < 0.88 ? "partial" : b < 0.94 ? "lapse" : "defaulter";
   // Even prompt payers slip occasionally; late payers are sometimes on time.
   const slip = r(8);
+  const first = Number(s.enrolled.slice(0, 4));
+  const plansByYear: Record<string, Plan> = {};
+  const installments: Installment[] = [];
+  let k = 0;
 
-  installments.forEach((inst, k) => {
-    const rk = (n: number) => hash(s.seed * 31 + k, 300 + n);
-    const dueDay = toDay(inst.due);
-    const pay = (day: number, kind: Payment["kind"], j = 0) => {
-      const date = fromDay(day);
-      if (date <= AS_OF) inst.payments.push(payment(s.seed, k * 3 + j, date, kind));
-    };
-    if (stopped && k > lastDue - stopped && k <= lastDue + 1) return;
-    const lateThisTime = habit === "late" ? rk(1) < 0.75 : habit === "prompt" ? rk(1) < slip * 0.12 : false;
-    if (habit === "partial" && rk(2) < 0.6) {
-      pay(dueDay - 6 + Math.floor(rk(3) * 8), "part", 0);
-      pay(dueDay + 18 + Math.floor(rk(4) * 40), "final", 1);
-    } else if (lateThisTime) {
-      pay(dueDay + 2 + Math.floor(rk(5) * 38), "final");
-    } else {
-      pay(dueDay - 14 + Math.floor(rk(6) * 14), "final");
-    }
-  });
+  for (let start = first; start <= CURRENT_START; start++) {
+    const year = yearLabel(start);
+    const plan = planFor(s.seed, start);
+    plansByYear[year] = plan;
+    const months = academicMonths(start);
+    const groups = plan === "monthly" ? months.map((m) => [m]) : plan === "biannual" ? [months.slice(0, 6), months.slice(6)] : [months];
+    const yearInst: Installment[] = groups.map((ms, gi) => ({
+      id: `IN-${ms[0].slice(2, 4)}${ms[0].slice(5, 7)}-${pad(s.seed, 4)}`,
+      year,
+      label: plan === "monthly" ? monthLabel(ms[0]) : plan === "biannual" ? `Installment ${gi + 1} (${monthShort(ms[0])} - ${monthShort(ms.at(-1)!)} ${year})` : `Full Annual ${year}`,
+      months: ms,
+      due: `${ms[0]}-${DUE_DAY}`,
+      payments: [],
+    }));
 
-  return { student: s, plan, installments };
+    const habit = habitFor(plan);
+    const current = start === CURRENT_START;
+    // Lapses and defaults only exist in the current year; earlier years were settled in full.
+    const lastDue = yearInst.reduce((idx, i, n) => (i.due < AS_OF ? n : idx), -1);
+    const stopped = current ? (habit === "defaulter" ? 2 + Math.floor(r(7) * 3) : habit === "lapse" ? 1 : 0) : 0;
+    const lateBias = habit === "defaulter" || habit === "lapse" ? 0.5 : habit === "late" ? 0.75 : habit === "prompt" ? slip * 0.12 : 0.2;
+
+    yearInst.forEach((inst, n) => {
+      const rk = (x: number) => hash(s.seed * 31 + k, 300 + x);
+      const dueDay = toDay(inst.due);
+      const pay = (day: number, kind: Payment["kind"], j = 0) => {
+        const date = fromDay(day);
+        if (date <= AS_OF) inst.payments.push(payment(s.seed, k * 3 + j, date, kind));
+      };
+      k++;
+      if (stopped && n > lastDue - stopped && n <= lastDue + 1) return;
+      if (habit === "partial" && rk(2) < 0.6) {
+        pay(dueDay - 6 + Math.floor(rk(3) * 8), "part", 0);
+        pay(dueDay + 18 + Math.floor(rk(4) * 40), "final", 1);
+      } else if (rk(1) < lateBias) {
+        pay(dueDay + 2 + Math.floor(rk(5) * 38), "final");
+      } else {
+        pay(dueDay - 14 + Math.floor(rk(6) * 14), "final");
+      }
+    });
+    installments.push(...yearInst);
+  }
+
+  const years = Object.keys(plansByYear);
+  return { student: s, plan: plansByYear[ACADEMIC_YEAR], plans: plansByYear, years, installments };
 }
 
 export const accounts: FeeAccount[] = students.map(buildAccount);
-
-/** Installments a challan can carry now: anything overdue, part-paid or in the current cycle. */
-export const openInstallments = (a: FeeAccount, on = AS_OF) => a.installments.filter((i) => settle(i, on).open);
-
-/** Installments not yet cleared, including future ones the principal may add to a challan early. */
-export const unclearedInstallments = (a: FeeAccount, on = AS_OF) => a.installments.filter((i) => !settle(i, on).cleared);
-
-export const DEFAULT_INSTRUCTIONS = `Pay at any HBL branch, online through the parent portal, or at the school accounts office by the due date shown for each installment. Keep the stamped parent copy as proof of payment.`;
-
-/** The challan as the principal last saved it, or the standard one: open installments, valid until the latest due date. */
-export function challanFor(a: FeeAccount, on = AS_OF): ChallanSettings {
-  if (a.challan) return a.challan;
-  const open = openInstallments(a, on);
-  const last = open.map((i) => i.due).sort().at(-1);
-  return {
-    include: open.map((i) => i.challan),
-    issued: on,
-    validUntil: last && last > on ? last : fromDay(toDay(on) + 15),
-    instructions: DEFAULT_INSTRUCTIONS,
-    note: "",
-  };
-}
-
-/** Saves challan edits: installment names and due dates (extensions) plus the challan settings. */
-export function saveChallan(a: FeeAccount, settings: ChallanSettings, edits: Record<string, { label: string; due: string }>): FeeAccount {
-  return {
-    ...a,
-    challan: settings,
-    installments: a.installments.map((i) => {
-      const e = edits[i.challan];
-      if (!e) return i;
-      const original = i.originalDue ?? i.due;
-      return { ...i, label: e.label, due: e.due, originalDue: e.due === original ? undefined : original };
-    }),
-  };
-}
-
-/** Every payment the student has made, newest first, with the installment it was for and whether it was on time. */
-export function paymentRecords(a: FeeAccount) {
-  return a.installments
-    .flatMap((i) => i.payments.map((p) => ({ i, p, late: Math.max(0, daysBetween(i.due, p.at)) })))
-    .sort((x, y) => y.p.at.localeCompare(x.p.at));
-}

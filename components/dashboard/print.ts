@@ -1,4 +1,4 @@
-// Print-ready documents (certificates, challans, receipts, reports) opened in a new window,
+// Print-ready documents (certificates, receipts, reports) opened in a new window,
 // so the principal can print them or choose "Save as PDF".
 
 export const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);

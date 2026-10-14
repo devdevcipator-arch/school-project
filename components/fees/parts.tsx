@@ -81,16 +81,16 @@ const cell: Record<MonthState, string> = {
   upcoming: "bg-ink/10",
 };
 
-const cellText = (state: MonthState, delay: number) =>
-  state === "covered" ? "Covered by an upfront installment" : `${installmentLabel[state]}${(state === "late" || state === "overdue") && delay ? `, ${plural(delay, "day")}` : ""}`;
+const cellText = (state: MonthState | null, delay: number) =>
+  state === null ? "Not enrolled" : state === "covered" ? "Covered by an upfront installment" : `${installmentLabel[state]}${(state === "late" || state === "overdue") && delay ? `, ${plural(delay, "day")}` : ""}`;
 
 /** Twelve-month installment behavior strip: one block per month of the academic year. */
 export function Timeline({ b, labels = false }: { b: Behavior; labels?: boolean }) {
   return (
-    <ol aria-label="Monthly installment record" className={`grid grid-cols-12 ${labels ? "gap-1.5" : "gap-[3px]"}`}>
+    <ol aria-label={`Monthly installment record, ${b.stripYear}`} className={`grid grid-cols-12 ${labels ? "gap-1.5" : "gap-[3px]"}`}>
       {b.timeline.map((t) => (
         <li key={t.month} title={`${monthLabel(t.month)}: ${cellText(t.state, t.delay)}`} className="grid justify-items-center gap-1">
-          <span className={`block w-full rounded-[4px] ${labels ? "h-7" : "h-3.5"} ${cell[t.state]}`}>
+          <span className={`block w-full rounded-[4px] ${labels ? "h-7" : "h-3.5"} ${t.state ? cell[t.state] : "bg-transparent"}`}>
             <span className="sr-only">
               {monthLabel(t.month)}: {cellText(t.state, t.delay)}
             </span>
