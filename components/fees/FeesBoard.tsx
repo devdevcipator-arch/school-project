@@ -26,7 +26,7 @@ import {
 } from "@/lib/fees";
 import { sectionLabel, sections } from "@/lib/students";
 import { downloadFeeCsv, printFeeReport, printPaymentHistory } from "./documents";
-import FeeLedger, { type LedgerTab } from "./FeeLedger";
+import FeeLedger from "./FeeLedger";
 import PaymentLog from "./PaymentLog";
 import { Aging, BehaviorBadge, FeeStatusBadge, Legend, Timeline } from "./parts";
 import ReminderPanel, { type Channel } from "./ReminderPanel";
@@ -71,13 +71,12 @@ function Kpi({ label, value, icon, note, tone = "from-primary to-accent", childr
 
 type Actions = {
   alerted: Set<string>;
-  onLedger: (a: FeeAccount, tab?: LedgerTab) => void;
+  onLedger: (a: FeeAccount) => void;
   onAlert: (r: Row) => void;
 };
 
 const icons = {
   records: "M3 6h18v12H3z M3 10h18 M7 15h3",
-  history: "M8 3v3 M16 3v3 M4 7h16v13H4z M8 14l2.5 2.5L16 11",
   alert: "M6 16V11a6 6 0 0 1 12 0v5l2 2H4z M10 20a2 2 0 0 0 4 0",
   sent: "M5 12l4 4 10-10",
 };
@@ -87,8 +86,7 @@ function RowActions({ r, alerted, onLedger, onAlert, compact = false }: Actions 
   const sent = alerted.has(s.id);
   const open = r.status !== "paid";
   const items = [
-    { key: "records", label: "View Payment Records", short: "Payments", run: () => onLedger(r.account, "payments"), off: false },
-    { key: "history", label: "View Installment History", short: "History", run: () => onLedger(r.account, "installments"), off: false },
+    { key: "records", label: "View Payment Records", short: "Payments", run: () => onLedger(r.account), off: false },
     { key: sent ? "sent" : "alert", label: sent ? "Fee alert sent today" : "Send Fee Alert", short: sent ? "Alert Sent" : "Send Alert", run: () => onAlert(r), off: !open || sent },
   ] as const;
   return (
@@ -144,7 +142,7 @@ function FeeCard({ r, ...actions }: Actions & { r: Row }) {
       <div className="flex items-start gap-3">
         <Avatar name={s.name} />
         <div className="min-w-0 flex-1">
-          <button type="button" onClick={() => actions.onLedger(r.account, "payments")} className="block max-w-full cursor-pointer truncate text-left text-[1rem] font-extrabold tracking-tight hover:text-primary">
+          <button type="button" onClick={() => actions.onLedger(r.account)} className="block max-w-full cursor-pointer truncate text-left text-[1rem] font-extrabold tracking-tight hover:text-primary">
             {s.name}
           </button>
           <span className="text-[.76rem] text-ink/50">
@@ -208,7 +206,7 @@ function FeeTable({ list, ...actions }: Actions & { list: Row[] }) {
                   <div className="flex items-center gap-3">
                     <Avatar name={s.name} />
                     <div className="min-w-0">
-                      <button type="button" onClick={() => actions.onLedger(r.account, "payments")} className="cursor-pointer whitespace-nowrap text-left font-bold hover:text-primary">
+                      <button type="button" onClick={() => actions.onLedger(r.account)} className="cursor-pointer whitespace-nowrap text-left font-bold hover:text-primary">
                         {s.name}
                       </button>
                       <div className="mt-1 flex items-center gap-1.5 whitespace-nowrap text-[.76rem] text-ink/50">
@@ -302,7 +300,7 @@ export default function FeesBoard() {
   const [plan, setPlan] = useState("all");
   const [habit, setHabit] = useState("all");
   const [page, setPage] = useState(1);
-  const [ledger, setLedger] = useState<{ id: string; tab: LedgerTab } | null>(null);
+  const [ledgerId, setLedgerId] = useState<string | null>(null);
   const [reminding, setReminding] = useState(false);
   const [view, setView] = useState<"status" | "payments">("status");
   const [alerted, setAlerted] = useState<Set<string>>(() => new Set());
@@ -380,7 +378,7 @@ export default function FeesBoard() {
 
   const actions: Actions = {
     alerted,
-    onLedger: (a, tab = "payments") => setLedger({ id: a.student.id, tab }),
+    onLedger: (a) => setLedgerId(a.student.id),
     onAlert: (r) => {
       setAlerted((s) => new Set(s).add(r.account.student.id));
       setToast({ text: `Fee alert sent to ${r.account.student.guardian} (${r.account.student.phone}).` });
@@ -396,7 +394,7 @@ export default function FeesBoard() {
     setToast({ text: `Reminders sent to ${to.length} guardians via ${via.join(", ")}.` });
   };
 
-  const ledgerAccount = ledger ? list.find((a) => a.student.id === ledger.id) : undefined;
+  const ledgerAccount = ledgerId ? list.find((a) => a.student.id === ledgerId) : undefined;
   const overdueInScope = scoped.filter((r) => r.overdueDays > 0).length;
 
   return (
@@ -441,7 +439,7 @@ export default function FeesBoard() {
       </div>
 
       {view === "payments" ? (
-        <PaymentLog accounts={list} onView={(a) => setLedger({ id: a.student.id, tab: "payments" })} />
+        <PaymentLog accounts={list} onView={(a) => setLedgerId(a.student.id)} />
       ) : (
         <section className="flex min-w-0 flex-col gap-4 rounded-[20px] border border-ink/8 bg-white p-4 shadow-[0_10px_30px_rgba(6,30,41,.05)] sm:p-6">
           <label className="relative">
@@ -555,14 +553,13 @@ export default function FeesBoard() {
         </section>
       )}
 
-      {hydrated && ledger && ledgerAccount && (
+      {hydrated && ledgerAccount && (
         <FeeLedger
-          key={`${ledger.id}-${ledger.tab}`}
+          key={ledgerAccount.student.id}
           account={ledgerAccount}
           record={recordFor(ledgerAccount, period)}
-          tab={ledger.tab}
           onHistory={() => popup(printPaymentHistory(ledgerAccount))}
-          onClose={() => setLedger(null)}
+          onClose={() => setLedgerId(null)}
         />
       )}
       {hydrated && reminding && <ReminderPanel records={scoped} scope={scope} onSend={sendReminders} onClose={() => setReminding(false)} />}

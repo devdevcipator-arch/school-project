@@ -26,6 +26,12 @@ export const ACADEMIC_YEAR = yearLabel(CURRENT_START);
 /** Months of the current academic year. */
 export const MONTHS = academicMonths(CURRENT_START);
 
+/** Academic year a date falls in, e.g. "2026-02-10" gives "2025-26". */
+export const academicYearOf = (iso: string) => yearLabel(Number(iso.slice(0, 4)) - (Number(iso.slice(5, 7)) < 4 ? 1 : 0));
+
+/** Month names in academic order (April first), as "04" ... "03" with labels. */
+export const academicMonthNames = academicMonths(2000).map((m) => ({ mm: m.slice(5, 7), name: monthNames[Number(m.slice(5, 7)) - 1] }));
+
 /** "2026-10" to "October 2026". */
 export const monthLabel = (ym: string) => `${monthNames[Number(ym.slice(5, 7)) - 1]} ${ym.slice(0, 4)}`;
 /** "2026-10" to "Oct". */
@@ -257,8 +263,6 @@ export function behaviorFor(a: FeeAccount, year?: string, on = AS_OF) {
 
 export type Behavior = ReturnType<typeof behaviorFor>;
 
-/** One row per academic year since enrollment, newest first. */
-export const yearSummaries = (a: FeeAccount) => [...a.years].reverse().map((y) => ({ year: y, plan: a.plans[y], b: behaviorFor(a, y) }));
 
 export type PaymentTiming = "ontime" | "late" | "part";
 
@@ -362,3 +366,10 @@ function buildAccount(s: Student): FeeAccount {
 }
 
 export const accounts: FeeAccount[] = students.map(buildAccount);
+
+/**
+ * Whether a payment date falls in the chosen academic year and month.
+ * `month` is "all", a calendar month "yyyy-mm" (when a year is chosen) or "mm" (that month in any year).
+ */
+export const paidIn = (at: string, year: string, month: string) =>
+  (year === "all" || academicYearOf(at) === year) && (month === "all" || (month.length === 2 ? at.slice(5, 7) === month : at.startsWith(month)));

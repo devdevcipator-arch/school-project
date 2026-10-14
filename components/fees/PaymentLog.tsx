@@ -5,9 +5,10 @@ import { Pagination, Select, fieldClass, ghostBtn, ghostSm } from "@/components/
 import { Badge } from "@/components/dashboard/ui";
 import { Avatar } from "@/components/teachers/parts";
 import { Icon } from "@/components/ui/Icon";
-import { allPayments, shortDate, stamp, timings, type FeeAccount, type PaymentEntry, type PaymentTiming } from "@/lib/fees";
+import { academicYearOf, allPayments, paidIn, shortDate, stamp, timings, type FeeAccount, type PaymentEntry, type PaymentTiming } from "@/lib/fees";
 import { sectionLabel, sections } from "@/lib/students";
 import { downloadPaymentsCsv } from "./documents";
+import PeriodSelects from "./PeriodSelects";
 
 const PAGE_SIZE = 20;
 
@@ -29,11 +30,12 @@ function Timing({ e }: { e: PaymentEntry }) {
 /** Every payment by every student since they joined the platform. */
 export default function PaymentLog({ accounts, onView }: { accounts: FeeAccount[]; onView: (a: FeeAccount) => void }) {
   const all = useMemo(() => allPayments(accounts), [accounts]);
-  const years = useMemo(() => [...new Set(all.map((e) => e.i.year))].sort().reverse(), [all]);
+  const years = useMemo(() => [...new Set(all.map((e) => academicYearOf(e.p.at)))].sort().reverse(), [all]);
   const [query, setQuery] = useState("");
   const [timing, setTiming] = useState<PaymentTiming | "all">("all");
   const [section, setSection] = useState("all");
   const [year, setYear] = useState("all");
+  const [month, setMonth] = useState("all");
   const [sort, setSort] = useState<Sort>("newest");
   const [page, setPage] = useState(1);
 
@@ -41,15 +43,15 @@ export default function PaymentLog({ accounts, onView }: { accounts: FeeAccount[
   const scoped = useMemo(() => {
     const q = query.trim().toLowerCase();
     const digits = q.replace(/\D/g, "");
-    return all.filter(({ a, i }) => {
+    return all.filter(({ a, p }) => {
       const s = a.student;
       if (section !== "all" && s.section !== section) return false;
-      if (year !== "all" && i.year !== year) return false;
+      if (!paidIn(p.at, year, month)) return false;
       if (!q) return true;
       if (`${s.name} ${s.regId} ${s.guardian}`.toLowerCase().includes(q)) return true;
       return digits !== "" && (String(s.rollNo) === digits || (digits.length >= 4 && s.phone.replace(/\D/g, "").includes(digits)));
     });
-  }, [all, query, section, year]);
+  }, [all, query, section, year, month]);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: scoped.length };
@@ -72,12 +74,13 @@ export default function PaymentLog({ accounts, onView }: { accounts: FeeAccount[
     setter(v);
     setPage(1);
   };
-  const filtersOn = query || timing !== "all" || section !== "all" || year !== "all" || sort !== "newest";
+  const filtersOn = query || timing !== "all" || section !== "all" || year !== "all" || month !== "all" || sort !== "newest";
   const reset = () => {
     setQuery("");
     setTiming("all");
     setSection("all");
     setYear("all");
+    setMonth("all");
     setSort("newest");
     setPage(1);
   };
@@ -85,7 +88,7 @@ export default function PaymentLog({ accounts, onView }: { accounts: FeeAccount[
   const students = new Set(scoped.map((e) => e.a.student.id)).size;
   const first = scoped.at(-1);
   const pct = scoped.length ? Math.round(((counts.ontime ?? 0) / scoped.length) * 100) : 0;
-  const label = [year === "all" ? "all years" : year, section === "all" ? "all classes" : sectionLabel(section)].join(" ");
+  const label = [year === "all" ? "all years" : year, month === "all" ? "" : month, section === "all" ? "all classes" : sectionLabel(section)].filter(Boolean).join(" ");
 
   return (
     <section className="flex min-w-0 flex-col gap-4 rounded-[20px] border border-ink/8 bg-white p-4 shadow-[0_10px_30px_rgba(6,30,41,.05)] sm:p-6">
@@ -130,7 +133,7 @@ export default function PaymentLog({ accounts, onView }: { accounts: FeeAccount[
         })}
       </div>
 
-      <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-[1fr_1fr_1fr_auto]">
+      <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-[1fr_1fr_1.2fr_1fr_auto]">
         <Select label="Class & section" value={section} onChange={filter(setSection)}>
           <option value="all">All classes</option>
           {sections.map((s) => (
@@ -139,15 +142,8 @@ export default function PaymentLog({ accounts, onView }: { accounts: FeeAccount[
             </option>
           ))}
         </Select>
-        <Select label="Academic year" value={year} onChange={filter(setYear)}>
-          <option value="all">All academic years</option>
-          {years.map((y) => (
-            <option key={y} value={y}>
-              {y}
-            </option>
-          ))}
-        </Select>
-        <Select label="Sort payments" value={sort} onChange={filter((v: string) => setSort(v as Sort))} className="max-lg:col-span-2">
+        <PeriodSelects years={years} year={year} month={month} onYear={filter(setYear)} onMonth={filter(setMonth)} />
+        <Select label="Sort payments" value={sort} onChange={filter((v: string) => setSort(v as Sort))}>
           {sorts.map((s) => (
             <option key={s.key} value={s.key}>
               {s.label}
