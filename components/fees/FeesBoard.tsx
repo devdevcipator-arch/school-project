@@ -23,12 +23,11 @@ import {
   type FeeAccount,
   type FeeRecord,
   type FeeStatus,
-  type Installment,
-  type Payment,
 } from "@/lib/fees";
 import { sectionLabel, sections } from "@/lib/students";
-import { downloadFeeCsv, printFeeReport, printPaymentHistory, printReceipt } from "./documents";
+import { downloadFeeCsv, printFeeReport, printPaymentHistory } from "./documents";
 import FeeLedger, { type LedgerTab } from "./FeeLedger";
+import PaymentLog from "./PaymentLog";
 import { Aging, BehaviorBadge, FeeStatusBadge, Legend, Timeline } from "./parts";
 import ReminderPanel, { type Channel } from "./ReminderPanel";
 
@@ -305,6 +304,7 @@ export default function FeesBoard() {
   const [page, setPage] = useState(1);
   const [ledger, setLedger] = useState<{ id: string; tab: LedgerTab } | null>(null);
   const [reminding, setReminding] = useState(false);
+  const [view, setView] = useState<"status" | "payments">("status");
   const [alerted, setAlerted] = useState<Set<string>>(() => new Set());
   const [toast, setToast] = useState<ToastData | null>(null);
   const hydrated = useSyncExternalStore(noop, () => true, () => false);
@@ -344,7 +344,6 @@ export default function FeesBoard() {
       if (habit !== "all" && r.behavior.key !== habit) return false;
       if (!q) return true;
       if (`${s.name} ${s.regId} ${s.guardian}`.toLowerCase().includes(q)) return true;
-      if (r.account.installments.some((i) => i.payments.some((p) => p.receipt.toLowerCase().includes(q)))) return true;
       return digits !== "" && (String(s.rollNo) === digits || (digits.length >= 4 && s.phone.replace(/\D/g, "").includes(digits)));
     });
   }, [rows, query, section, plan, habit]);
@@ -420,116 +419,141 @@ export default function FeesBoard() {
         <Kpi label="Critical Defaulters" value={String(kpi.critical)} icon="M12 4l9 16H3z M12 10v4 M12 17h.01" tone="from-[#8e2a1f] to-danger" note={`${DEFAULTER_MONTHS} or more months unpaid`} />
       </div>
 
-      <section className="flex min-w-0 flex-col gap-4 rounded-[20px] border border-ink/8 bg-white p-4 shadow-[0_10px_30px_rgba(6,30,41,.05)] sm:p-6">
-        <label className="relative">
-          <span className="sr-only">Search fee records</span>
-          <Icon d="M11 4a7 7 0 1 0 0 14a7 7 0 1 0 0-14z M20 20l-4-4" className="pointer-events-none absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-ink/45" />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => filter(setQuery)(e.target.value)}
-            placeholder="Search by student name, roll no., registration ID, receipt no. or parent phone"
-            className={`${fieldClass} w-full pl-10`}
-          />
-        </label>
-
-        <div role="tablist" aria-label="Payment status" className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
-          {tabs.map((t) => {
-            const on = tab === t.key;
-            return (
-              <button
-                key={t.key}
-                type="button"
-                role="tab"
-                aria-selected={on}
-                onClick={() => filter(setTab)(t.key)}
-                className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-[.8rem] font-semibold transition-colors ${
-                  on ? "border-primary bg-primary text-surface" : "border-ink/12 text-ink/70 hover:border-accent hover:text-primary"
-                }`}
-              >
-                {t.dot && <span aria-hidden className={`size-2.5 rounded-full ${t.dot}`} />}
-                {t.label}
-                <span className={`text-[.72rem] ${on ? "text-surface/70" : "text-ink/40"}`}>{counts[t.key] ?? 0}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-[1fr_1.2fr_1fr_1fr_auto]">
-          <Select label="Class & section" value={section} onChange={filter(setSection)}>
-            <option value="all">All classes</option>
-            {sections.map((s) => (
-              <option key={s} value={s}>
-                {sectionLabel(s)}
-              </option>
-            ))}
-          </Select>
-          <Select label="Month / academic term" value={periodKey} onChange={filter(setPeriodKey)}>
-            {periods.map((p) => (
-              <option key={p.key} value={p.key}>
-                {p.label}
-              </option>
-            ))}
-          </Select>
-          <Select label="Installment plan" value={plan} onChange={filter(setPlan)}>
-            <option value="all">All installment plans</option>
-            {plans.map((p) => (
-              <option key={p.key} value={p.key}>
-                {p.label}
-              </option>
-            ))}
-          </Select>
-          <Select label="Payment behavior" value={habit} onChange={filter(setHabit)}>
-            <option value="all">All payment behaviors</option>
-            {behaviors.map((b) => (
-              <option key={b.key} value={b.key}>
-                {b.label}
-              </option>
-            ))}
-          </Select>
-          <button type="button" onClick={reset} disabled={!filtersOn} className={`${ghostBtn} max-lg:col-span-2 disabled:pointer-events-none disabled:opacity-45`}>
-            <Icon d="M4 4v6h6 M4.5 15a8 8 0 1 0 1.9-8.3L4 10" className="size-[18px]" />
-            Reset
+      <div role="tablist" aria-label="Fee views" className="flex w-full rounded-xl border border-ink/10 bg-white p-1 sm:w-fit">
+        {(
+          [
+            ["status", "Fee Status Directory", "M4 5h16v14H4z M4 10h16 M4 15h16 M10 5v14"],
+            ["payments", "All Payment Records", "M3 6h18v12H3z M3 10h18 M7 15h3"],
+          ] as const
+        ).map(([k, label, ic]) => (
+          <button
+            key={k}
+            type="button"
+            role="tab"
+            aria-selected={view === k}
+            onClick={() => setView(k)}
+            className={`inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-4 py-2 text-[.86rem] font-semibold transition-colors sm:flex-none ${view === k ? "bg-primary text-surface" : "text-ink/60 hover:text-primary"}`}
+          >
+            <Icon d={ic} className="size-4" />
+            {label}
           </button>
-        </div>
+        ))}
+      </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[.8rem] text-ink/55" aria-live="polite">
-            <span>
-              <strong className="text-ink">{filtered.length}</strong> {filtered.length === 1 ? "record" : "records"} · {period.label} · {scope}
-            </span>
-            {counts.pending ? <span>{counts.pending} not yet due (shown under All Records)</span> : null}
-            {overdueInScope > 0 && <span className="font-semibold text-danger">{overdueInScope} overdue in this view</span>}
-          </p>
-          <Legend />
-        </div>
-
-        {visible.length === 0 ? (
-          <div className="grid justify-items-center gap-3 rounded-[18px] border border-dashed border-ink/15 px-6 py-14 text-center">
-            <span className="grid size-14 place-items-center rounded-2xl bg-primary/8 text-primary">
-              <Icon d="M7 3h7l5 5v13H7z M14 3v5h5 M10 13h6 M10 17h6" className="size-7" />
-            </span>
-            <p className="font-bold">No fee records match these filters</p>
-            <p className="max-w-[380px] text-[.86rem] text-ink/55">Try another class, period, plan or behavior, or search by receipt no. or parent phone.</p>
-            <button type="button" onClick={reset} className={ghostBtn}>
-              Reset filters
+      {view === "payments" ? (
+        <PaymentLog accounts={list} onView={(a) => setLedger({ id: a.student.id, tab: "payments" })} />
+      ) : (
+        <section className="flex min-w-0 flex-col gap-4 rounded-[20px] border border-ink/8 bg-white p-4 shadow-[0_10px_30px_rgba(6,30,41,.05)] sm:p-6">
+          <label className="relative">
+            <span className="sr-only">Search fee records</span>
+            <Icon d="M11 4a7 7 0 1 0 0 14a7 7 0 1 0 0-14z M20 20l-4-4" className="pointer-events-none absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-ink/45" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => filter(setQuery)(e.target.value)}
+              placeholder="Search by student name, roll no., registration ID or parent phone"
+              className={`${fieldClass} w-full pl-10`}
+            />
+          </label>
+  
+          <div role="tablist" aria-label="Payment status" className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+            {tabs.map((t) => {
+              const on = tab === t.key;
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={on}
+                  onClick={() => filter(setTab)(t.key)}
+                  className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-[.8rem] font-semibold transition-colors ${
+                    on ? "border-primary bg-primary text-surface" : "border-ink/12 text-ink/70 hover:border-accent hover:text-primary"
+                  }`}
+                >
+                  {t.dot && <span aria-hidden className={`size-2.5 rounded-full ${t.dot}`} />}
+                  {t.label}
+                  <span className={`text-[.72rem] ${on ? "text-surface/70" : "text-ink/40"}`}>{counts[t.key] ?? 0}</span>
+                </button>
+              );
+            })}
+          </div>
+  
+          <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-[1fr_1.2fr_1fr_1fr_auto]">
+            <Select label="Class & section" value={section} onChange={filter(setSection)}>
+              <option value="all">All classes</option>
+              {sections.map((s) => (
+                <option key={s} value={s}>
+                  {sectionLabel(s)}
+                </option>
+              ))}
+            </Select>
+            <Select label="Month / academic term" value={periodKey} onChange={filter(setPeriodKey)}>
+              {periods.map((p) => (
+                <option key={p.key} value={p.key}>
+                  {p.label}
+                </option>
+              ))}
+            </Select>
+            <Select label="Installment plan" value={plan} onChange={filter(setPlan)}>
+              <option value="all">All installment plans</option>
+              {plans.map((p) => (
+                <option key={p.key} value={p.key}>
+                  {p.label}
+                </option>
+              ))}
+            </Select>
+            <Select label="Payment behavior" value={habit} onChange={filter(setHabit)}>
+              <option value="all">All payment behaviors</option>
+              {behaviors.map((b) => (
+                <option key={b.key} value={b.key}>
+                  {b.label}
+                </option>
+              ))}
+            </Select>
+            <button type="button" onClick={reset} disabled={!filtersOn} className={`${ghostBtn} max-lg:col-span-2 disabled:pointer-events-none disabled:opacity-45`}>
+              <Icon d="M4 4v6h6 M4.5 15a8 8 0 1 0 1.9-8.3L4 10" className="size-[18px]" />
+              Reset
             </button>
           </div>
-        ) : (
-          <>
-            <ul className="grid gap-3 sm:grid-cols-2 lg:hidden">
-              {visible.map((r) => (
-                <FeeCard key={r.account.student.id} r={r} {...actions} />
-              ))}
-            </ul>
-            <div className="max-lg:hidden">
-              <FeeTable list={visible} {...actions} />
+  
+          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+            <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[.8rem] text-ink/55" aria-live="polite">
+              <span>
+                <strong className="text-ink">{filtered.length}</strong> {filtered.length === 1 ? "record" : "records"} · {period.label} · {scope}
+              </span>
+              {counts.pending ? <span>{counts.pending} not yet due (shown under All Records)</span> : null}
+              {overdueInScope > 0 && <span className="font-semibold text-danger">{overdueInScope} overdue in this view</span>}
+            </p>
+            <Legend />
+          </div>
+  
+          {visible.length === 0 ? (
+            <div className="grid justify-items-center gap-3 rounded-[18px] border border-dashed border-ink/15 px-6 py-14 text-center">
+              <span className="grid size-14 place-items-center rounded-2xl bg-primary/8 text-primary">
+                <Icon d="M7 3h7l5 5v13H7z M14 3v5h5 M10 13h6 M10 17h6" className="size-7" />
+              </span>
+              <p className="font-bold">No fee records match these filters</p>
+              <p className="max-w-[380px] text-[.86rem] text-ink/55">Try another class, period, plan or behavior, or search by name or parent phone.</p>
+              <button type="button" onClick={reset} className={ghostBtn}>
+                Reset filters
+              </button>
             </div>
-          </>
-        )}
-
-        <Pagination page={current} pages={pages} total={filtered.length} size={PAGE_SIZE} noun="records" onPage={setPage} />
-      </section>
+          ) : (
+            <>
+              <ul className="grid gap-3 sm:grid-cols-2 lg:hidden">
+                {visible.map((r) => (
+                  <FeeCard key={r.account.student.id} r={r} {...actions} />
+                ))}
+              </ul>
+              <div className="max-lg:hidden">
+                <FeeTable list={visible} {...actions} />
+              </div>
+            </>
+          )}
+  
+          <Pagination page={current} pages={pages} total={filtered.length} size={PAGE_SIZE} noun="records" onPage={setPage} />
+        </section>
+      )}
 
       {hydrated && ledger && ledgerAccount && (
         <FeeLedger
@@ -538,7 +562,6 @@ export default function FeesBoard() {
           record={recordFor(ledgerAccount, period)}
           tab={ledger.tab}
           onHistory={() => popup(printPaymentHistory(ledgerAccount))}
-          onReceipt={(i: Installment, p: Payment) => popup(printReceipt(ledgerAccount, i, p))}
           onClose={() => setLedger(null)}
         />
       )}

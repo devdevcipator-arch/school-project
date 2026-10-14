@@ -123,9 +123,3 @@ export function Legend() {
     </ul>
   );
 }
-
-export const methodIcon = {
-  "Online Gateway": "M3 6h18v12H3z M3 10h18 M7 15h3",
-  "Bank Slip": "M3 21h18 M5 21V10l7-5 7 5v11 M9 21v-6 M15 21v-6",
-  Cash: "M3 7h18v10H3z M12 9.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 1 0 0-5z M6 12h.01 M18 12h.01",
-} as const;

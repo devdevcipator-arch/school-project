@@ -66,18 +66,13 @@ export const plans: { key: Plan; label: string; short: string }[] = [
 ];
 export const planOf = (p: Plan) => plans.find((x) => x.key === p)!;
 
-export type PaymentMethod = "Online Gateway" | "Bank Slip" | "Cash";
-export const methods: PaymentMethod[] = ["Online Gateway", "Bank Slip", "Cash"];
-
 export type Payment = {
-  receipt: string;
+  /** Internal key only; never shown. */
+  id: string;
   /** ISO date-time, e.g. "2026-10-05T10:24". */
   at: string;
-  method: PaymentMethod;
   /** "part" leaves the installment open; "final" clears it. */
   kind: "part" | "final";
-  /** Bank slip / transaction reference. */
-  ref?: string;
 };
 
 export type Installment = {
@@ -265,12 +260,28 @@ export type Behavior = ReturnType<typeof behaviorFor>;
 /** One row per academic year since enrollment, newest first. */
 export const yearSummaries = (a: FeeAccount) => [...a.years].reverse().map((y) => ({ year: y, plan: a.plans[y], b: behaviorFor(a, y) }));
 
+export type PaymentTiming = "ontime" | "late" | "part";
+
+export const timings: { key: PaymentTiming; label: string; hint: string }[] = [
+  { key: "ontime", label: "On time", hint: "Full payment by the due date" },
+  { key: "late", label: "Late", hint: "Full payment after the due date" },
+  { key: "part", label: "Part payment", hint: "Installment paid in parts" },
+];
+
+export type PaymentEntry = { a: FeeAccount; i: Installment; p: Payment; late: number; timing: PaymentTiming };
+
+const entry = (a: FeeAccount, i: Installment, p: Payment): PaymentEntry => {
+  const late = Math.max(0, daysBetween(i.due, p.at));
+  return { a, i, p, late, timing: p.kind === "part" ? "part" : late > 0 ? "late" : "ontime" };
+};
+
 /** Every payment the student has made since enrollment, newest first, with its installment and timing. */
 export function paymentRecords(a: FeeAccount) {
-  return a.installments
-    .flatMap((i) => i.payments.map((p) => ({ i, p, late: Math.max(0, daysBetween(i.due, p.at)) })))
-    .sort((x, y) => y.p.at.localeCompare(x.p.at));
+  return a.installments.flatMap((i) => i.payments.map((p) => entry(a, i, p))).sort((x, y) => y.p.at.localeCompare(x.p.at));
 }
+
+/** Every payment by every student since they joined, newest first. */
+export const allPayments = (list: FeeAccount[]) => list.flatMap((a) => a.installments.flatMap((i) => i.payments.map((p) => entry(a, i, p)))).sort((x, y) => y.p.at.localeCompare(x.p.at));
 
 /* ---------------- Mock ledger ---------------- */
 
@@ -278,13 +289,10 @@ type Habit = "prompt" | "late" | "partial" | "lapse" | "defaulter";
 
 function payment(seed: number, k: number, date: string, kind: Payment["kind"]): Payment {
   const r = (n: number) => hash(seed * 97 + k, n);
-  const method: PaymentMethod = r(1) < 0.45 ? "Online Gateway" : r(1) < 0.86 ? "Bank Slip" : "Cash";
   return {
-    receipt: `RCP-${date.slice(2, 4)}${date.slice(5, 7)}-${pad(seed, 4)}-${pad(k % 1000, 3)}`,
+    id: `p${seed}-${k}`,
     at: `${date}T${pad(9 + Math.floor(r(2) * 7))}:${pad(Math.floor(r(3) * 60))}`,
-    method,
     kind,
-    ref: method === "Bank Slip" ? `HBL-${Math.floor(100000 + r(4) * 899999)}` : method === "Online Gateway" ? `TXN${Math.floor(1e8 + r(5) * 8.9e8)}` : undefined,
   };
 }
 

@@ -5,40 +5,18 @@ import {
   behaviorFor,
   behaviorOf,
   paymentRecords,
-  installmentLabel,
   planOf,
-  settle,
   shortDate,
   stamp,
   statusMeta,
   type FeeAccount,
   type FeeRecord,
-  type Installment,
-  type Payment,
+  type PaymentEntry,
 } from "@/lib/fees";
 
 const head = (title: string, sub: string) => `<div class="bar"></div><div class="page">
   <p class="muted" style="letter-spacing:.2em;text-transform:uppercase;margin:0 0 6px">${principal.school}</p>
   <h1>${title}</h1><p class="muted">${sub}</p>`;
-
-/** Digital receipt for one recorded payment. */
-export function printReceipt(a: FeeAccount, i: Installment, p: Payment) {
-  const s = a.student;
-  const st = settle(i);
-  return printDocument(`Fee Receipt ${p.receipt}`, (e) => `${head("Fee Payment Receipt", `Receipt ${e(p.receipt)} &middot; ${e(stamp(p.at))}`)}
-    <div class="slip">
-      <div style="display:flex;justify-content:space-between;align-items:center"><strong>${e(s.name)}</strong><span class="stamp">RECEIVED</span></div>
-      <div class="grid">
-        <div><span class="muted">Class / Roll No.</span><br/>${e(sectionLabel(s.section))} &middot; ${s.rollNo}</div>
-        <div><span class="muted">Registration ID</span><br/>${e(s.regId)}</div>
-        <div><span class="muted">Fee period</span><br/>${e(i.label)} &middot; ${e(i.year)}</div>
-        <div><span class="muted">Payment method</span><br/>${e(p.method)}${p.ref ? ` &middot; ${e(p.ref)}` : ""}</div>
-        <div><span class="muted">Payment type</span><br/>${p.kind === "final" ? "Full / final payment" : "Part payment"}</div>
-        <div><span class="muted">Installment status</span><br/>${e(installmentLabel[st.status])}${st.status === "late" ? ` (${st.delay} days after due date)` : ""}</div>
-      </div>
-    </div>
-    <p class="muted">This is a computer-generated receipt and does not require a signature.</p></div>`);
-}
 
 /** Printable fee status and behavior report for the filtered directory. */
 export function printFeeReport(records: FeeRecord[], period: string, scope: string) {
@@ -92,16 +70,16 @@ export function printPaymentHistory(a: FeeAccount) {
         const rows = paymentRecords(a).filter((r) => r.i.year === y);
         const b = behaviorFor(a, y);
         return `<h2>${e(y)} <span class="muted">&middot; ${e(planOf(a.plans[y]).label)} &middot; ${rows.length} payments &middot; ${b.rate}% on time</span></h2>
-        <table><thead><tr><th>Date &amp; time</th><th>Installment</th><th>Type</th><th>Method</th><th>Receipt</th><th>Timing</th></tr></thead><tbody>
+        <table><thead><tr><th>Date &amp; time</th><th>Installment</th><th>Type</th><th>Timing</th></tr></thead><tbody>
         ${
           rows.length
             ? rows
                 .map(
                   ({ i, p, late }) =>
-                    `<tr><td>${e(stamp(p.at))}</td><td>${e(i.label)}</td><td>${p.kind === "final" ? "Full" : "Part"}</td><td>${e(p.method)}${p.ref ? `<br/><span class="muted">${e(p.ref)}</span>` : ""}</td><td>${e(p.receipt)}</td><td>${late ? `${late} days late` : "On time"}</td></tr>`,
+                    `<tr><td>${e(stamp(p.at))}</td><td>${e(i.label)}</td><td>${p.kind === "final" ? "Full" : "Part"}</td><td>${late ? `${late} days late` : "On time"}</td></tr>`,
                 )
                 .join("")
-            : `<tr><td colspan="6" class="muted">No payments recorded in this year.</td></tr>`
+            : `<tr><td colspan="4" class="muted">No payments recorded in this year.</td></tr>`
         }
         </tbody></table>`;
       })
@@ -116,4 +94,29 @@ export function printPaymentHistory(a: FeeAccount) {
       ${groups}
     </div>`;
   });
+}
+
+/** Spreadsheet of payment records (CSV opens directly in Excel). */
+export function downloadPaymentsCsv(entries: PaymentEntry[], label: string) {
+  const cell = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
+  const header = ["Date", "Time", "Student", "Roll No", "Registration ID", "Class", "Academic Year", "Installment", "Due Date", "Type", "Timing", "Days Late"];
+  const rows = entries.map(({ a, i, p, late, timing }) => [
+    p.at.slice(0, 10),
+    p.at.slice(11, 16),
+    a.student.name,
+    a.student.rollNo,
+    a.student.regId,
+    a.student.section,
+    i.year,
+    i.label,
+    i.due,
+    p.kind === "final" ? "Full payment" : "Part payment",
+    timing === "ontime" ? "On time" : timing === "late" ? "Late" : "Part payment",
+    late,
+  ]);
+  const csv = "\uFEFF" + [header, ...rows].map((row) => row.map(cell).join(",")).join("\r\n");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const link = Object.assign(document.createElement("a"), { href: url, download: `payment-records-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.csv` });
+  link.click();
+  URL.revokeObjectURL(url);
 }

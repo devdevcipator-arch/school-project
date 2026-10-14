@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
-import { Chip, Drawer, ghostBtn, ghostSm } from "@/components/dashboard/controls";
+import { Chip, Drawer, ghostBtn } from "@/components/dashboard/controls";
 import { Badge, Bar } from "@/components/dashboard/ui";
 import { Avatar } from "@/components/teachers/parts";
 import { buttonClass } from "@/components/ui/Button";
@@ -10,7 +10,6 @@ import {
   ACADEMIC_YEAR,
   behaviorFor,
   behaviorOf,
-  methods,
   paymentRecords,
   planOf,
   settle,
@@ -19,11 +18,9 @@ import {
   yearSummaries,
   type FeeAccount,
   type FeeRecord,
-  type Installment,
-  type Payment,
 } from "@/lib/fees";
 import { sectionLabel } from "@/lib/students";
-import { BehaviorBadge, FeeStatusBadge, InstallmentBadge, Legend, Timeline, behaviorTone, methodIcon } from "./parts";
+import { BehaviorBadge, FeeStatusBadge, InstallmentBadge, Legend, Timeline, behaviorTone } from "./parts";
 
 export type LedgerTab = "payments" | "installments";
 
@@ -45,13 +42,12 @@ function Tile({ label, value, note, cls = "" }: { label: string; value: string; 
 }
 
 /** Every payment since enrollment, newest first, grouped by academic year. */
-function PaymentRecords({ a, onReceipt }: { a: FeeAccount; onReceipt: (i: Installment, p: Payment) => void }) {
+function PaymentRecords({ a }: { a: FeeAccount }) {
   const all = useMemo(() => paymentRecords(a), [a]);
   const [year, setYear] = useState("all");
   const shown = year === "all" ? all : all.filter((r) => r.i.year === year);
   const finals = all.filter((r) => r.p.kind === "final");
   const onTime = finals.filter((r) => r.late === 0).length;
-  const byMethod = methods.map((m) => ({ m, n: all.filter((r) => r.p.method === m).length }));
   const years = [...a.years].reverse();
 
   if (!all.length)
@@ -74,15 +70,18 @@ function PaymentRecords({ a, onReceipt }: { a: FeeAccount; onReceipt: (i: Instal
         <Tile label="Last payment" value={shortDate(all[0].p.at)} note={all[0].i.label} />
       </dl>
       <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[.8rem] text-ink/60">
-        <strong className="text-ink">Payment methods:</strong>
-        {byMethod
-          .filter((b) => b.n)
-          .map((b) => (
-            <span key={b.m} className="inline-flex items-center gap-1.5">
-              <Icon d={methodIcon[b.m]} className="size-4 text-primary" />
-              {b.m} {b.n}
-            </span>
-          ))}
+        <span className="inline-flex items-center gap-1.5">
+          <span aria-hidden className="size-2.5 rounded-full bg-ok" />
+          {all.filter((r) => r.timing === "ontime").length} on time
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span aria-hidden className="size-2.5 rounded-full bg-serious" />
+          {all.filter((r) => r.timing === "late").length} late
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span aria-hidden className="size-2.5 rounded-full bg-warn" />
+          {all.filter((r) => r.timing === "part").length} part payments
+        </span>
       </p>
 
       <div role="group" aria-label="Academic year" className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
@@ -102,11 +101,8 @@ function PaymentRecords({ a, onReceipt }: { a: FeeAccount; onReceipt: (i: Instal
             <tr>
               <th scope="col" className="px-4 py-3">Date & time</th>
               <th scope="col" className="px-3 py-3">For installment</th>
-              <th scope="col" className="px-3 py-3">Method & reference</th>
+              <th scope="col" className="px-3 py-3">Type</th>
               <th scope="col" className="px-3 py-3">Timing</th>
-              <th scope="col" className="px-3 py-3 text-right">
-                <span className="sr-only">Receipt</span>
-              </th>
             </tr>
           </thead>
           <tbody>
@@ -115,44 +111,26 @@ function PaymentRecords({ a, onReceipt }: { a: FeeAccount; onReceipt: (i: Instal
               return (
                 <Fragment key={y}>
                   <tr className="bg-primary/6">
-                    <th scope="rowgroup" colSpan={5} className="px-4 py-2 text-left text-[.76rem] font-bold text-primary">
+                    <th scope="rowgroup" colSpan={4} className="px-4 py-2 text-left text-[.76rem] font-bold text-primary">
                       Academic year {y} · {planOf(a.plans[y]).label} · {rows.length} {rows.length === 1 ? "payment" : "payments"}
                     </th>
                   </tr>
                   {rows.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="px-4 py-3 text-ink/50">
+                      <td colSpan={4} className="px-4 py-3 text-ink/50">
                         No payments in this year.
                       </td>
                     </tr>
                   )}
                   {rows.map(({ i, p, late }) => (
-                    <tr key={p.receipt} className="border-t border-ink/8 align-middle">
-                      <td className="px-4 py-3">
-                        <span className="block whitespace-nowrap font-semibold">{stamp(p.at)}</span>
-                        <span className="text-[.72rem] text-ink/50">{p.receipt}</span>
-                      </td>
+                    <tr key={p.id} className="border-t border-ink/8 align-middle">
+                      <td className="whitespace-nowrap px-4 py-3 font-semibold">{stamp(p.at)}</td>
                       <td className="px-3 py-3">
                         <span className="block font-semibold">{i.label}</span>
-                        <span className="text-[.72rem] text-ink/50">{p.kind === "final" ? "Full payment" : "Part payment"}</span>
+                        <span className="text-[.72rem] text-ink/50">due {shortDate(i.due)}</span>
                       </td>
-                      <td className="px-3 py-3">
-                        <span className="inline-flex items-center gap-1.5 font-semibold">
-                          <Icon d={methodIcon[p.method]} className="size-4 text-primary" />
-                          {p.method}
-                        </span>
-                        {p.ref && <span className="block text-[.72rem] text-ink/50">{p.ref}</span>}
-                      </td>
-                      <td className="px-3 py-3">
-                        {late > 0 ? <Badge tone="serious">{late} days late</Badge> : <Badge tone="ok">On time</Badge>}
-                        <span className="mt-1 block text-[.72rem] text-ink/50">due {shortDate(i.due)}</span>
-                      </td>
-                      <td className="px-3 py-3 text-right">
-                        <button type="button" onClick={() => onReceipt(i, p)} className={ghostSm} aria-label={`Download receipt ${p.receipt}`}>
-                          <Icon d="M12 4v11 M7 10l5 5 5-5 M5 20h14" className="size-4" />
-                          Receipt
-                        </button>
-                      </td>
+                      <td className="px-3 py-3">{p.kind === "final" ? "Full payment" : "Part payment"}</td>
+                      <td className="px-3 py-3">{late > 0 ? <Badge tone="serious">{late} days late</Badge> : <Badge tone="ok">On time</Badge>}</td>
                     </tr>
                   ))}
                 </Fragment>
@@ -166,7 +144,7 @@ function PaymentRecords({ a, onReceipt }: { a: FeeAccount; onReceipt: (i: Instal
 }
 
 /** Year-by-year behavior since enrollment, then one year in detail. */
-function InstallmentHistory({ a, onReceipt }: { a: FeeAccount; onReceipt: (i: Installment, p: Payment) => void }) {
+function InstallmentHistory({ a }: { a: FeeAccount }) {
   const summaries = useMemo(() => yearSummaries(a), [a]);
   const [year, setYear] = useState(ACADEMIC_YEAR);
   const b = useMemo(() => behaviorFor(a, year), [a, year]);
@@ -249,20 +227,14 @@ function InstallmentHistory({ a, onReceipt }: { a: FeeAccount; onReceipt: (i: In
             {i.payments.length > 0 && (
               <ul className="mt-3 grid gap-1.5 border-t border-ink/8 pt-3">
                 {i.payments.map((p) => (
-                  <li key={p.receipt} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[.8rem]">
+                  <li key={p.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[.8rem]">
                     <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/8 text-primary">
-                      <Icon d={methodIcon[p.method]} className="size-4" />
+                      <Icon d="M5 12l4 4 10-10" className="size-4" />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <strong>{p.kind === "final" ? "Full payment" : "Part payment"}</strong> via {p.method}
-                      <span className="block text-[.74rem] text-ink/50">
-                        {stamp(p.at)} · {p.receipt}
-                      </span>
+                      <strong>{p.kind === "final" ? "Full payment" : "Part payment"}</strong>
+                      <span className="block text-[.74rem] text-ink/50">{stamp(p.at)}</span>
                     </span>
-                    <button type="button" onClick={() => onReceipt(i, p)} className={ghostSm} aria-label={`Download receipt ${p.receipt}`}>
-                      <Icon d="M12 4v11 M7 10l5 5 5-5 M5 20h14" className="size-4" />
-                      Receipt
-                    </button>
                   </li>
                 ))}
               </ul>
@@ -279,14 +251,12 @@ export default function FeeLedger({
   record,
   tab: initialTab = "payments",
   onHistory,
-  onReceipt,
   onClose,
 }: {
   account: FeeAccount;
   record: FeeRecord;
   tab?: LedgerTab;
   onHistory: () => void;
-  onReceipt: (i: Installment, p: Payment) => void;
   onClose: () => void;
 }) {
   const s = a.student;
@@ -350,7 +320,7 @@ export default function FeeLedger({
             ))}
           </div>
 
-          {tab === "payments" ? <PaymentRecords a={a} onReceipt={onReceipt} /> : <InstallmentHistory a={a} onReceipt={onReceipt} />}
+          {tab === "payments" ? <PaymentRecords a={a} /> : <InstallmentHistory a={a} />}
         </div>
       )}
     </Drawer>
