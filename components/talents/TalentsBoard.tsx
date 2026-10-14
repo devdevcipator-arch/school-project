@@ -20,16 +20,15 @@ import {
   levelRank,
   levels,
   mentorFor,
-  shortDate,
   skillsOf,
   tagsOf,
   talents as seed,
   type Talent,
 } from "@/lib/talents";
-import { printCertificate, printShortlist } from "./documents";
+import { printCertificate } from "./documents";
 import EndorseForm, { type Endorsement } from "./EndorseForm";
 import { LevelBadge, PrimaryTalent, SkillChips, categoryTone, trophyIcon } from "./parts";
-import { PoolDrawer, ShortlistDialog } from "./Shortlist";
+import { ShortlistDialog } from "./Shortlist";
 import TalentProfile from "./TalentProfile";
 
 const PAGE_SIZE = 12;
@@ -206,7 +205,6 @@ export default function TalentsBoard() {
   const [profileId, setProfileId] = useState<string | null>(null);
   const [picking, setPicking] = useState<Talent | null>(null);
   const [endorsing, setEndorsing] = useState(false);
-  const [poolOpen, setPoolOpen] = useState(false);
   const [toast, setToast] = useState<ToastData | null>(null);
   const hydrated = useSyncExternalStore(noop, () => true, () => false);
 
@@ -216,7 +214,6 @@ export default function TalentsBoard() {
   const stats = useMemo(() => {
     const sports = list.filter((t) => categoriesOf(t).includes(SPORTS));
     const debate = list.filter((t) => categoriesOf(t).includes(DEBATE));
-    const next = competitions[0];
     return {
       total: list.length,
       share: Math.round((list.length / students.length) * 100),
@@ -226,10 +223,8 @@ export default function TalentsBoard() {
       debate: debate.length,
       mun: list.filter((t) => skillsOf(t).includes("Model UN")).length,
       orators: list.filter((t) => skillsOf(t).some((k) => k === "Urdu Speech" || k === "English Speech")).length,
-      pool: Object.keys(shortlist).length,
-      next: `Next: ${next.title.replace(/ 20\d\d$/, "")}, ${shortDate(next.date)}`,
     };
-  }, [list, shortlist]);
+  }, [list]);
 
   const catalog = useMemo(() => catalogFrom(list), [list]);
 
@@ -290,7 +285,7 @@ export default function TalentsBoard() {
     setPage(1);
   };
 
-  const removeFromPool = (t: Talent) => {
+  const unshortlist = (t: Talent) => {
     const event = shortlist[t.id];
     setShortlist((s) => Object.fromEntries(Object.entries(s).filter(([id]) => id !== t.id)));
     setToast({ text: `${t.student.name} removed from the shortlist.`, action: { label: "Undo", run: () => (setShortlist((s) => ({ ...s, [t.id]: event })), setToast(null)) } });
@@ -299,28 +294,15 @@ export default function TalentsBoard() {
   const actions: Actions = {
     shortlist,
     onView: (t) => setProfileId(t.id),
-    onShortlist: (t) => (shortlist[t.id] ? removeFromPool(t) : setPicking(t)),
+    onShortlist: (t) => (shortlist[t.id] ? unshortlist(t) : setPicking(t)),
   };
 
-  const addToPool = (t: Talent, event: string) => {
+  const shortlistFor = (t: Talent, event: string) => {
     setShortlist((s) => ({ ...s, [t.id]: event }));
     setPicking(null);
     setToast({ text: `${t.student.name} shortlisted for ${competitions.find((c) => c.id === event)!.title}.` });
   };
 
-  const pool = useMemo(
-    () =>
-      list
-        .filter((t) => shortlist[t.id])
-        .sort((a, b) => order(a) - order(b))
-        .map((t) => ({ t, event: shortlist[t.id] })),
-    [list, shortlist],
-  );
-
-  const exportPool = (event?: string) => {
-    const rows = event ? pool.filter((p) => p.event === event) : pool;
-    if (!printShortlist(rows)) setToast({ text: "Allow pop-ups for this site to export the shortlist." });
-  };
 
   const certificate = (t: Talent) => {
     if (!printCertificate(t)) setToast({ text: "Allow pop-ups for this site to print the certificate." });
@@ -370,24 +352,18 @@ export default function TalentsBoard() {
 
   return (
     <main className="mx-auto flex max-w-[1500px] flex-col gap-5 px-[clamp(16px,3vw,36px)] py-6 lg:gap-6 lg:py-8">
-      {/* The page title lives in the portal top bar; this row keeps the page actions. */}
-      <header className="flex flex-wrap justify-end gap-2.5">
-        <button type="button" onClick={() => setPoolOpen(true)} className={`${ghostBtn} max-sm:flex-1`}>
-          <Icon d="M8 21h8 M12 17v4 M7 4h10v5a5 5 0 0 1-10 0z M7 6H4a3 3 0 0 0 3 4 M17 6h3a3 3 0 0 1-3 4" className="size-[18px]" />
-          Competition Pool
-          <span className="rounded-full bg-primary px-2 py-0.5 text-[.72rem] font-bold text-surface">{stats.pool}</span>
-        </button>
+      {/* The page title lives in the portal top bar; this row keeps the page action. */}
+      <header className="flex justify-end">
         <button type="button" onClick={() => setEndorsing(true)} className={buttonClass("primary", "lg", "cursor-pointer max-sm:w-full")}>
           <Icon d="M12 5v14 M5 12h14" className="size-5" />
           Endorse / Tag Student Skill
         </button>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard label="Total Profiled Talents" value={stats.total} icon="M12 3l2.2 5.3L20 9l-4.4 3.8L17 19l-5-3-5 3 1.4-6.2L4 9l5.8-.7z" note={`${stats.share}% of students · ${stats.multi} multi-talented`} />
         <StatCard label="Active Sports Talents" value={stats.sports} icon={categoryIcon(SPORTS)} note={stats.sportsNote} />
         <StatCard label="Public Speaking & Debates" value={stats.debate} icon={categoryIcon(DEBATE)} note={`${stats.orators} orators · ${stats.mun} MUN delegates`} />
-        <StatCard label="Upcoming Competition Pool" value={stats.pool} icon={trophyIcon} note={stats.next} />
       </div>
 
       <section className="flex min-w-0 flex-col gap-4 rounded-[20px] border border-ink/8 bg-white p-4 shadow-[0_10px_30px_rgba(6,30,41,.05)] sm:p-6">
@@ -499,9 +475,8 @@ export default function TalentsBoard() {
           onClose={() => setProfileId(null)}
         />
       )}
-      {hydrated && poolOpen && <PoolDrawer pool={pool} onView={(t) => (setPoolOpen(false), setProfileId(t.id))} onRemove={removeFromPool} onExport={exportPool} onClose={() => setPoolOpen(false)} />}
       {hydrated && endorsing && <EndorseForm talents={list} onSave={endorse} onClose={() => setEndorsing(false)} />}
-      {picking && <ShortlistDialog t={picking} onPick={(event) => addToPool(picking, event)} onClose={closePick} />}
+      {picking && <ShortlistDialog t={picking} onPick={(event) => shortlistFor(picking, event)} onClose={closePick} />}
       {toast && <Toast {...toast} onDone={closeToast} />}
     </main>
   );
