@@ -6,6 +6,7 @@ export const principalNav = [
   { href: "/principal/announcements", label: "Announcements", icon: "M3 11l15-6v14L3 13z M7 13v5h3v-4" },
   { href: "/principal/teachers", label: "Teachers", icon: "M9 11a4 4 0 1 0 0-8a4 4 0 1 0 0 8z M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7 M19 8v6 M16 11h6" },
   { href: "/principal/students", label: "Students", icon: "M2 9l9-5 9 5-9 5z M6 11.5V16c0 1.5 2.2 3 5 3 M19 14v6 M16 17h6" },
+  { href: "/principal/talents", label: "Talents", icon: "M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" },
   { href: "/principal/fees", label: "Student Fees", icon: "M3 6h18v12H3z M3 10h18 M7 15h3" },
   { href: "/principal/ai", label: "AI Assistant", icon: "M12 3v4 M12 17v4 M3 12h4 M17 12h4 M6 6l2.5 2.5 M15.5 15.5 18 18 M6 18l2.5-2.5 M15.5 8.5 18 6" },
 ];
@@ -31,6 +32,11 @@ export const principalTitles: Record<string, { eyebrow: string; title: string; d
     eyebrow: "Students",
     title: "Student Management & Class Directory",
     description: "Inspect student profiles, monitor class rosters, and review student attendance trends.",
+  },
+  "/principal/talents": {
+    eyebrow: "Talents",
+    title: "Student Talents & Achievements",
+    description: "Discover and showcase student talents across sports, arts, academics and more.",
   },
 };
 
