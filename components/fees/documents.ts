@@ -3,8 +3,8 @@ import { principal } from "@/lib/principal";
 import { AS_OF, sectionLabel } from "@/lib/students";
 import {
   ACADEMIC_YEAR,
-  DUE_DAY,
   behaviorFor,
+  challanFor,
   behaviorOf,
   installmentLabel,
   planOf,
@@ -12,6 +12,7 @@ import {
   shortDate,
   stamp,
   statusMeta,
+  type ChallanSettings,
   type FeeAccount,
   type FeeRecord,
   type Installment,
@@ -22,11 +23,12 @@ const head = (title: string, sub: string) => `<div class="bar"></div><div class=
   <p class="muted" style="letter-spacing:.2em;text-transform:uppercase;margin:0 0 6px">${principal.school}</p>
   <h1>${title}</h1><p class="muted">${sub}</p>`;
 
-/** Fee challan listing the open installments and their due dates. */
-export function printChallan(a: FeeAccount, items: Installment[]) {
+/** Fee challan as the principal customised it (installments, due dates, validity, instructions, note). */
+export function printChallan(a: FeeAccount, only?: Installment[], settings: ChallanSettings = challanFor(a)) {
   const s = a.student;
+  const items = only ?? a.installments.filter((i) => settings.include.includes(i.challan));
   return printDocument(`Fee Challan - ${s.name}`, (e) => {
-    const rows = items.map((i) => ({ i, st: settle(i) })).filter((x) => !x.st.cleared);
+    const rows = items.map((i) => ({ i, st: settle(i) }));
     const copy = (who: string) => `<div class="slip">
       <div style="display:flex;justify-content:space-between;align-items:center"><strong>${who}</strong><span class="stamp due">PAYABLE</span></div>
       <div class="grid">
@@ -34,14 +36,22 @@ export function printChallan(a: FeeAccount, items: Installment[]) {
         <div><span class="muted">Class / Roll No.</span><br/><strong>${e(sectionLabel(s.section))} &middot; ${s.rollNo}</strong></div>
         <div><span class="muted">Registration ID</span><br/>${e(s.regId)}</div>
         <div><span class="muted">Guardian</span><br/>${e(s.guardian)} &middot; ${e(s.phone)}</div>
+        <div><span class="muted">Issued</span><br/>${e(shortDate(settings.issued))}</div>
+        <div><span class="muted">Valid until</span><br/><strong>${e(shortDate(settings.validUntil))}</strong></div>
       </div>
       <table><thead><tr><th>Challan No.</th><th>Fee period</th><th>Due date</th><th>Status</th></tr></thead><tbody>
-      ${rows.map(({ i, st }) => `<tr><td>${e(i.challan)}</td><td>${e(i.label)}</td><td>${e(shortDate(i.due))}</td><td>${e(installmentLabel[st.status])}${st.late > 0 ? ` (${st.late} days late)` : ""}</td></tr>`).join("")}
+      ${rows
+        .map(
+          ({ i, st }) =>
+            `<tr><td>${e(i.challan)}</td><td>${e(i.label)}</td><td>${e(shortDate(i.due))}${i.originalDue ? `<br/><span class="muted">extended from ${e(shortDate(i.originalDue))}</span>` : ""}</td><td>${e(installmentLabel[st.status])}${st.late > 0 && !st.cleared ? ` (${st.late} days late)` : ""}</td></tr>`,
+        )
+        .join("")}
       </tbody></table>
-      <p class="muted" style="margin-top:10px">Pay at any HBL branch, online via the parent portal, or at the school accounts office by the ${DUE_DAY}th of the month.</p>
+      ${settings.note ? `<p style="margin-top:12px"><strong>Note from the principal:</strong> ${e(settings.note)}</p>` : ""}
+      <p class="muted" style="margin-top:10px">${e(settings.instructions)}</p>
     </div>`;
-    return `${head("Fee Challan", `Academic year ${ACADEMIC_YEAR} &middot; Issued ${shortDate(AS_OF)} &middot; ${planOf(a.plan).label}`)}
-      ${rows.length ? copy("Bank copy") + copy("School copy") + copy("Parent copy") : "<p>All installments are cleared. Nothing is payable.</p>"}
+    return `${head("Fee Challan", `Academic year ${ACADEMIC_YEAR} &middot; ${planOf(a.plan).label}`)}
+      ${rows.length ? copy("Bank copy") + copy("School copy") + copy("Parent copy") : "<p>No installments are on this challan.</p>"}
     </div>`;
   });
 }

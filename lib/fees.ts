@@ -80,10 +80,24 @@ export type Installment = {
   /** Months (yyyy-mm) this installment covers. */
   months: string[];
   due: string;
+  /** Original due date when the principal has granted an extension on the challan. */
+  originalDue?: string;
   payments: Payment[];
 };
 
-export type FeeAccount = { student: Student; plan: Plan; installments: Installment[] };
+/** Per-student challan customisation set by the principal. */
+export type ChallanSettings = {
+  /** Challan numbers of the installments printed on the challan. */
+  include: string[];
+  issued: string;
+  validUntil: string;
+  instructions: string;
+  note: string;
+  /** Last edit, ISO date-time; undefined until the principal edits the challan. */
+  editedAt?: string;
+};
+
+export type FeeAccount = { student: Student; plan: Plan; installments: Installment[]; challan?: ChallanSettings };
 
 export type InstallmentStatus = "ontime" | "late" | "partial" | "overdue" | "due" | "upcoming";
 
@@ -302,16 +316,45 @@ function buildAccount(s: Student): FeeAccount {
 
 export const accounts: FeeAccount[] = students.map(buildAccount);
 
-/** Installments a manual payment can be logged against now: anything overdue, part-paid or in the current cycle. */
+/** Installments a challan can carry now: anything overdue, part-paid or in the current cycle. */
 export const openInstallments = (a: FeeAccount, on = AS_OF) => a.installments.filter((i) => settle(i, on).open);
 
-/** Records a verified manual payment against the chosen installments. */
-export function applyPayment(a: FeeAccount, challans: string[], base: Omit<Payment, "receipt">): FeeAccount {
-  let k = 0;
+/** Installments not yet cleared, including future ones the principal may add to a challan early. */
+export const unclearedInstallments = (a: FeeAccount, on = AS_OF) => a.installments.filter((i) => !settle(i, on).cleared);
+
+export const DEFAULT_INSTRUCTIONS = `Pay at any HBL branch, online through the parent portal, or at the school accounts office by the due date shown for each installment. Keep the stamped parent copy as proof of payment.`;
+
+/** The challan as the principal last saved it, or the standard one: open installments, valid until the latest due date. */
+export function challanFor(a: FeeAccount, on = AS_OF): ChallanSettings {
+  if (a.challan) return a.challan;
+  const open = openInstallments(a, on);
+  const last = open.map((i) => i.due).sort().at(-1);
+  return {
+    include: open.map((i) => i.challan),
+    issued: on,
+    validUntil: last && last > on ? last : fromDay(toDay(on) + 15),
+    instructions: DEFAULT_INSTRUCTIONS,
+    note: "",
+  };
+}
+
+/** Saves challan edits: installment names and due dates (extensions) plus the challan settings. */
+export function saveChallan(a: FeeAccount, settings: ChallanSettings, edits: Record<string, { label: string; due: string }>): FeeAccount {
   return {
     ...a,
-    installments: a.installments.map((i) =>
-      challans.includes(i.challan) ? { ...i, payments: [...i.payments, { ...base, receipt: `RCP-${base.at.slice(2, 4)}${base.at.slice(5, 7)}-M${pad(a.student.seed, 4)}${++k}` }] } : i,
-    ),
+    challan: settings,
+    installments: a.installments.map((i) => {
+      const e = edits[i.challan];
+      if (!e) return i;
+      const original = i.originalDue ?? i.due;
+      return { ...i, label: e.label, due: e.due, originalDue: e.due === original ? undefined : original };
+    }),
   };
+}
+
+/** Every payment the student has made, newest first, with the installment it was for and whether it was on time. */
+export function paymentRecords(a: FeeAccount) {
+  return a.installments
+    .flatMap((i) => i.payments.map((p) => ({ i, p, late: Math.max(0, daysBetween(i.due, p.at)) })))
+    .sort((x, y) => y.p.at.localeCompare(x.p.at));
 }
