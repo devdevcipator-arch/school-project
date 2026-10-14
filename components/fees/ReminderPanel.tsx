@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Chip, Drawer, ghostBtn } from "@/components/dashboard/controls";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { rs, type FeeRecord } from "@/lib/fees";
+import { shortDate, type FeeRecord } from "@/lib/fees";
 import { principal } from "@/lib/principal";
 
 export type Channel = "SMS" | "Email" | "App notification";
@@ -14,10 +14,10 @@ type Group = "defaulter" | "delayed" | "partial";
 const groups: { key: Group; label: string; hint: string }[] = [
   { key: "defaulter", label: "Critical defaulters", hint: "2+ months unpaid" },
   { key: "delayed", label: "Delayed / overdue", hint: "Past the due date" },
-  { key: "partial", label: "Partially paid, overdue", hint: "Balance past due" },
+  { key: "partial", label: "Partially paid, overdue", hint: "Part paid, rest past due" },
 ];
 
-const template = `Dear {guardian}, the school fee of {student} ({class}) is overdue by {days} days. Outstanding amount: {amount}. Please clear the dues at the earliest to avoid further late fines. - ${principal.school}`;
+const template = `Dear {guardian}, the school fee of {student} ({class}) was due on {due} and is now overdue by {days} days. Please clear the pending installment at the earliest. - ${principal.school}`;
 
 export const fillMessage = (msg: string, r: FeeRecord) =>
   msg
@@ -25,17 +25,16 @@ export const fillMessage = (msg: string, r: FeeRecord) =>
     .replace(/\{student\}/g, r.account.student.name)
     .replace(/\{class\}/g, r.account.student.section)
     .replace(/\{days\}/g, String(r.overdueDays))
-    .replace(/\{amount\}/g, rs(r.balance));
+    .replace(/\{due\}/g, r.dueDate ? shortDate(r.dueDate) : "the due date");
 
 export default function ReminderPanel({ records, scope, onSend, onClose }: { records: FeeRecord[]; scope: string; onSend: (to: FeeRecord[], via: Channel[]) => void; onClose: () => void }) {
   const [picked, setPicked] = useState<Group[]>(["defaulter", "delayed", "partial"]);
   const [via, setVia] = useState<Channel[]>(["SMS", "App notification"]);
   const [message, setMessage] = useState(template);
 
-  const overdue = useMemo(() => records.filter((r) => r.overdueDays > 0 && r.balance > 0), [records]);
+  const overdue = useMemo(() => records.filter((r) => r.overdueDays > 0), [records]);
   const count = (g: Group) => overdue.filter((r) => r.status === g).length;
   const to = overdue.filter((r) => picked.includes(r.status as Group));
-  const total = to.reduce((n, r) => n + r.balance, 0);
   const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
   const sample = to[0] ?? overdue[0];
 
@@ -85,7 +84,7 @@ export default function ReminderPanel({ records, scope, onSend, onClose }: { rec
               ))}
             </div>
             <p className="mt-2.5 text-[.8rem] text-ink/60">
-              {to.length} {to.length === 1 ? "student" : "students"} selected · {rs(total)} outstanding
+              {to.length} {to.length === 1 ? "student" : "students"} selected{to.length > 0 && ` · longest delay ${Math.max(...to.map((r) => r.overdueDays))} days`}
             </p>
           </fieldset>
 
@@ -111,7 +110,7 @@ export default function ReminderPanel({ records, scope, onSend, onClose }: { rec
               onChange={(e) => setMessage(e.target.value)}
               className="w-full resize-y rounded-xl border border-ink/12 bg-white px-4 py-3 text-[.9rem] outline-none transition-colors hover:border-accent focus:border-primary"
             />
-            <p className="mt-1.5 text-[.76rem] text-ink/50">Placeholders: {"{guardian} {student} {class} {days} {amount}"}</p>
+            <p className="mt-1.5 text-[.76rem] text-ink/50">Placeholders: {"{guardian} {student} {class} {due} {days}"}</p>
           </div>
 
           {sample && (

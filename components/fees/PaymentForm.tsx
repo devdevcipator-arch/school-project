@@ -5,12 +5,12 @@ import { Chip, Drawer, ghostBtn } from "@/components/dashboard/controls";
 import { Avatar } from "@/components/teachers/parts";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { methods, payableNow, rs, settle, shortDate, type FeeAccount, type PaymentMethod } from "@/lib/fees";
+import { methods, openInstallments, settle, shortDate, type FeeAccount, type Payment, type PaymentMethod } from "@/lib/fees";
 import { AS_OF, sectionLabel } from "@/lib/students";
-import { methodIcon } from "./parts";
+import { InstallmentBadge, methodIcon } from "./parts";
 
-export type ManualPayment = { amount: number; method: PaymentMethod; ref: string; date: string; note: string };
-type Errors = Partial<Record<"amount" | "ref" | "date", string>>;
+export type ManualPayment = { challans: string[]; kind: Payment["kind"]; method: PaymentMethod; ref: string; date: string; note: string };
+type Errors = Partial<Record<"challans" | "ref" | "date", string>>;
 
 function Field({ id, label, hint, error, children }: { id: string; label: string; hint?: string; error?: string; children: ReactNode }) {
   return (
@@ -33,25 +33,27 @@ const input = (bad?: string) =>
 const aria = (id: string, bad?: string) => ({ id, "aria-invalid": !!bad, "aria-describedby": bad ? `${id}-error` : undefined });
 
 export default function PaymentForm({ account: a, onSave, onClose }: { account: FeeAccount; onSave: (p: ManualPayment) => void; onClose: () => void }) {
-  const payable = payableNow(a);
-  const open = a.installments.map((i) => ({ i, st: settle(i) })).filter((x) => x.st.balance > 0 && (x.st.late >= -31 || x.st.paid > 0));
-  const [amount, setAmount] = useState(String(payable));
+  const open = openInstallments(a).map((i) => ({ i, st: settle(i) }));
+  // Pre-select everything already overdue or part-paid; otherwise the current cycle.
+  const urgent = open.filter((x) => x.st.late > 0 || x.i.payments.length > 0);
+  const [challans, setChallans] = useState<string[]>((urgent.length ? urgent : open.slice(0, 1)).map((x) => x.i.challan));
+  const [kind, setKind] = useState<Payment["kind"]>("final");
   const [method, setMethod] = useState<PaymentMethod>("Cash");
   const [ref, setRef] = useState("");
   const [date, setDate] = useState(AS_OF);
   const [note, setNote] = useState("");
   const [errors, setErrors] = useState<Errors>({});
 
+  const toggle = (c: string) => setChallans((l) => (l.includes(c) ? l.filter((x) => x !== c) : [...l, c]));
+
   const submit = (close: () => void) => {
-    const n = Number(amount.replace(/[,\s]/g, ""));
     const next: Errors = {};
-    if (!Number.isFinite(n) || n <= 0) next.amount = "Enter the amount received.";
-    else if (n > payable) next.amount = `Amount cannot exceed the payable balance of ${rs(payable)}.`;
+    if (!challans.length) next.challans = "Choose at least one installment this payment covers.";
     if (method === "Bank Slip" && !ref.trim()) next.ref = "Enter the bank slip number to verify the deposit.";
     if (!date || date > AS_OF) next.date = "Payment date cannot be in the future.";
     setErrors(next);
     if (Object.keys(next).length) return;
-    onSave({ amount: Math.round(n), method, ref: ref.trim(), date, note: note.trim() });
+    onSave({ challans, kind, method, ref: ref.trim(), date, note: note.trim() });
     close();
   };
 
@@ -80,36 +82,47 @@ export default function PaymentForm({ account: a, onSave, onClose }: { account: 
             <div className="min-w-0 flex-1">
               <p className="truncate font-bold">{a.student.name}</p>
               <p className="text-[.78rem] text-ink/55">
-                {sectionLabel(a.student.section)} · Roll {a.student.rollNo}
+                {sectionLabel(a.student.section)} · Roll {a.student.rollNo} · {a.student.regId}
               </p>
-            </div>
-            <div className="text-right">
-              <p className="text-[.7rem] font-bold uppercase tracking-[.08em] text-ink/45">Payable now</p>
-              <p className="text-[1.15rem] font-extrabold text-danger">{rs(payable)}</p>
             </div>
           </div>
 
-          <section>
-            <h3 className="mb-2 text-[.84rem] font-bold">Applied to (oldest first)</h3>
-            <ul className="divide-y divide-ink/8 rounded-2xl border border-ink/8 text-[.84rem]">
+          <fieldset aria-describedby={errors.challans ? "pay-challans-error" : undefined}>
+            <legend className="mb-2 text-[.84rem] font-bold">Installments covered</legend>
+            <ul className="grid gap-2">
               {open.map(({ i, st }) => (
-                <li key={i.challan} className="flex items-center justify-between gap-3 px-4 py-2.5">
-                  <span>
-                    <strong>{i.label}</strong>
-                    <span className="block text-[.74rem] text-ink/50">
-                      Due {shortDate(i.due)}
-                      {st.fine > 0 && ` · includes ${rs(st.fine)} fine`}
+                <li key={i.challan}>
+                  <label className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 transition-colors ${challans.includes(i.challan) ? "border-primary bg-primary/6" : "border-ink/10 hover:border-accent"}`}>
+                    <input type="checkbox" checked={challans.includes(i.challan)} onChange={() => toggle(i.challan)} className="size-4 accent-[#1D546D]" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[.9rem] font-bold">{i.label}</span>
+                      <span className="text-[.76rem] text-ink/55">
+                        {i.challan} · Due {shortDate(i.due)}
+                      </span>
                     </span>
-                  </span>
-                  <span className="font-bold">{rs(st.balance)}</span>
+                    <InstallmentBadge status={st.status} delay={st.delay} />
+                  </label>
                 </li>
               ))}
             </ul>
-          </section>
+            {errors.challans && (
+              <p id="pay-challans-error" className="mt-1.5 text-[.8rem] font-semibold text-danger">
+                {errors.challans}
+              </p>
+            )}
+          </fieldset>
 
-          <Field id="pay-amount" label="Amount received (Rs)" error={errors.amount}>
-            <input {...aria("pay-amount", errors.amount)} inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} className={input(errors.amount)} />
-          </Field>
+          <fieldset>
+            <legend className="mb-2 text-[.84rem] font-bold">Payment type</legend>
+            <div className="flex flex-wrap gap-2">
+              <Chip type="radio" name="pay-kind" checked={kind === "final"} onChange={() => setKind("final")}>
+                Full payment (clears installment)
+              </Chip>
+              <Chip type="radio" name="pay-kind" checked={kind === "part"} onChange={() => setKind("part")}>
+                Part payment (balance pending)
+              </Chip>
+            </div>
+          </fieldset>
 
           <fieldset>
             <legend className="mb-2 text-[.84rem] font-bold">Payment method</legend>
