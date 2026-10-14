@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
 import { Toast, ghostBtn, type ToastData } from "@/components/dashboard/controls";
 import { Icon } from "@/components/ui/Icon";
-import { formatBytes, respond, seedAudit, seedVault, suggestions, type AuditEntry, type AuditKind, type DraftAction, type Reply, type VaultDoc } from "@/lib/copilot";
+import { respond, seedAudit, seedVault, suggestions, type AuditEntry, type AuditKind, type DraftAction, type Reply, type VaultDoc } from "@/lib/copilot";
 import { principal } from "@/lib/principal";
 import { AS_OF, sectionLabel } from "@/lib/students";
 import { teachers } from "@/lib/teachers";
@@ -190,7 +190,6 @@ export default function CopilotWorkspace() {
     inputRef.current?.focus();
   };
 
-  const recent = audit.slice(0, 4);
   const onlyGreeting = messages.length === 1;
 
   return (
@@ -221,185 +220,120 @@ export default function CopilotWorkspace() {
         </div>
       </header>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6">
-        {/* Chat */}
-        <section
-          aria-label="AI conversation"
-          className="relative isolate flex h-[min(80dvh,860px)] min-h-[560px] flex-col overflow-hidden rounded-[22px] bg-linear-135 from-ink via-ink to-primary text-surface shadow-[0_24px_60px_rgba(6,30,41,.25)]"
-        >
-          <span aria-hidden className="absolute -right-24 -top-24 -z-10 size-72 rounded-full bg-accent/25 blur-3xl" />
-          <div className="flex items-center gap-3 border-b border-surface/10 px-5 py-4 sm:px-6">
-            <span className="grid size-10 shrink-0 animate-float place-items-center rounded-xl bg-linear-135 from-primary to-accent shadow-[0_10px_24px_rgba(95,149,152,.35)]">
-              <Icon d={spark} className="size-5" />
-            </span>
-            <div className="min-w-0">
-              <p className="font-extrabold tracking-tight">Executive Copilot</p>
-              <p className="truncate text-[.78rem] text-surface/55">Queries school data · executes admin actions with your confirmation · cites your vault</p>
-            </div>
+      <section
+        aria-label="AI conversation"
+        className="relative isolate flex h-[calc(100dvh-14rem)] min-h-[560px] flex-col overflow-hidden rounded-[22px] bg-linear-135 from-ink via-ink to-primary text-surface shadow-[0_24px_60px_rgba(6,30,41,.25)]"
+      >
+        <span aria-hidden className="absolute -right-24 -top-24 -z-10 size-72 rounded-full bg-accent/25 blur-3xl" />
+        <div className="flex items-center gap-3 border-b border-surface/10 px-5 py-4 sm:px-6">
+          <span className="grid size-10 shrink-0 animate-float place-items-center rounded-xl bg-linear-135 from-primary to-accent shadow-[0_10px_24px_rgba(95,149,152,.35)]">
+            <Icon d={spark} className="size-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="font-extrabold tracking-tight">Executive Copilot</p>
+            <p className="truncate text-[.78rem] text-surface/55">Queries school data · executes admin actions with your confirmation · cites your vault</p>
           </div>
+        </div>
 
-          <div ref={listRef} aria-live="polite" className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-5 [scrollbar-width:thin] sm:px-6">
-            {messages.map((m) =>
-              m.from === "user" ? (
-                <p key={m.id} className="max-w-[85%] self-end whitespace-pre-wrap rounded-2xl rounded-br-md bg-linear-135 from-primary to-accent px-4 py-3 text-[.92rem] leading-relaxed">
-                  {m.text}
-                </p>
-              ) : (
-                <div key={m.id} className="flex max-w-[94%] gap-2.5 self-start">
-                  <span aria-hidden className="mt-1 grid size-7 shrink-0 place-items-center rounded-lg bg-surface/10 text-accent">
-                    <Icon d={spark} className="size-4" />
-                  </span>
-                  <div className="grid min-w-0 flex-1 gap-3">
-                    <div className="rounded-2xl rounded-tl-md bg-surface/10 px-4 py-3 text-[.92rem] leading-relaxed text-surface/90">{m.reply ? <ReplyView reply={m.reply} /> : m.text}</div>
-                    {m.reply?.action && m.state && (
-                      <ActionCard id={m.id} draft={m.reply.action} state={m.state} result={m.result} onExecute={(d) => execute(m.id, d)} onCancel={() => cancel(m.id, m.reply!.action!)} />
+        <div ref={listRef} aria-live="polite" className="flex flex-1 flex-col gap-4 overflow-y-auto px-[max(16px,calc((100%-1100px)/2))] py-5 [scrollbar-width:thin]">
+          {messages.map((m) =>
+            m.from === "user" ? (
+              <p key={m.id} className="max-w-[85%] self-end whitespace-pre-wrap rounded-2xl rounded-br-md bg-linear-135 from-primary to-accent px-4 py-3 text-[.92rem] leading-relaxed">
+                {m.text}
+              </p>
+            ) : (
+              <div key={m.id} className="flex max-w-[94%] gap-2.5 self-start">
+                <span aria-hidden className="mt-1 grid size-7 shrink-0 place-items-center rounded-lg bg-surface/10 text-accent">
+                  <Icon d={spark} className="size-4" />
+                </span>
+                <div className="grid min-w-0 flex-1 gap-3">
+                  <div className="rounded-2xl rounded-tl-md bg-surface/10 px-4 py-3 text-[.92rem] leading-relaxed text-surface/90">{m.reply ? <ReplyView reply={m.reply} /> : m.text}</div>
+                  {m.reply?.action && m.state && (
+                    <ActionCard id={m.id} draft={m.reply.action} state={m.state} result={m.result} onExecute={(d) => execute(m.id, d)} onCancel={() => cancel(m.id, m.reply!.action!)} />
+                  )}
+                </div>
+              </div>
+            ),
+          )}
+          {thinking && (
+            <div className="flex gap-2.5 self-start" aria-label="Copilot is working">
+              <span aria-hidden className="mt-1 grid size-7 shrink-0 place-items-center rounded-lg bg-surface/10 text-accent">
+                <Icon d={spark} className="size-4 animate-spin [animation-duration:2.5s]" />
+              </span>
+              <ul className="grid gap-1 rounded-2xl rounded-tl-md bg-surface/10 px-4 py-3 text-[.82rem]">
+                {thinking.steps.slice(0, thinking.at + 1).map((s, i) => (
+                  <li key={s} className="flex animate-fade-in items-center gap-2 text-surface/75">
+                    {i < thinking.at ? (
+                      <Icon d="M5 12l4 4 10-10" className="size-3.5 text-[#8fd6ac]" />
+                    ) : (
+                      <span className="flex gap-1">
+                        {[0, 150, 300].map((d) => (
+                          <span key={d} className="size-1.5 animate-bounce rounded-full bg-accent" style={{ animationDelay: `${d}ms` }} />
+                        ))}
+                      </span>
                     )}
+                    {s}...
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {onlyGreeting && !thinking && (
+            <div className="grid gap-3 pt-2 sm:grid-cols-3">
+              {suggestions.map((g) => (
+                <div key={g.group} className="rounded-2xl border border-surface/10 bg-surface/5 p-3.5">
+                  <p className="mb-2 text-[.7rem] font-bold uppercase tracking-[.12em] text-accent">{g.group}</p>
+                  <div className="grid gap-1.5">
+                    {g.prompts.slice(0, 3).map((p) => (
+                      <button key={p} type="button" onClick={() => ask(p)} className="cursor-pointer rounded-xl bg-surface/5 px-3 py-2 text-left text-[.8rem] font-semibold text-surface/85 transition-colors hover:bg-accent/25">
+                        {p}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              ),
-            )}
-            {thinking && (
-              <div className="flex gap-2.5 self-start" aria-label="Copilot is working">
-                <span aria-hidden className="mt-1 grid size-7 shrink-0 place-items-center rounded-lg bg-surface/10 text-accent">
-                  <Icon d={spark} className="size-4 animate-spin [animation-duration:2.5s]" />
-                </span>
-                <ul className="grid gap-1 rounded-2xl rounded-tl-md bg-surface/10 px-4 py-3 text-[.82rem]">
-                  {thinking.steps.slice(0, thinking.at + 1).map((s, i) => (
-                    <li key={s} className="flex animate-fade-in items-center gap-2 text-surface/75">
-                      {i < thinking.at ? (
-                        <Icon d="M5 12l4 4 10-10" className="size-3.5 text-[#8fd6ac]" />
-                      ) : (
-                        <span className="flex gap-1">
-                          {[0, 150, 300].map((d) => (
-                            <span key={d} className="size-1.5 animate-bounce rounded-full bg-accent" style={{ animationDelay: `${d}ms` }} />
-                          ))}
-                        </span>
-                      )}
-                      {s}...
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {onlyGreeting && !thinking && (
-              <div className="grid gap-3 pt-2 sm:grid-cols-3">
-                {suggestions.map((g) => (
-                  <div key={g.group} className="rounded-2xl border border-surface/10 bg-surface/5 p-3.5">
-                    <p className="mb-2 text-[.7rem] font-bold uppercase tracking-[.12em] text-accent">{g.group}</p>
-                    <div className="grid gap-1.5">
-                      {g.prompts.slice(0, 3).map((p) => (
-                        <button key={p} type="button" onClick={() => ask(p)} className="cursor-pointer rounded-xl bg-surface/5 px-3 py-2 text-left text-[.8rem] font-semibold text-surface/85 transition-colors hover:bg-accent/25">
-                          {p}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+              ))}
+            </div>
+          )}
+        </div>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            ask(input);
+          }}
+          className="border-t border-surface/10 px-[max(12px,calc((100%-1100px)/2))] py-3 sm:py-4"
+        >
+          <div className="flex items-end gap-2 rounded-2xl border border-surface/15 bg-surface/8 p-2 transition-colors focus-within:border-accent">
+            <button type="button" onClick={() => setVaultOpen(true)} title="Upload to the knowledge vault" aria-label="Upload books or documents" className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-xl text-surface/70 transition-colors hover:bg-surface/10 hover:text-surface">
+              <Icon d="M21 12.5l-8.5 8.5a5 5 0 0 1-7-7l9-9a3.5 3.5 0 0 1 5 5l-9 9a2 2 0 0 1-3-3l8-8" className="size-5" />
+            </button>
+            <label htmlFor="copilot-input" className="sr-only">
+              Ask the executive copilot
+            </label>
+            <textarea
+              id="copilot-input"
+              ref={inputRef}
+              rows={1}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={onKey}
+              placeholder="Ask about any record, say 'Add a teacher...', or ask about a syllabus or policy"
+              className="max-h-32 min-h-11 min-w-0 flex-1 resize-none bg-transparent px-2 py-2.5 text-[.92rem] text-surface outline-none [field-sizing:content] placeholder:text-surface/45"
+            />
+            <button
+              type="submit"
+              aria-label="Send"
+              disabled={!input.trim() || !!thinking}
+              className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-xl bg-linear-135 from-primary via-accent to-primary bg-[length:220%_100%] bg-left text-surface transition-[background-position,opacity] duration-500 ease-nav hover:bg-right disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <svg viewBox="0 0 20 20" aria-hidden className="size-[18px]">
+                <path d="M4 10h11M11 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
           </div>
-
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              ask(input);
-            }}
-            className="border-t border-surface/10 p-3 sm:p-4"
-          >
-            <div className="flex items-end gap-2 rounded-2xl border border-surface/15 bg-surface/8 p-2 transition-colors focus-within:border-accent">
-              <button type="button" onClick={() => setVaultOpen(true)} title="Upload to the knowledge vault" aria-label="Upload books or documents" className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-xl text-surface/70 transition-colors hover:bg-surface/10 hover:text-surface">
-                <Icon d="M21 12.5l-8.5 8.5a5 5 0 0 1-7-7l9-9a3.5 3.5 0 0 1 5 5l-9 9a2 2 0 0 1-3-3l8-8" className="size-5" />
-              </button>
-              <label htmlFor="copilot-input" className="sr-only">
-                Ask the executive copilot
-              </label>
-              <textarea
-                id="copilot-input"
-                ref={inputRef}
-                rows={1}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={onKey}
-                placeholder="Ask about any record, say 'Add a teacher...', or ask about a syllabus or policy"
-                className="max-h-32 min-h-11 min-w-0 flex-1 resize-none bg-transparent px-2 py-2.5 text-[.92rem] text-surface outline-none [field-sizing:content] placeholder:text-surface/45"
-              />
-              <button
-                type="submit"
-                aria-label="Send"
-                disabled={!input.trim() || !!thinking}
-                className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-xl bg-linear-135 from-primary via-accent to-primary bg-[length:220%_100%] bg-left text-surface transition-[background-position,opacity] duration-500 ease-nav hover:bg-right disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <svg viewBox="0 0 20 20" aria-hidden className="size-[18px]">
-                  <path d="M4 10h11M11 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </div>
-            <p className="mt-2 px-1 text-[.7rem] text-surface/40">Enter to send · Shift + Enter for a new line · Actions never run without your confirmation</p>
-          </form>
-        </section>
-
-        {/* Side panel */}
-        <aside className="grid content-start gap-5">
-          <section className="rounded-[20px] border border-ink/8 bg-white p-5 shadow-[0_10px_30px_rgba(6,30,41,.05)]">
-            <h2 className="text-[1rem] font-extrabold tracking-tight">What I can do</h2>
-            <ul className="mt-3 grid gap-3 text-[.84rem]">
-              {[
-                ["M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3z M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6 M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3", "Query any record", "Teacher check-ins, student profiles, attendance, fee status and behavior, talents and announcements."],
-                ["M13 3L4 14h7l-1 7 9-11h-7z", "Take admin actions", "Add teachers, enroll students and post announcements. You review and confirm every action."],
-                ["M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z M8 7h6", "Read your library", "Answers syllabus and policy questions and audits lesson plans, citing the exact pages."],
-              ].map(([ic, t, d]) => (
-                <li key={t} className="flex gap-3">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/8 text-primary">
-                    <Icon d={ic} className="size-[18px]" />
-                  </span>
-                  <span>
-                    <strong className="block">{t}</strong>
-                    <span className="text-ink/60">{d}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section className="rounded-[20px] border border-ink/8 bg-white p-5 shadow-[0_10px_30px_rgba(6,30,41,.05)]">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-[1rem] font-extrabold tracking-tight">Knowledge vault</h2>
-              <span className="text-[.78rem] font-bold text-primary">{indexed.length} indexed</span>
-            </div>
-            <ul className="mt-3 grid gap-2">
-              {vault.slice(0, 4).map((d) => (
-                <li key={d.id} className="flex items-center gap-2.5 text-[.82rem]">
-                  <Icon d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z M8 7h6" className="size-4 shrink-0 text-accent" />
-                  <span className="min-w-0 flex-1 truncate font-semibold">{d.title}</span>
-                  <span className="shrink-0 text-[.72rem] text-ink/45">{d.status === "indexed" ? `${d.pages}p` : `${d.progress}%`}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-3 text-[.76rem] text-ink/50">{formatBytes(vault.reduce((n, d) => n + d.size, 0))} across {vault.length} files</p>
-            <button type="button" onClick={() => setVaultOpen(true)} className={`${ghostBtn} mt-3 w-full`}>
-              Upload or manage books
-            </button>
-          </section>
-
-          <section className="rounded-[20px] border border-ink/8 bg-white p-5 shadow-[0_10px_30px_rgba(6,30,41,.05)]">
-            <h2 className="text-[1rem] font-extrabold tracking-tight">Recent actions</h2>
-            <ul className="mt-3 grid gap-2.5">
-              {recent.map((e) => (
-                <li key={e.id} className="text-[.82rem]">
-                  <span className="flex items-center gap-2">
-                    <span aria-hidden className={`size-2 shrink-0 rounded-full ${e.status === "executed" ? "bg-ok" : "bg-ink/25"}`} />
-                    <strong>{e.action}</strong>
-                  </span>
-                  <span className="block truncate pl-4 text-ink/55">{e.detail}</span>
-                </li>
-              ))}
-            </ul>
-            <button type="button" onClick={() => setAuditOpen(true)} className={`${ghostBtn} mt-3 w-full`}>
-              View full audit trail
-            </button>
-          </section>
-        </aside>
-      </div>
+          <p className="mt-2 px-1 text-[.7rem] text-surface/40">Enter to send · Shift + Enter for a new line · Actions never run without your confirmation</p>
+        </form>
+      </section>
 
       {hydrated && vaultOpen && (
         <VaultDrawer
