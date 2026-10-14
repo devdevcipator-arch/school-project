@@ -4,7 +4,7 @@ import { Icon } from "@/components/ui/Icon";
 import { principalNav } from "@/lib/principal";
 
 // Placeholder for principal sections that are not built yet.
-const sections = principalNav.filter((n) => !["/principal", "/principal/announcements", "/principal/teachers", "/principal/students", "/principal/talents"].includes(n.href));
+const sections = principalNav.filter((n) => !["/principal", "/principal/announcements", "/principal/teachers", "/principal/students", "/principal/talents", "/principal/fees"].includes(n.href));
 
 export function generateStaticParams() {
   return sections.map((n) => ({ section: n.href.split("/").pop()! }));

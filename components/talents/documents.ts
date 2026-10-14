@@ -1,7 +1,7 @@
 import { principal } from "@/lib/principal";
 import { sectionLabel } from "@/lib/students";
 import { AS_OF_LABEL, levelOf, type Talent } from "@/lib/talents";
-import { printDocument } from "./parts";
+import { printDocument } from "@/components/dashboard/print";
 
 /** Talent endorsement certificate signed by the principal. */
 export function printCertificate(t: Talent) {

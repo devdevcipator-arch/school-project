@@ -33,6 +33,11 @@ export const principalTitles: Record<string, { eyebrow: string; title: string; d
     title: "Student Management & Class Directory",
     description: "Inspect student profiles, monitor class rosters, and review student attendance trends.",
   },
+  "/principal/fees": {
+    eyebrow: "Student Fees",
+    title: "Student Fee Management & Defaulter Tracking",
+    description: "Track collections, monitor overdue installments, and follow up with defaulters across every class.",
+  },
   "/principal/talents": {
     eyebrow: "Talents",
     title: "Talent & Co-Curricular Directory",
