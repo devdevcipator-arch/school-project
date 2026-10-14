@@ -222,3 +222,73 @@ export function ViewToggle({ view, onChange }: { view: DirectoryView; onChange: 
     </div>
   );
 }
+
+/** Checkbox dropdown for multi-value filters; closes on outside click or Escape. */
+export function MultiSelect({
+  label,
+  options,
+  value,
+  onChange,
+  className = "",
+}: {
+  label: string;
+  options: { value: string; label: string; hint?: ReactNode }[];
+  value: string[];
+  onChange: (v: string[]) => void;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const listId = useId();
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", onDown);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const toggle = (v: string) => onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]);
+  const summary = value.length === 0 ? label : value.length === 1 ? (options.find((o) => o.value === value[0])?.label ?? label) : `${label} (${value.length})`;
+
+  return (
+    <div ref={ref} className={`relative ${className}`}>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={listId}
+        aria-label={`${label}: ${value.length ? `${value.length} selected` : "any"}`}
+        onClick={() => setOpen((o) => !o)}
+        className={`${fieldClass} flex w-full cursor-pointer items-center justify-between gap-2 pr-3 text-left font-semibold ${value.length ? "border-primary text-primary" : ""}`}
+      >
+        <span className="truncate">{summary}</span>
+        <svg viewBox="0 0 20 20" aria-hidden className={`size-4 shrink-0 text-primary transition-transform ${open ? "rotate-180" : ""}`}>
+          <path d="m5 7.5 5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </button>
+      {open && (
+        <div id={listId} className="absolute left-0 top-[calc(100%+6px)] z-30 w-full min-w-[230px] animate-fade-in rounded-2xl border border-ink/10 bg-white p-1.5 shadow-[0_20px_50px_rgba(6,30,41,.16)]">
+          <div className="max-h-[280px] overflow-y-auto">
+            {options.map((o) => (
+              <label key={o.value} className="flex cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2 text-[.86rem] font-semibold transition-colors hover:bg-primary/6">
+                <input type="checkbox" checked={value.includes(o.value)} onChange={() => toggle(o.value)} className="size-4 accent-[#1D546D]" />
+                <span className="min-w-0 flex-1 truncate">{o.label}</span>
+                {o.hint}
+              </label>
+            ))}
+          </div>
+          {value.length > 0 && (
+            <button type="button" onClick={() => onChange([])} className="mt-1 w-full cursor-pointer rounded-xl border-t border-ink/8 px-3 py-2 text-left text-[.8rem] font-bold text-primary hover:bg-primary/6">
+              Clear selection
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

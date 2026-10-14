@@ -35,8 +35,8 @@ export const principalTitles: Record<string, { eyebrow: string; title: string; d
   },
   "/principal/talents": {
     eyebrow: "Talents",
-    title: "Student Talents & Achievements",
-    description: "Discover and showcase student talents across sports, arts, academics and more.",
+    title: "Talent & Co-Curricular Directory",
+    description: "Discover, filter, and track talented students across athletics, arts, and competitive skills.",
   },
 };
 

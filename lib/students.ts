@@ -73,7 +73,7 @@ const toDay = (iso: string) => Date.parse(`${iso}T00:00:00Z`) / DAY;
 const fromDay = (n: number) => new Date(n * DAY).toISOString().slice(0, 10);
 
 /** Stateless hash to [0, 1): the same student + day always gets the same value. */
-function hash(a: number, b: number) {
+export function hash(a: number, b: number) {
   let h = Math.imul(a ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul(b + 0x632be5ab, 0xc2b2ae35);
   h = Math.imul(h ^ (h >>> 16), 0x7feb352d);
   h = Math.imul(h ^ (h >>> 15), 0x846ca68b);
