@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { aiMockAnswers, aiSuggestions } from "@/lib/principal";
 
@@ -67,6 +68,10 @@ export default function AiCopilot() {
           {scopes.map((s) => (
             <span key={s} className="rounded-full bg-surface/10 px-2.5 py-1.5 text-[.74rem] font-semibold text-surface/80">{s}</span>
           ))}
+          <Link href="/principal/ai" className="inline-flex items-center gap-1.5 rounded-full border border-surface/25 px-3 py-1.5 text-[.76rem] font-bold text-surface transition-colors hover:border-accent hover:bg-accent/20">
+            Open full workspace
+            <svg viewBox="0 0 20 20" aria-hidden className="size-3.5"><path d="M4 10h11M11 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </Link>
         </div>
       </header>
 

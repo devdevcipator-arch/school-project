@@ -38,6 +38,11 @@ export const principalTitles: Record<string, { eyebrow: string; title: string; d
     title: "Student Fee Management & Defaulter Tracking",
     description: "Track collections, monitor overdue installments, and follow up with defaulters across every class.",
   },
+  "/principal/ai": {
+    eyebrow: "AI Assistant",
+    title: "Principal AI Executive Copilot",
+    description: "Your institutional intelligence partner for live school queries, curriculum analysis, and automated admin workflows.",
+  },
   "/principal/talents": {
     eyebrow: "Talents",
     title: "Talent & Co-Curricular Directory",

@@ -1,0 +1,421 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
+import { Toast, ghostBtn, type ToastData } from "@/components/dashboard/controls";
+import { Icon } from "@/components/ui/Icon";
+import { formatBytes, respond, seedAudit, seedVault, suggestions, type AuditEntry, type AuditKind, type DraftAction, type Reply, type VaultDoc } from "@/lib/copilot";
+import { principal } from "@/lib/principal";
+import { AS_OF, sectionLabel } from "@/lib/students";
+import { teachers } from "@/lib/teachers";
+import ActionCard, { type ActionState } from "./ActionCard";
+import AuditDrawer from "./AuditDrawer";
+import ReplyView from "./ReplyView";
+import VaultDrawer, { type UploadMeta } from "./VaultDrawer";
+
+type Message = { id: string; from: "user" | "ai"; text: string; reply?: Reply; state?: ActionState; result?: string };
+
+const spark = "M12 3v4 M12 17v4 M3 12h4 M17 12h4 M6 6l2.5 2.5 M15.5 15.5 18 18 M6 18l2.5-2.5 M15.5 8.5 18 6";
+const noop = () => () => {};
+
+const greeting = (): Message => ({
+  id: "m0",
+  from: "ai",
+  text: `Good day, ${principal.name.split(" ").slice(0, 2).join(" ")}. I have live access to every school record and your knowledge vault. Ask a question, tell me to take an action, or ask about a book or policy.`,
+});
+
+/** Snapshot date with the real clock time, e.g. "2026-10-13T14:05". */
+const now = () => {
+  const d = new Date();
+  return `${AS_OF}T${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+};
+
+let seq = 0;
+const uid = (p: string) => `${p}${Date.now().toString(36)}${(seq++).toString(36)}`;
+
+function Badge({ icon, children, live = false }: { icon: string; children: ReactNode; live?: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-ink/10 bg-white px-3 py-1.5 text-[.78rem] font-bold text-ink/75 shadow-[0_6px_16px_rgba(6,30,41,.05)]">
+      {live ? (
+        <span aria-hidden className="relative flex size-2.5">
+          <span className="absolute inline-flex size-full animate-ping rounded-full bg-ok/60" />
+          <span className="relative inline-flex size-2.5 rounded-full bg-ok" />
+        </span>
+      ) : (
+        <Icon d={icon} className="size-4 text-primary" />
+      )}
+      {children}
+    </span>
+  );
+}
+
+export default function CopilotWorkspace() {
+  const [messages, setMessages] = useState<Message[]>(() => [greeting()]);
+  const [input, setInput] = useState("");
+  const [thinking, setThinking] = useState<{ steps: string[]; at: number } | null>(null);
+  const [vault, setVault] = useState<VaultDoc[]>(seedVault);
+  const [audit, setAudit] = useState<AuditEntry[]>(seedAudit);
+  const [vaultOpen, setVaultOpen] = useState(false);
+  const [auditOpen, setAuditOpen] = useState(false);
+  const [toast, setToast] = useState<ToastData | null>(null);
+  const [added, setAdded] = useState(0);
+  const hydrated = useSyncExternalStore(noop, () => true, () => false);
+  const listRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const closeToast = useCallback(() => setToast(null), []);
+
+  const indexed = vault.filter((d) => d.status === "indexed");
+  const processing = vault.some((d) => d.status !== "indexed" && d.status !== "failed");
+
+  const log = useCallback((kind: AuditKind, action: string, detail: string, status: AuditEntry["status"] = "executed") => {
+    setAudit((a) => [{ id: uid("a"), at: now(), kind, action, detail, status }, ...a]);
+  }, []);
+
+  useEffect(() => {
+    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages, thinking]);
+
+  // Simulated ingestion pipeline: upload, parse, embed, index.
+  const vaultRef = useRef(vault);
+  useEffect(() => {
+    vaultRef.current = vault;
+  }, [vault]);
+  useEffect(() => {
+    if (!processing) return;
+    const t = setInterval(() => {
+      const done: VaultDoc[] = [];
+      const next = vaultRef.current.map((d) => {
+        if (d.status === "indexed" || d.status === "failed") return d;
+        const progress = Math.min(100, d.progress + 6 + Math.round(Math.random() * 6));
+        const status: VaultDoc["status"] = progress >= 100 ? "indexed" : progress >= 60 ? "embedding" : progress >= 25 ? "parsing" : "uploading";
+        if (status === "indexed") done.push(d);
+        return { ...d, progress, status };
+      });
+      vaultRef.current = next;
+      setVault(next);
+      done.forEach((d) => log("vault", "Indexed document", `${d.title} (${d.pages} pages)`));
+    }, 450);
+    return () => clearInterval(t);
+  }, [processing, log]);
+
+  const ask = (q: string) => {
+    const text = q.trim();
+    if (!text || thinking) return;
+    const reply = respond(text, vault);
+    const steps = reply.tools.length ? reply.tools.map((t) => `Querying ${t}`) : ["Understanding your request"];
+    setMessages((m) => [...m, { id: uid("u"), from: "user", text }]);
+    setInput("");
+    setThinking({ steps, at: 0 });
+    // Front-end phase: the reply is computed locally; the delay mirrors tool calls in the live API.
+    steps.forEach((_, i) => setTimeout(() => setThinking((t) => (t ? { ...t, at: i } : t)), 380 * i));
+    setTimeout(
+      () => {
+        setMessages((m) => [...m, { id: uid("r"), from: "ai", text: reply.text, reply, state: reply.action ? "pending" : undefined }]);
+        setThinking(null);
+      },
+      380 * steps.length + 350,
+    );
+  };
+
+  const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      ask(input);
+    }
+  };
+
+  const settle = (id: string, state: ActionState, result?: string) => setMessages((m) => m.map((x) => (x.id === id ? { ...x, state, result } : x)));
+
+  const execute = (id: string, d: DraftAction) => {
+    if (d.type === "teacher") {
+      const emp = `EMP-${String(teachers.length + added + 1).padStart(3, "0")}`;
+      setAdded((n) => n + 1);
+      const result = `Teacher account created for ${d.name} (${emp}, ${d.subject})${d.classTeacher ? `, class teacher of ${sectionLabel(d.classTeacher)}` : ""}. Login invite sent to ${d.email}.`;
+      settle(id, "executed", result);
+      log("teacher", "Added teacher", `${d.name} (${d.subject}), invite sent to ${d.email}`);
+    } else if (d.type === "student") {
+      const result = `${d.name} enrolled in ${sectionLabel(d.section)}. Guardian ${d.guardian} (${d.phone}) will receive portal login details.`;
+      settle(id, "executed", result);
+      log("student", "Enrolled student", `${d.name} in ${sectionLabel(d.section)}, guardian ${d.guardian}`);
+    } else {
+      const to = d.audience === "staff" ? "Teachers & staff" : d.audience === "students" ? "Students & parents" : "the whole school";
+      settle(id, "executed", `Announcement "${d.title}" posted to ${to}${d.priority !== "normal" ? ` as ${d.priority}` : ""}.`);
+      log("announcement", "Posted announcement", `"${d.title}" to ${to}`);
+    }
+  };
+
+  const cancel = (id: string, d: DraftAction) => {
+    settle(id, "cancelled");
+    const what = d.type === "teacher" ? "Add teacher" : d.type === "student" ? "Enroll student" : "Post announcement";
+    const who = d.type === "announcement" ? `"${d.title || "Untitled"}"` : d.name || "unnamed";
+    log(d.type, what, `Draft for ${who} discarded`, "cancelled");
+  };
+
+  const upload = (files: File[], meta: UploadMeta) => {
+    const docs: VaultDoc[] = files.map((f) => {
+      const base = f.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim();
+      const pages = Math.max(1, Math.round(f.size / 60_000));
+      return {
+        id: uid("d"),
+        title: base.replace(/\b\w/g, (c) => c.toUpperCase()),
+        file: f.name,
+        category: meta.category,
+        subject: meta.subject || undefined,
+        grade: meta.grade || undefined,
+        pages,
+        size: f.size,
+        uploaded: AS_OF,
+        status: "uploading",
+        progress: 0,
+        keywords: [...base.toLowerCase().split(/\s+/), meta.subject.toLowerCase(), meta.grade.toLowerCase()].filter((w) => w.length > 2),
+        passages: [{ page: 1, text: `${base} is now in the vault (${pages} pages${meta.subject ? `, ${meta.subject}` : ""}${meta.grade ? `, ${meta.grade}` : ""}). Ask about its chapters, units or rules and I will cite the relevant pages.` }],
+      };
+    });
+    vaultRef.current = [...docs, ...vaultRef.current];
+    setVault(vaultRef.current);
+    setToast({ text: `${files.length === 1 ? files[0].name : `${files.length} files`} uploading to the knowledge vault.` });
+  };
+
+  const removeDoc = (d: VaultDoc) => {
+    vaultRef.current = vaultRef.current.filter((x) => x.id !== d.id);
+    setVault(vaultRef.current);
+    log("vault", "Removed document", d.title);
+    setToast({ text: `${d.title} removed from the vault.` });
+  };
+
+  const newSession = () => {
+    setMessages([greeting()]);
+    setThinking(null);
+    setInput("");
+    log("session", "Started new session", "Chat cleared; the audit trail and vault are kept");
+    inputRef.current?.focus();
+  };
+
+  const recent = audit.slice(0, 4);
+  const onlyGreeting = messages.length === 1;
+
+  return (
+    <main className="mx-auto flex max-w-[1500px] flex-col gap-5 px-[clamp(16px,3vw,36px)] py-6 lg:gap-6 lg:py-8">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          <Badge icon="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z M8.5 12l2.5 2.5 4.5-5">Full Administrative Access · RBAC Level 0</Badge>
+          <Badge icon="" live>
+            Live SMS Database Connected
+          </Badge>
+          <Badge icon="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z M8 7h6">
+            Knowledge Vault: {indexed.length} {indexed.length === 1 ? "Document" : "Books / Documents"} Indexed
+          </Badge>
+        </div>
+        <div className="flex flex-wrap gap-2 max-sm:w-full">
+          <button type="button" onClick={newSession} className={`${ghostBtn} max-sm:flex-1`}>
+            <Icon d="M4 4v6h6 M4.5 15a8 8 0 1 0 1.9-8.3L4 10" className="size-[18px]" />
+            New Session
+          </button>
+          <button type="button" onClick={() => setVaultOpen(true)} className={`${ghostBtn} max-sm:flex-1`}>
+            <Icon d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z M8 7h6" className="size-[18px]" />
+            Manage Document Vault
+          </button>
+          <button type="button" onClick={() => setAuditOpen(true)} className={`${ghostBtn} max-sm:w-full`}>
+            <Icon d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z M12 7v5l3 2" className="size-[18px]" />
+            Audit Trail
+          </button>
+        </div>
+      </header>
+
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6">
+        {/* Chat */}
+        <section
+          aria-label="AI conversation"
+          className="relative isolate flex h-[min(80dvh,860px)] min-h-[560px] flex-col overflow-hidden rounded-[22px] bg-linear-135 from-ink via-ink to-primary text-surface shadow-[0_24px_60px_rgba(6,30,41,.25)]"
+        >
+          <span aria-hidden className="absolute -right-24 -top-24 -z-10 size-72 rounded-full bg-accent/25 blur-3xl" />
+          <div className="flex items-center gap-3 border-b border-surface/10 px-5 py-4 sm:px-6">
+            <span className="grid size-10 shrink-0 animate-float place-items-center rounded-xl bg-linear-135 from-primary to-accent shadow-[0_10px_24px_rgba(95,149,152,.35)]">
+              <Icon d={spark} className="size-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="font-extrabold tracking-tight">Executive Copilot</p>
+              <p className="truncate text-[.78rem] text-surface/55">Queries school data · executes admin actions with your confirmation · cites your vault</p>
+            </div>
+          </div>
+
+          <div ref={listRef} aria-live="polite" className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-5 [scrollbar-width:thin] sm:px-6">
+            {messages.map((m) =>
+              m.from === "user" ? (
+                <p key={m.id} className="max-w-[85%] self-end whitespace-pre-wrap rounded-2xl rounded-br-md bg-linear-135 from-primary to-accent px-4 py-3 text-[.92rem] leading-relaxed">
+                  {m.text}
+                </p>
+              ) : (
+                <div key={m.id} className="flex max-w-[94%] gap-2.5 self-start">
+                  <span aria-hidden className="mt-1 grid size-7 shrink-0 place-items-center rounded-lg bg-surface/10 text-accent">
+                    <Icon d={spark} className="size-4" />
+                  </span>
+                  <div className="grid min-w-0 flex-1 gap-3">
+                    <div className="rounded-2xl rounded-tl-md bg-surface/10 px-4 py-3 text-[.92rem] leading-relaxed text-surface/90">{m.reply ? <ReplyView reply={m.reply} /> : m.text}</div>
+                    {m.reply?.action && m.state && (
+                      <ActionCard id={m.id} draft={m.reply.action} state={m.state} result={m.result} onExecute={(d) => execute(m.id, d)} onCancel={() => cancel(m.id, m.reply!.action!)} />
+                    )}
+                  </div>
+                </div>
+              ),
+            )}
+            {thinking && (
+              <div className="flex gap-2.5 self-start" aria-label="Copilot is working">
+                <span aria-hidden className="mt-1 grid size-7 shrink-0 place-items-center rounded-lg bg-surface/10 text-accent">
+                  <Icon d={spark} className="size-4 animate-spin [animation-duration:2.5s]" />
+                </span>
+                <ul className="grid gap-1 rounded-2xl rounded-tl-md bg-surface/10 px-4 py-3 text-[.82rem]">
+                  {thinking.steps.slice(0, thinking.at + 1).map((s, i) => (
+                    <li key={s} className="flex animate-fade-in items-center gap-2 text-surface/75">
+                      {i < thinking.at ? (
+                        <Icon d="M5 12l4 4 10-10" className="size-3.5 text-[#8fd6ac]" />
+                      ) : (
+                        <span className="flex gap-1">
+                          {[0, 150, 300].map((d) => (
+                            <span key={d} className="size-1.5 animate-bounce rounded-full bg-accent" style={{ animationDelay: `${d}ms` }} />
+                          ))}
+                        </span>
+                      )}
+                      {s}...
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {onlyGreeting && !thinking && (
+              <div className="grid gap-3 pt-2 sm:grid-cols-3">
+                {suggestions.map((g) => (
+                  <div key={g.group} className="rounded-2xl border border-surface/10 bg-surface/5 p-3.5">
+                    <p className="mb-2 text-[.7rem] font-bold uppercase tracking-[.12em] text-accent">{g.group}</p>
+                    <div className="grid gap-1.5">
+                      {g.prompts.slice(0, 3).map((p) => (
+                        <button key={p} type="button" onClick={() => ask(p)} className="cursor-pointer rounded-xl bg-surface/5 px-3 py-2 text-left text-[.8rem] font-semibold text-surface/85 transition-colors hover:bg-accent/25">
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              ask(input);
+            }}
+            className="border-t border-surface/10 p-3 sm:p-4"
+          >
+            <div className="flex items-end gap-2 rounded-2xl border border-surface/15 bg-surface/8 p-2 transition-colors focus-within:border-accent">
+              <button type="button" onClick={() => setVaultOpen(true)} title="Upload to the knowledge vault" aria-label="Upload books or documents" className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-xl text-surface/70 transition-colors hover:bg-surface/10 hover:text-surface">
+                <Icon d="M21 12.5l-8.5 8.5a5 5 0 0 1-7-7l9-9a3.5 3.5 0 0 1 5 5l-9 9a2 2 0 0 1-3-3l8-8" className="size-5" />
+              </button>
+              <label htmlFor="copilot-input" className="sr-only">
+                Ask the executive copilot
+              </label>
+              <textarea
+                id="copilot-input"
+                ref={inputRef}
+                rows={1}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={onKey}
+                placeholder="Ask about any record, say 'Add a teacher...', or ask about a syllabus or policy"
+                className="max-h-32 min-h-11 min-w-0 flex-1 resize-none bg-transparent px-2 py-2.5 text-[.92rem] text-surface outline-none [field-sizing:content] placeholder:text-surface/45"
+              />
+              <button
+                type="submit"
+                aria-label="Send"
+                disabled={!input.trim() || !!thinking}
+                className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-xl bg-linear-135 from-primary via-accent to-primary bg-[length:220%_100%] bg-left text-surface transition-[background-position,opacity] duration-500 ease-nav hover:bg-right disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <svg viewBox="0 0 20 20" aria-hidden className="size-[18px]">
+                  <path d="M4 10h11M11 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
+            <p className="mt-2 px-1 text-[.7rem] text-surface/40">Enter to send · Shift + Enter for a new line · Actions never run without your confirmation</p>
+          </form>
+        </section>
+
+        {/* Side panel */}
+        <aside className="grid content-start gap-5">
+          <section className="rounded-[20px] border border-ink/8 bg-white p-5 shadow-[0_10px_30px_rgba(6,30,41,.05)]">
+            <h2 className="text-[1rem] font-extrabold tracking-tight">What I can do</h2>
+            <ul className="mt-3 grid gap-3 text-[.84rem]">
+              {[
+                ["M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3z M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6 M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3", "Query any record", "Teacher check-ins, student profiles, attendance, fee status and behavior, talents and announcements."],
+                ["M13 3L4 14h7l-1 7 9-11h-7z", "Take admin actions", "Add teachers, enroll students and post announcements. You review and confirm every action."],
+                ["M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z M8 7h6", "Read your library", "Answers syllabus and policy questions and audits lesson plans, citing the exact pages."],
+              ].map(([ic, t, d]) => (
+                <li key={t} className="flex gap-3">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/8 text-primary">
+                    <Icon d={ic} className="size-[18px]" />
+                  </span>
+                  <span>
+                    <strong className="block">{t}</strong>
+                    <span className="text-ink/60">{d}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="rounded-[20px] border border-ink/8 bg-white p-5 shadow-[0_10px_30px_rgba(6,30,41,.05)]">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-[1rem] font-extrabold tracking-tight">Knowledge vault</h2>
+              <span className="text-[.78rem] font-bold text-primary">{indexed.length} indexed</span>
+            </div>
+            <ul className="mt-3 grid gap-2">
+              {vault.slice(0, 4).map((d) => (
+                <li key={d.id} className="flex items-center gap-2.5 text-[.82rem]">
+                  <Icon d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z M8 7h6" className="size-4 shrink-0 text-accent" />
+                  <span className="min-w-0 flex-1 truncate font-semibold">{d.title}</span>
+                  <span className="shrink-0 text-[.72rem] text-ink/45">{d.status === "indexed" ? `${d.pages}p` : `${d.progress}%`}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-3 text-[.76rem] text-ink/50">{formatBytes(vault.reduce((n, d) => n + d.size, 0))} across {vault.length} files</p>
+            <button type="button" onClick={() => setVaultOpen(true)} className={`${ghostBtn} mt-3 w-full`}>
+              Upload or manage books
+            </button>
+          </section>
+
+          <section className="rounded-[20px] border border-ink/8 bg-white p-5 shadow-[0_10px_30px_rgba(6,30,41,.05)]">
+            <h2 className="text-[1rem] font-extrabold tracking-tight">Recent actions</h2>
+            <ul className="mt-3 grid gap-2.5">
+              {recent.map((e) => (
+                <li key={e.id} className="text-[.82rem]">
+                  <span className="flex items-center gap-2">
+                    <span aria-hidden className={`size-2 shrink-0 rounded-full ${e.status === "executed" ? "bg-ok" : "bg-ink/25"}`} />
+                    <strong>{e.action}</strong>
+                  </span>
+                  <span className="block truncate pl-4 text-ink/55">{e.detail}</span>
+                </li>
+              ))}
+            </ul>
+            <button type="button" onClick={() => setAuditOpen(true)} className={`${ghostBtn} mt-3 w-full`}>
+              View full audit trail
+            </button>
+          </section>
+        </aside>
+      </div>
+
+      {hydrated && vaultOpen && (
+        <VaultDrawer
+          docs={vault}
+          onUpload={upload}
+          onRemove={removeDoc}
+          onAsk={(d) => {
+            setVaultOpen(false);
+            setInput(`Using "${d.title}", `);
+            setTimeout(() => inputRef.current?.focus(), 320);
+          }}
+          onClose={() => setVaultOpen(false)}
+        />
+      )}
+      {hydrated && auditOpen && <AuditDrawer entries={audit} onClose={() => setAuditOpen(false)} />}
+      {toast && <Toast {...toast} onDone={closeToast} />}
+    </main>
+  );
+}
