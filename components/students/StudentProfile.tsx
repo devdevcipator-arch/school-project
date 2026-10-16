@@ -3,10 +3,10 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Drawer, ghostBtn } from "@/components/dashboard/controls";
 import { Badge } from "@/components/dashboard/ui";
-import { Avatar, SubjectPills } from "@/components/teachers/parts";
+import { Avatar } from "@/components/teachers/parts";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { AS_OF, DEFAULTER_BELOW, TERM_LABEL, attendanceLogs, classTeacherOf, sectionLabel, subjectsFor, tally, type Student } from "@/lib/students";
+import { AS_OF, DEFAULTER_BELOW, TERM_LABEL, attendanceLogs, classTeacherOf, sectionLabel, tally, type Student } from "@/lib/students";
 import AttendanceLogs from "./AttendanceLogs";
 import { AttendanceMeter, StatusBadge } from "./parts";
 
@@ -122,9 +122,6 @@ export default function StudentProfile({ s, tab: initialTab = "profile", onClose
                 <dl className="grid gap-4 rounded-2xl border border-ink/8 bg-surface/50 p-5 sm:grid-cols-2">
                   <Info label="Class & section">{sectionLabel(s.section)}</Info>
                   <Info label="Class teacher">{classTeacherOf(s.section)}</Info>
-                  <Info label="Enrolled subjects" wide>
-                    <SubjectPills subjects={subjectsFor(s)} />
-                  </Info>
                 </dl>
               </section>
 
