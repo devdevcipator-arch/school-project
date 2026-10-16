@@ -1,9 +1,8 @@
 import type { ReactNode } from "react";
-import { Badge, Trend } from "@/components/dashboard/ui";
 import { kpis } from "@/lib/principal";
 
-/** KPI card: header, body, and a footer pinned to the bottom so cards in a row line up. */
-function Kpi({ label, icon, footer, children }: { label: string; icon: string; footer: ReactNode; children: ReactNode }) {
+/** KPI card: header and body. */
+function Kpi({ label, icon, children }: { label: string; icon: string; children: ReactNode }) {
   return (
     <section
       className="flex min-w-0 flex-col rounded-[20px] border border-ink/8 bg-white p-5 shadow-[0_10px_30px_rgba(6,30,41,.05)] transition-[translate,box-shadow] duration-300 ease-soft hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(6,30,41,.1)]"
@@ -16,8 +15,7 @@ function Kpi({ label, icon, footer, children }: { label: string; icon: string; f
           </svg>
         </span>
       </div>
-      <div className="mb-5 mt-4 grid gap-4">{children}</div>
-      <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-ink/8 pt-3.5">{footer}</div>
+      <div className="mt-4 grid gap-4">{children}</div>
     </section>
   );
 }
@@ -69,9 +67,7 @@ export default function KpiCards() {
     <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
       <Kpi
         label="Total Active Teachers"
-        icon="M9 11a4 4 0 1 0 0-8a4 4 0 1 0 0 8z M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7 M16 3.5a4 4 0 0 1 0 7.5 M18 14c2.4.8 4 3.2 4 7"
-        footer={<Trend value={teachers.trend} />}
-      >
+        icon="M9 11a4 4 0 1 0 0-8a4 4 0 1 0 0 8z M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7 M16 3.5a4 4 0 0 1 0 7.5 M18 14c2.4.8 4 3.2 4 7"      >
         <p className={big}>
           {teachers.total} <span className={sub}>on staff</span>
         </p>
@@ -85,9 +81,7 @@ export default function KpiCards() {
 
       <Kpi
         label="Total Enrolled Students"
-        icon="M3 9l9-5 9 5-9 5z M7 11.5V16c0 1.5 2.2 3 5 3s5-1.5 5-3v-4.5"
-        footer={<Trend value={students.trend} />}
-      >
+        icon="M3 9l9-5 9 5-9 5z M7 11.5V16c0 1.5 2.2 3 5 3s5-1.5 5-3v-4.5"      >
         <p className={big}>
           {students.total} <span className={sub}>in Grades 1 to {students.grades}</span>
         </p>
@@ -101,9 +95,7 @@ export default function KpiCards() {
 
       <Kpi
         label="Today's Overall Attendance"
-        icon="M8 3v3 M16 3v3 M4 7h16v13H4z M8 14l2.5 2.5L16 11"
-        footer={<Trend value={attendance.trend} label="vs last week" />}
-      >
+        icon="M8 3v3 M16 3v3 M4 7h16v13H4z M8 14l2.5 2.5L16 11"      >
         <div className="flex items-center gap-4">
           <Ring percent={attendance.percent} />
           <div className="min-w-0">
@@ -117,14 +109,7 @@ export default function KpiCards() {
 
       <Kpi
         label="Fee Status"
-        icon="M3 6h18v12H3z M3 10h18 M7 15h3"
-        footer={
-          <>
-            <Trend value={fees.trend} />
-            <Badge tone="danger">{fees.overdue} overdue</Badge>
-          </>
-        }
-      >
+        icon="M3 6h18v12H3z M3 10h18 M7 15h3"      >
         <p className={big}>
           {fees.paid} <span className={sub}>of {fees.total} students paid</span>
         </p>

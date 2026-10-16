@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 type Props = PageProps<"/principal/teachers">;
 
-// `?add=1` (from "Add Teacher" on the overview) opens the onboarding form straight away.
+// `?add=1` opens the onboarding form straight away.
 async function Board({ searchParams }: Pick<Props, "searchParams">) {
   const { add } = await searchParams;
   return <TeachersBoard startAdding={add === "1"} />;

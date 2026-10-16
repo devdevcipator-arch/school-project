@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 type Props = PageProps<"/principal/announcements">;
 
-// `?compose=1` (from "Post Announcement" on the overview) opens the composer straight away.
+// `?compose=1` opens the composer straight away.
 async function Board({ searchParams }: Pick<Props, "searchParams">) {
   const { compose } = await searchParams;
   return <AnnouncementsBoard startComposing={compose === "1"} />;

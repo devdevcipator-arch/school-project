@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ButtonLink, buttonClass } from "@/components/ui/Button";
 import { notifications } from "@/lib/principal";
 
 /** Small popover that closes on outside click or Escape. */
@@ -37,45 +35,13 @@ function Popover({ open, onClose, children, className = "" }: { open: boolean; o
 const toneDot = { danger: "bg-danger", warn: "bg-warn" };
 
 export default function ExecHeader() {
-  const [menu, setMenu] = useState<"add" | "bell" | null>(null);
+  const [menu, setMenu] = useState<"bell" | null>(null);
   const close = () => setMenu(null);
 
   return (
     <header className="flex justify-end">
-      {/* The page title lives in the portal top bar; this row keeps the quick actions. */}
+      {/* The page title lives in the portal top bar; this row keeps the notifications bell. */}
       <div className="flex flex-wrap items-center gap-2.5">
-        <ButtonLink href="/principal/announcements?compose=1" className="max-sm:flex-1">
-          <svg viewBox="0 0 24 24" aria-hidden className="size-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 11l15-6v14L3 13z M7 13v5h3v-4" />
-          </svg>
-          Post Announcement
-        </ButtonLink>
-
-        <div className="relative max-sm:flex-1">
-          <button
-            type="button"
-            aria-haspopup="menu"
-            aria-expanded={menu === "add"}
-            onClick={() => setMenu((m) => (m === "add" ? null : "add"))}
-            className={buttonClass("dark", "md", "w-full cursor-pointer")}
-          >
-            <svg viewBox="0 0 20 20" aria-hidden className="size-4"><path d="M10 4v12M4 10h12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" /></svg>
-            Add Teacher / Student
-          </button>
-          <Popover open={menu === "add"} onClose={close} className="w-56">
-            <div role="menu">
-              {[
-                { href: "/principal/teachers?add=1", label: "Add Teacher" },
-                { href: "/principal/students", label: "Add Student" },
-              ].map((l) => (
-                <Link key={l.href} role="menuitem" href={l.href} onClick={close} className="block rounded-xl px-3.5 py-2.5 text-[.9rem] font-semibold text-ink transition-colors hover:bg-primary/8 hover:text-primary">
-                  {l.label}
-                </Link>
-              ))}
-            </div>
-          </Popover>
-        </div>
-
         <div className="relative">
           <button
             type="button"
