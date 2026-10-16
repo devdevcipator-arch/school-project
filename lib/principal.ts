@@ -1,6 +1,8 @@
 // Principal portal: navigation + front-end mock data.
 // Replace the mock objects with real API data in the backend phase.
 
+import { accounts, unpaidMonths } from "./fees";
+
 export const principalNav = [
   { href: "/principal", label: "Overview", icon: "M4 4h7v7H4z M13 4h7v4h-7z M13 10h7v10h-7z M4 13h7v7H4z" },
   { href: "/principal/announcements", label: "Announcements", icon: "M3 11l15-6v14L3 13z M7 13v5h3v-4" },
@@ -93,15 +95,21 @@ export const classAttendance = [
 
 export const LOW_ATTENDANCE = 80;
 
+// Unpaid students grouped by how many months of fees are past due (same rule as the Fees page).
+const lateBuckets = [
+  { bucket: "1 month", match: (m: number) => m === 1, tone: "warn" as const },
+  { bucket: "2 months", match: (m: number) => m === 2, tone: "serious" as const },
+  { bucket: "3+ months", match: (m: number) => m >= 3, tone: "danger" as const },
+];
+const lateMonths = accounts.map((a) => unpaidMonths(a));
+const overdueCount = lateMonths.filter((m) => m >= 1).length;
+const severeCount = lateMonths.filter((m) => m >= 3).length;
+
 // Fee status is tracked by student count only (paid vs not paid), never by amount.
 export const feeOverview = {
   monthTotal: 642,
   monthPaid: 518,
-  aging: [
-    { bucket: "30 days", count: 24, tone: "warn" as const },
-    { bucket: "60 days", count: 11, tone: "serious" as const },
-    { bucket: "90+ days", count: 6, tone: "danger" as const },
-  ],
+  aging: lateBuckets.map(({ bucket, match, tone }) => ({ bucket, count: lateMonths.filter(match).length, tone })),
   topPending: [
     { grade: "Grade 9", unpaid: 9, total: 66 },
     { grade: "Grade 7", unpaid: 8, total: 64 },
@@ -120,7 +128,7 @@ export const announcements: { title: string; text: string; audience: Audience; w
 ];
 
 export const notifications = [
-  { text: "6 students are 90+ days overdue on fees", tone: "danger" as const, when: "10m ago" },
+  { text: `${severeCount} students are 3+ months overdue on fees`, tone: "danger" as const, when: "10m ago" },
   { text: "Grade 8 attendance fell below 80% today", tone: "warn" as const, when: "35m ago" },
   { text: "2 teachers checked in late this morning", tone: "warn" as const, when: "1h ago" },
 ];
@@ -130,7 +138,7 @@ export const aiSuggestions = ["Who delayed fees this month?", "Show attendance s
 // Canned answers for the front-end preview of the AI copilot.
 export const aiMockAnswers: Record<string, string> = {
   "Who delayed fees this month?":
-    "124 of 642 students have not paid this month. 41 are overdue, and 6 of them are 90+ days late. Grade 9 has the most unpaid students (9 of 66).",
+    `124 of 642 students have not paid this month. ${overdueCount} are overdue, and ${severeCount} of them are 3+ months late. Grade 9 has the most unpaid students (9 of 66).`,
   "Show attendance summary for Grade 10":
     "Grade 10 attendance today is 91% (58 of 64 present). This week's average is 92.4%, slightly above the school average.",
   "Register a new teacher":
