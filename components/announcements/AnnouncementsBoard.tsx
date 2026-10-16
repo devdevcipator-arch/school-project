@@ -17,7 +17,7 @@ import {
 } from "@/lib/announcements";
 import { Select, Toast, fieldClass, ghostSm, type ToastData } from "@/components/dashboard/controls";
 import Composer, { type ComposerResult } from "./Composer";
-import { saveCustomPresets, setEmergency, useCustomPresets, useEmergency } from "./emergency";
+import { savePresets, setEmergency, useEmergency, usePresets } from "./emergency";
 import { AudienceTag, PriorityBadge, PriorityDot } from "./tags";
 
 type Tab = "all" | "school" | "staff" | "students" | "drafts";
@@ -65,13 +65,12 @@ const chipClass = "rounded-full px-3 py-1 text-[.74rem] font-semibold transition
 const chipIdle = "bg-ink/5 text-ink/65 hover:bg-danger/10 hover:text-danger";
 const chipActive = "bg-danger/10 text-danger ring-1 ring-danger/30";
 
-/** Quick-select messages: the defaults plus any the principal saved, with a (+) to add new ones. */
+/** Quick-select messages, each removable with (x), plus a (+) to add new ones. */
 function PresetChips({ value, onPick }: { value: string; onPick: (msg: string) => void }) {
-  const custom = useCustomPresets();
+  const presets = usePresets(defaultPresets);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState("");
 
-  const all = [...defaultPresets, ...custom.filter((p) => !defaultPresets.includes(p))];
   const cancel = () => {
     setAdding(false);
     setDraft("");
@@ -79,31 +78,28 @@ function PresetChips({ value, onPick }: { value: string; onPick: (msg: string) =
   const save = () => {
     const text = draft.trim();
     if (!text) return;
-    if (!all.includes(text)) saveCustomPresets([...custom, text]);
+    if (!presets.includes(text)) savePresets([...presets, text]);
     onPick(text);
     cancel();
   };
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      {all.map((p) => {
-        const isCustom = !defaultPresets.includes(p);
+      {presets.map((p) => {
         const active = p === value;
         return (
-          <span key={p} className={`inline-flex items-center ${chipClass} ${active ? chipActive : chipIdle} ${isCustom ? "pr-1.5" : ""}`}>
+          <span key={p} className={`inline-flex items-center pr-1.5 ${chipClass} ${active ? chipActive : chipIdle}`}>
             <button type="button" onClick={() => onPick(p)} aria-pressed={active} className="cursor-pointer text-left">
               {p}
             </button>
-            {isCustom && (
-              <button
-                type="button"
-                aria-label={`Remove preset: ${p}`}
-                onClick={() => saveCustomPresets(custom.filter((c) => c !== p))}
-                className="ml-1 grid size-4 cursor-pointer place-items-center rounded-full text-current/70 transition-colors hover:bg-danger hover:text-white"
-              >
-                <Icon d="M6 6l12 12 M18 6 6 18" className="size-2.5" />
-              </button>
-            )}
+            <button
+              type="button"
+              aria-label={`Remove preset: ${p}`}
+              onClick={() => savePresets(presets.filter((c) => c !== p))}
+              className="ml-1 grid size-4 cursor-pointer place-items-center rounded-full text-current/70 transition-colors hover:bg-danger hover:text-white"
+            >
+              <Icon d="M6 6l12 12 M18 6 6 18" className="size-2.5" />
+            </button>
           </span>
         );
       })}

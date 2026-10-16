@@ -26,15 +26,17 @@ export function setEmergency(message: string | null) {
   window.dispatchEvent(new Event(EVENT));
 }
 
-// Custom quick-select messages the principal saved for the broadcast form.
-const PRESETS_KEY = "ss-emergency-presets";
+// Quick-select messages for the broadcast form. Starts as `defaults` until the principal
+// adds or removes one; after that the saved list is used as-is.
+const PRESETS_KEY = "ss-emergency-presets-v2";
 
-function readPresets(raw: string | null): string[] {
+function readPresets(raw: string | null, defaults: string[]): string[] {
+  if (raw === null) return defaults;
   try {
-    const list: unknown = JSON.parse(raw ?? "[]");
-    return Array.isArray(list) ? list.filter((p): p is string => typeof p === "string") : [];
+    const list: unknown = JSON.parse(raw);
+    return Array.isArray(list) ? list.filter((p): p is string => typeof p === "string") : defaults;
   } catch {
-    return [];
+    return defaults;
   }
 }
 
@@ -46,12 +48,12 @@ function presetsSnapshot() {
   }
 }
 
-export function useCustomPresets() {
+export function usePresets(defaults: string[]) {
   const raw = useSyncExternalStore(subscribe, presetsSnapshot, () => null);
-  return useMemo(() => readPresets(raw), [raw]);
+  return useMemo(() => readPresets(raw, defaults), [raw, defaults]);
 }
 
-export function saveCustomPresets(list: string[]) {
+export function savePresets(list: string[]) {
   try {
     localStorage.setItem(PRESETS_KEY, JSON.stringify(list));
   } catch {
