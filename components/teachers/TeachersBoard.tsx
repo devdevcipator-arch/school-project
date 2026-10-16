@@ -72,10 +72,12 @@ function TeacherCard({ t, ...actions }: Actions & { t: Teacher }) {
           <Icon d="M4 6h16v12H4z M4 7l8 6 8-6" className="size-4 shrink-0 text-accent" />
           <span className="truncate">{t.email}</span>
         </a>
-        <a href={`tel:${t.phone.replace(/\s/g, "")}`} className="inline-flex items-center gap-2 text-ink/70 hover:text-primary">
-          <Icon d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2" className="size-4 shrink-0 text-accent" />
-          {t.phone}
-        </a>
+        {t.phone && (
+          <a href={`tel:${t.phone.replace(/\s/g, "")}`} className="inline-flex items-center gap-2 text-ink/70 hover:text-primary">
+            <Icon d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2" className="size-4 shrink-0 text-accent" />
+            {t.phone}
+          </a>
+        )}
       </div>
 
       <div className="mb-4 mt-4 grid gap-2">
@@ -128,9 +130,11 @@ function TeacherTable({ list, ...actions }: Actions & { list: Teacher[] }) {
                 <a href={`mailto:${t.email}`} className="block max-w-[200px] truncate text-ink/75 hover:text-primary">
                   {t.email}
                 </a>
-                <a href={`tel:${t.phone.replace(/\s/g, "")}`} className="whitespace-nowrap text-ink/50 hover:text-primary">
-                  {t.phone}
-                </a>
+                {t.phone && (
+                  <a href={`tel:${t.phone.replace(/\s/g, "")}`} className="whitespace-nowrap text-ink/50 hover:text-primary">
+                    {t.phone}
+                  </a>
+                )}
               </td>
               <td className="max-w-[210px] px-2.5 py-3.5">
                 <ScopeBadges t={t} />

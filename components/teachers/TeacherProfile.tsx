@@ -106,9 +106,13 @@ export default function TeacherProfile({
               </a>
             </Info>
             <Info label="Phone">
-              <a href={`tel:${t.phone.replace(/\s/g, "")}`} className="text-primary hover:underline">
-                {t.phone}
-              </a>
+              {t.phone ? (
+                <a href={`tel:${t.phone.replace(/\s/g, "")}`} className="text-primary hover:underline">
+                  {t.phone}
+                </a>
+              ) : (
+                <span className="text-ink/50">Not added yet</span>
+              )}
             </Info>
             <Info label="Academic scope">
               <ScopeBadges t={t} />

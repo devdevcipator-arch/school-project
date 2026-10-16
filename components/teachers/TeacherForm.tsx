@@ -59,6 +59,14 @@ const input = (bad?: string) =>
   `w-full rounded-xl border bg-white px-4 py-3 text-[.92rem] outline-none transition-colors hover:border-accent focus:border-primary ${bad ? "border-danger" : "border-ink/12"}`;
 const aria = (id: string, bad?: string) => ({ id, "aria-invalid": !!bad, "aria-describedby": bad ? `${id}-error` : undefined });
 
+const inviteIcon = "M4 6h16v12H4z M4 7l8 6 8-6";
+
+// Onboarding methods shown at the top of the Add Teacher form.
+const methods = [
+  ["invite", "Invite link", "Email a one-time link; the teacher sets their own password.", inviteIcon],
+  ["password", "Temporary password", "Set up the full profile now with an auto-generated password.", "M6 11V8a6 6 0 0 1 12 0v3 M5 11h14v10H5z M12 15v2"],
+] as const;
+
 export default function TeacherForm({
   initial,
   roster,
@@ -93,13 +101,22 @@ export default function TeacherForm({
   const toggle = (k: "classes" | "subjects", v: string) => setF((p) => ({ ...p, [k]: p[k].includes(v) ? p[k].filter((x) => x !== v) : [...p[k], v] }));
   const others = roster.filter((t) => t.id !== initial?.id);
 
+  // Invite mode (new teachers only) collects just name + email; the teacher fills in the rest
+  // after accepting. Temporary password mode sets up the complete profile now.
+  const invite = !initial && f.credential === "invite";
+  const pickMethod = (m: Fields["credential"]) => {
+    set("credential", m);
+    setErrors({});
+  };
+
   const validate = (): Errors => {
     const e: Errors = {};
     if (f.name.trim().length < 3) e.name = "Enter the teacher's full name.";
-    if (!/^TCH-\d{3,6}$/.test(f.empId.trim())) e.empId = "Use the format TCH-1234.";
-    else if (others.some((t) => t.empId === f.empId.trim())) e.empId = "This employee ID is already in use.";
     if (!emailRe.test(f.email.trim())) e.email = "Enter a valid email address.";
     else if (others.some((t) => t.email.toLowerCase() === f.email.trim().toLowerCase())) e.email = "Another teacher already uses this email.";
+    if (invite) return e;
+    if (!/^TCH-\d{3,6}$/.test(f.empId.trim())) e.empId = "Use the format TCH-1234.";
+    else if (others.some((t) => t.empId === f.empId.trim())) e.empId = "This employee ID is already in use.";
     if (!phoneRe.test(f.phone.trim())) e.phone = "Enter a valid phone number, e.g. +92 300 1234567.";
     if (f.ctGrade) {
       const cls = `${f.ctGrade}-${f.ctSection}`;
@@ -117,18 +134,19 @@ export default function TeacherForm({
       requestAnimationFrame(() => document.querySelector<HTMLElement>("[aria-invalid='true']")?.focus());
       return;
     }
-    const classTeacher = f.ctGrade ? `${f.ctGrade}-${f.ctSection}` : null;
+    // Hidden fields never leak into an invite, even if they were filled before switching.
+    const classTeacher = !invite && f.ctGrade ? `${f.ctGrade}-${f.ctSection}` : null;
     const status = initial ? f.status : "active";
     onSave(
       {
         id: initial?.id ?? `t-${crypto.randomUUID()}`,
         name: f.name.trim(),
-        empId: f.empId.trim(),
+        empId: invite ? nextEmp : f.empId.trim(),
         email: f.email.trim().toLowerCase(),
-        phone: f.phone.trim(),
+        phone: invite ? "" : f.phone.trim(),
         classTeacher,
-        classes: grades.filter((g) => f.classes.includes(g)),
-        subjects: subjects.filter((s) => f.subjects.includes(s)),
+        classes: invite ? [] : grades.filter((g) => f.classes.includes(g)),
+        subjects: invite ? [] : subjects.filter((s) => f.subjects.includes(s)),
         status,
         checkIn: initial && status === initial.status ? initial.checkIn : { state: status === "active" ? "absent" : status === "leave" ? "leave" : "none" },
         joined: initial?.joined ?? new Date().toISOString().slice(0, 10),
@@ -141,7 +159,13 @@ export default function TeacherForm({
   return (
     <Drawer
       title={initial ? "Edit Details / Class Assignment" : "Add New Teacher"}
-      subtitle={initial ? `${initial.name} · ${initial.empId}` : "Create the profile, assign classes and send login credentials."}
+      subtitle={
+        initial
+          ? `${initial.name} · ${initial.empId}`
+          : invite
+            ? "Email an invite; the teacher completes their own profile after joining."
+            : "Create the profile, assign classes and send login credentials."
+      }
       onClose={onClose}
       footer={(close) => (
         <>
@@ -149,8 +173,8 @@ export default function TeacherForm({
             Cancel
           </button>
           <button type="submit" form="teacher-form" className={buttonClass("primary", "md", "cursor-pointer max-sm:flex-1 sm:ml-auto")}>
-            <Icon d={initial ? "M5 12l4 4 10-10" : "M9 11a4 4 0 1 0 0-8a4 4 0 1 0 0 8z M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7 M19 8v6 M16 11h6"} className="size-[18px]" />
-            {initial ? "Save Changes" : "Save & Onboard Teacher"}
+            <Icon d={initial ? "M5 12l4 4 10-10" : invite ? inviteIcon : "M9 11a4 4 0 1 0 0-8a4 4 0 1 0 0 8z M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7 M19 8v6 M16 11h6"} className="size-[18px]" />
+            {initial ? "Save Changes" : invite ? "Send Invite Link" : "Save & Onboard Teacher"}
           </button>
         </>
       )}
@@ -164,7 +188,29 @@ export default function TeacherForm({
             submit(close);
           }}
         >
-          <Section title="Teacher profile details">
+          {!initial && (
+            <Section title="Onboarding method" hint="Choose how this teacher gets started. The form below adjusts to your choice.">
+              <fieldset className="grid gap-2.5 sm:grid-cols-2">
+                <legend className="sr-only">Onboarding method</legend>
+                {methods.map(([k, l, h, ic]) => (
+                  <label key={k} className="cursor-pointer">
+                    <input type="radio" name="credential" checked={f.credential === k} onChange={() => pickMethod(k)} className="peer sr-only" />
+                    <span className="flex h-full gap-3 rounded-2xl border border-ink/12 p-3.5 transition-[border-color,background-color] duration-200 hover:border-accent peer-checked:border-primary peer-checked:bg-primary/5 peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent">
+                      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                        <Icon d={ic} className="size-[18px]" />
+                      </span>
+                      <span className="grid">
+                        <span className="text-[.88rem] font-bold">{l}</span>
+                        <span className="text-[.76rem] text-ink/55">{h}</span>
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </fieldset>
+            </Section>
+          )}
+
+          <Section title="Teacher profile details" hint={invite ? "Only the basics are needed to send the invite." : undefined}>
             <Field id="t-name" label="Full name" error={errors.name}>
               <input
                 {...aria("t-name", errors.name)}
@@ -178,14 +224,16 @@ export default function TeacherForm({
                 className={input(errors.name)}
               />
             </Field>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field id="t-emp" label="Employee ID / code" error={errors.empId}>
-                <input {...aria("t-emp", errors.empId)} value={f.empId} onChange={(e) => set("empId", e.target.value.toUpperCase())} className={input(errors.empId)} />
-              </Field>
-              <Field id="t-phone" label="Phone number" error={errors.phone}>
-                <input {...aria("t-phone", errors.phone)} type="tel" value={f.phone} placeholder="+92 300 1234567" onChange={(e) => set("phone", e.target.value)} className={input(errors.phone)} />
-              </Field>
-            </div>
+            {!invite && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field id="t-emp" label="Employee ID / code" error={errors.empId}>
+                  <input {...aria("t-emp", errors.empId)} value={f.empId} onChange={(e) => set("empId", e.target.value.toUpperCase())} className={input(errors.empId)} />
+                </Field>
+                <Field id="t-phone" label="Phone number" error={errors.phone}>
+                  <input {...aria("t-phone", errors.phone)} type="tel" value={f.phone} placeholder="+92 300 1234567" onChange={(e) => set("phone", e.target.value)} className={input(errors.phone)} />
+                </Field>
+              </div>
+            )}
             <Field id="t-email" label="Official email" error={errors.email}>
               <input
                 {...aria("t-email", errors.email)}
@@ -199,6 +247,11 @@ export default function TeacherForm({
                 className={input(errors.email)}
               />
             </Field>
+            {invite && (
+              <p className="animate-fade-in rounded-2xl bg-surface p-3.5 text-[.86rem] text-ink/70">
+                A one-time invite link will be emailed to <strong className="text-ink">{f.email || "the official email"}</strong>. The teacher sets their own password, and you can assign classes and subjects afterwards.
+              </p>
+            )}
             {initial && (
               <fieldset>
                 <legend className="mb-2 text-[.84rem] font-bold">Status</legend>
@@ -219,109 +272,83 @@ export default function TeacherForm({
             )}
           </Section>
 
-          <Section title="Academic assignment" hint="Class teacher section plus the grades and subjects this teacher covers.">
-            <div>
-              <p className="mb-1.5 text-[.84rem] font-bold">Primary assigned class / section</p>
-              <div className="grid grid-cols-[1fr_120px] gap-2.5">
-                <Select label="Class teacher of grade" value={f.ctGrade} onChange={(v) => set("ctGrade", v)}>
-                  <option value="">Not a class teacher</option>
-                  {grades.map((g) => (
-                    <option key={g} value={g.replace("Grade ", "")}>
-                      Class {g.replace("Grade ", "")}
-                    </option>
-                  ))}
-                </Select>
-                <Select label="Section" value={f.ctSection} onChange={(v) => set("ctSection", v)} className={f.ctGrade ? "" : "pointer-events-none opacity-50"}>
-                  {sections.map((s) => (
-                    <option key={s} value={s}>
-                      Section {s}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              {errors.classTeacher && <p className="mt-1.5 text-[.8rem] font-semibold text-danger">{errors.classTeacher}</p>}
-            </div>
-
-            <fieldset>
-              <legend className="mb-2 text-[.84rem] font-bold">Other classes taught</legend>
-              <div className="flex flex-wrap gap-2">
-                {grades.map((g) => (
-                  <Chip key={g} type="checkbox" name="classes" checked={f.classes.includes(g)} onChange={() => toggle("classes", g)}>
-                    {g}
-                  </Chip>
-                ))}
-              </div>
-            </fieldset>
-
-            <fieldset aria-describedby={errors.subjects ? "t-subjects-error" : undefined}>
-              <legend className="mb-2 text-[.84rem] font-bold">Assigned subjects</legend>
-              <div className="flex flex-wrap gap-2">
-                {subjects.map((s) => (
-                  <Chip key={s} type="checkbox" name="subjects" checked={f.subjects.includes(s)} onChange={() => toggle("subjects", s)}>
-                    {s}
-                  </Chip>
-                ))}
-              </div>
-              {errors.subjects && (
-                <p id="t-subjects-error" className="mt-1.5 text-[.8rem] font-semibold text-danger">
-                  {errors.subjects}
-                </p>
-              )}
-            </fieldset>
-          </Section>
-
-          {!initial && (
-            <Section title="System credentials" hint="How the teacher signs in for the first time.">
-              <fieldset className="grid gap-2.5 sm:grid-cols-2">
-                <legend className="sr-only">Credential method</legend>
-                {(
-                  [
-                    ["password", "Temporary password", "Auto-generated; teacher changes it on first login.", "M6 11V8a6 6 0 0 1 12 0v3 M5 11h14v10H5z M12 15v2"],
-                    ["invite", "Invite link", "Email a one-time link to set their own password.", "M4 6h16v12H4z M4 7l8 6 8-6"],
-                  ] as const
-                ).map(([k, l, h, ic]) => (
-                  <label key={k} className="cursor-pointer">
-                    <input type="radio" name="credential" checked={f.credential === k} onChange={() => set("credential", k)} className="peer sr-only" />
-                    <span className="flex h-full gap-3 rounded-2xl border border-ink/12 p-3.5 transition-[border-color,background-color] duration-200 hover:border-accent peer-checked:border-primary peer-checked:bg-primary/5 peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent">
-                      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-                        <Icon d={ic} className="size-[18px]" />
-                      </span>
-                      <span className="grid">
-                        <span className="text-[.88rem] font-bold">{l}</span>
-                        <span className="text-[.76rem] text-ink/55">{h}</span>
-                      </span>
-                    </span>
-                  </label>
-                ))}
-              </fieldset>
-              {f.credential === "password" ? (
-                <div className="flex animate-fade-in flex-wrap items-center gap-2 rounded-2xl bg-surface p-3.5">
-                  <code className="min-w-0 flex-1 rounded-lg bg-white px-3 py-2 font-mono text-[.95rem] font-bold tracking-wider">{password}</code>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPassword(makePassword());
-                      setCopied(false);
-                    }}
-                    className={`${ghostBtn} px-3! py-2!`}
-                  >
-                    <Icon d="M20 11a8 8 0 1 0-2.3 5.7 M20 4v7h-7" className="size-4" />
-                    Regenerate
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => navigator.clipboard?.writeText(password).then(() => setCopied(true))}
-                    className={`${ghostBtn} px-3! py-2!`}
-                  >
-                    <Icon d={copied ? "M5 12l4 4 10-10" : "M8 8h11v13H8z M5 16V3h11"} className="size-4" />
-                    {copied ? "Copied" : "Copy"}
-                  </button>
+          {!invite && (
+            <Section title="Academic assignment" hint="Class teacher section plus the grades and subjects this teacher covers.">
+              <div>
+                <p className="mb-1.5 text-[.84rem] font-bold">Primary assigned class / section</p>
+                <div className="grid grid-cols-[1fr_120px] gap-2.5">
+                  <Select label="Class teacher of grade" value={f.ctGrade} onChange={(v) => set("ctGrade", v)}>
+                    <option value="">Not a class teacher</option>
+                    {grades.map((g) => (
+                      <option key={g} value={g.replace("Grade ", "")}>
+                        Class {g.replace("Grade ", "")}
+                      </option>
+                    ))}
+                  </Select>
+                  <Select label="Section" value={f.ctSection} onChange={(v) => set("ctSection", v)} className={f.ctGrade ? "" : "pointer-events-none opacity-50"}>
+                    {sections.map((s) => (
+                      <option key={s} value={s}>
+                        Section {s}
+                      </option>
+                    ))}
+                  </Select>
                 </div>
-              ) : (
-                <p className="animate-fade-in rounded-2xl bg-surface p-3.5 text-[.86rem] text-ink/70">
-                  An invite link will be emailed to <strong className="text-ink">{f.email || "the official email"}</strong> once you save.
-                </p>
-              )}
+                {errors.classTeacher && <p className="mt-1.5 text-[.8rem] font-semibold text-danger">{errors.classTeacher}</p>}
+              </div>
+
+              <fieldset>
+                <legend className="mb-2 text-[.84rem] font-bold">Other classes taught</legend>
+                <div className="flex flex-wrap gap-2">
+                  {grades.map((g) => (
+                    <Chip key={g} type="checkbox" name="classes" checked={f.classes.includes(g)} onChange={() => toggle("classes", g)}>
+                      {g}
+                    </Chip>
+                  ))}
+                </div>
+              </fieldset>
+
+              <fieldset aria-describedby={errors.subjects ? "t-subjects-error" : undefined}>
+                <legend className="mb-2 text-[.84rem] font-bold">Assigned subjects</legend>
+                <div className="flex flex-wrap gap-2">
+                  {subjects.map((s) => (
+                    <Chip key={s} type="checkbox" name="subjects" checked={f.subjects.includes(s)} onChange={() => toggle("subjects", s)}>
+                      {s}
+                    </Chip>
+                  ))}
+                </div>
+                {errors.subjects && (
+                  <p id="t-subjects-error" className="mt-1.5 text-[.8rem] font-semibold text-danger">
+                    {errors.subjects}
+                  </p>
+                )}
+              </fieldset>
+            </Section>
+          )}
+
+          {!initial && !invite && (
+            <Section title="Temporary password" hint="Auto-generated. Share it with the teacher; they change it on first login.">
+              <div className="flex animate-fade-in flex-wrap items-center gap-2 rounded-2xl bg-surface p-3.5">
+                <code className="min-w-0 flex-1 rounded-lg bg-white px-3 py-2 font-mono text-[.95rem] font-bold tracking-wider">{password}</code>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPassword(makePassword());
+                    setCopied(false);
+                  }}
+                  className={`${ghostBtn} px-3! py-2!`}
+                >
+                  <Icon d="M20 11a8 8 0 1 0-2.3 5.7 M20 4v7h-7" className="size-4" />
+                  Regenerate
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigator.clipboard?.writeText(password).then(() => setCopied(true))}
+                  className={`${ghostBtn} px-3! py-2!`}
+                >
+                  <Icon d={copied ? "M5 12l4 4 10-10" : "M8 8h11v13H8z M5 16V3h11"} className="size-4" />
+                  {copied ? "Copied" : "Copy"}
+                </button>
+              </div>
             </Section>
           )}
         </form>
