@@ -223,7 +223,7 @@ export default function TeachersBoard({ startAdding = false }: { startAdding?: b
         ? `${t.name}'s details were updated.`
         : credential?.type === "invite"
           ? `${t.name} onboarded. Invite link sent to ${credential.value}.`
-          : `${t.name} onboarded with a temporary password.`,
+          : `${t.name}'s teacher profile was created.`,
     });
   };
 

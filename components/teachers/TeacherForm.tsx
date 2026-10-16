@@ -64,7 +64,7 @@ const inviteIcon = "M4 6h16v12H4z M4 7l8 6 8-6";
 // Onboarding methods shown at the top of the Add Teacher form.
 const methods = [
   ["invite", "Invite link", "Email a one-time link; the teacher sets their own password.", inviteIcon],
-  ["password", "Temporary password", "Set up the full profile now with an auto-generated password.", "M6 11V8a6 6 0 0 1 12 0v3 M5 11h14v10H5z M12 15v2"],
+  ["password", "Create teacher profile", "Fill in the full profile now: contact details, classes and subjects.", "M9 11a4 4 0 1 0 0-8a4 4 0 1 0 0 8z M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7 M19 8v6 M16 11h6"],
 ] as const;
 
 export default function TeacherForm({
@@ -102,7 +102,7 @@ export default function TeacherForm({
   const others = roster.filter((t) => t.id !== initial?.id);
 
   // Invite mode (new teachers only) collects just name + email; the teacher fills in the rest
-  // after accepting. Temporary password mode sets up the complete profile now.
+  // after accepting. "Create teacher profile" sets up the complete profile now.
   const invite = !initial && f.credential === "invite";
   const pickMethod = (m: Fields["credential"]) => {
     set("credential", m);
