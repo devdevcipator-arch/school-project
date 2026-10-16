@@ -427,8 +427,7 @@ export default function AnnouncementsBoard({ startComposing = false }: { startCo
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState("all");
   const [prio, setPrio] = useState("all");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const [day, setDay] = useState("");
   const [view, setView] = useState<"feed" | "table">("feed");
   const [composer, setComposer] = useState<{ initial: Notice | null } | null>(startComposing ? { initial: null } : null);
   const [file, setFile] = useState<Attachment | null>(null);
@@ -459,20 +458,16 @@ export default function AnnouncementsBoard({ startComposing = false }: { startCo
       .filter((n) => !q || `${n.title} ${plainText(n.body)} ${n.author} ${n.targets.join(" ")}`.toLowerCase().includes(q))
       .filter((n) => cat === "all" || n.category === cat)
       .filter((n) => prio === "all" || n.priority === prio)
-      .filter((n) => {
-        const day = n.date.slice(0, 10);
-        return (!from || day >= from) && (!to || day <= to);
-      })
+      .filter((n) => !day || n.date.slice(0, 10) === day)
       .sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.date.localeCompare(a.date));
-  }, [list, tab, query, cat, prio, from, to]);
+  }, [list, tab, query, cat, prio, day]);
 
-  const filtersOn = query || cat !== "all" || prio !== "all" || from || to;
+  const filtersOn = query || cat !== "all" || prio !== "all" || day;
   const clearFilters = () => {
     setQuery("");
     setCat("all");
     setPrio("all");
-    setFrom("");
-    setTo("");
+    setDay("");
   };
 
   const actions: Actions = {
@@ -568,12 +563,8 @@ export default function AnnouncementsBoard({ startComposing = false }: { startCo
               <option value="normal">Normal</option>
             </Select>
             <label className="grid">
-              <span className="sr-only">From date</span>
-              <input type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} className={`${field} cursor-pointer`} />
-            </label>
-            <label className="grid">
-              <span className="sr-only">To date</span>
-              <input type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} className={`${field} cursor-pointer`} />
+              <span className="sr-only">Notice date</span>
+              <input type="date" value={day} onChange={(e) => setDay(e.target.value)} className={`${field} cursor-pointer`} />
             </label>
           </div>
           {filtersOn && (
