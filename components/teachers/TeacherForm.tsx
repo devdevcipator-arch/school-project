@@ -93,8 +93,8 @@ export default function TeacherForm({
     credential: "password",
   });
   const [emailTouched, setEmailTouched] = useState(!!initial);
-  const [password, setPassword] = useState(makePassword);
-  const [copied, setCopied] = useState(false);
+  // Generated once per form; handed to onSave for the teacher's first login.
+  const [password] = useState(makePassword);
   const [errors, setErrors] = useState<Errors>({});
 
   const set = <K extends keyof Fields>(k: K, v: Fields[K]) => setF((p) => ({ ...p, [k]: v }));
@@ -325,32 +325,6 @@ export default function TeacherForm({
             </Section>
           )}
 
-          {!initial && !invite && (
-            <Section title="Temporary password" hint="Auto-generated. Share it with the teacher; they change it on first login.">
-              <div className="flex animate-fade-in flex-wrap items-center gap-2 rounded-2xl bg-surface p-3.5">
-                <code className="min-w-0 flex-1 rounded-lg bg-white px-3 py-2 font-mono text-[.95rem] font-bold tracking-wider">{password}</code>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPassword(makePassword());
-                    setCopied(false);
-                  }}
-                  className={`${ghostBtn} px-3! py-2!`}
-                >
-                  <Icon d="M20 11a8 8 0 1 0-2.3 5.7 M20 4v7h-7" className="size-4" />
-                  Regenerate
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigator.clipboard?.writeText(password).then(() => setCopied(true))}
-                  className={`${ghostBtn} px-3! py-2!`}
-                >
-                  <Icon d={copied ? "M5 12l4 4 10-10" : "M8 8h11v13H8z M5 16V3h11"} className="size-4" />
-                  {copied ? "Copied" : "Copy"}
-                </button>
-              </div>
-            </Section>
-          )}
         </form>
       )}
     </Drawer>
