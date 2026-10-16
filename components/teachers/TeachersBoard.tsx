@@ -5,7 +5,8 @@ import { Dialog, Pagination, Select, Toast, ViewToggle, fieldClass, ghostBtn, gh
 import { StatCard } from "@/components/dashboard/ui";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { grades, teachers as seed, teachesGrade, type Teacher } from "@/lib/teachers";
+import { pillClass, useSlidingPill } from "@/components/motion/useSlidingPill";
+import { grades, longDate, teachers as seed, teachesGrade, type Teacher } from "@/lib/teachers";
 import { Avatar, CheckInChip, ScopeBadges, StatusBadge, SubjectPills } from "./parts";
 import TeacherForm from "./TeacherForm";
 import TeacherProfile, { type ProfileTab } from "./TeacherProfile";
@@ -158,10 +159,66 @@ function TeacherTable({ list, ...actions }: Actions & { list: Teacher[] }) {
   );
 }
 
+/* ---------------- Pending (joined via invite) ---------------- */
+
+function PendingList({ list, onView, onEdit, onRemove }: Actions & { list: Teacher[] }) {
+  return (
+    <ul className="divide-y divide-ink/8 overflow-hidden rounded-[18px] border border-ink/8 bg-white">
+      {list.map((t) => (
+        <li key={t.id} className="grid gap-4 px-5 py-4 transition-colors hover:bg-surface/50 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)_minmax(0,.8fr)_auto] lg:items-center">
+          <div className="flex min-w-0 items-center gap-3">
+            <Avatar name={t.name} />
+            <div className="min-w-0">
+              <button type="button" onClick={() => onView(t)} className="block max-w-full cursor-pointer truncate text-left font-bold hover:text-primary">
+                {t.name}
+              </button>
+              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="whitespace-nowrap text-[.76rem] text-ink/50">{t.empId}</span>
+                <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-warn/12 px-2.5 py-0.5 text-[.72rem] font-bold text-[#9a6a0f]">
+                  <Icon d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z M12 7v5l3 2" className="size-3" />
+                  Awaiting assignment
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="grid min-w-0 text-[.84rem]">
+            <a href={`mailto:${t.email}`} className="truncate text-ink/75 hover:text-primary">
+              {t.email}
+            </a>
+            {t.phone ? (
+              <a href={`tel:${t.phone.replace(/\s/g, "")}`} className="whitespace-nowrap text-ink/50 hover:text-primary">
+                {t.phone}
+              </a>
+            ) : (
+              <span className="text-ink/40">No phone added</span>
+            )}
+          </div>
+          <p className="text-[.82rem] text-ink/60">
+            Joined via invite
+            <span className="block font-semibold text-ink">{longDate(t.joined)}</span>
+          </p>
+          <div className="flex items-center gap-1.5">
+            <button type="button" onClick={() => onEdit(t)} className={buttonClass("primary", "md", "cursor-pointer max-lg:flex-1 px-4! py-2.5! text-[.86rem]!")}>
+              <Icon d="M9 11a4 4 0 1 0 0-8a4 4 0 1 0 0 8z M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7 M19 8v6 M16 11h6" className="size-4" />
+              Assign classes & subjects
+            </button>
+            <button type="button" onClick={() => onRemove(t)} aria-label={`Remove ${t.name}`} title="Remove" className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-xl text-ink/55 transition-colors hover:bg-danger/10 hover:text-danger">
+              <Icon d={actionIcons.remove} className="size-[18px]" />
+            </button>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /* ---------------- Board ---------------- */
+
+type BoardTab = "profiles" | "pending";
 
 export default function TeachersBoard({ startAdding = false }: { startAdding?: boolean }) {
   const [list, setList] = useState<Teacher[]>(seed);
+  const [tab, setTab] = useState<BoardTab>("profiles");
   const [query, setQuery] = useState("");
   const [grade, setGrade] = useState("all");
   const [status, setStatus] = useState("all");
@@ -177,26 +234,43 @@ export default function TeachersBoard({ startAdding = false }: { startAdding?: b
   const closeToast = useCallback(() => setToast(null), []);
   const closeRemove = useCallback(() => setRemoving(null), []);
 
+  // Profiles tab: teachers with a completed profile. Pending tab: joined via invite, nothing assigned yet.
+  const profiles = useMemo(() => list.filter((t) => !t.pending), [list]);
+  const pending = useMemo(() => list.filter((t) => t.pending), [list]);
+  const onPending = tab === "pending";
+
   const stats = useMemo(() => {
-    const staff = list.filter((t) => t.status !== "inactive");
+    const staff = profiles.filter((t) => t.status !== "inactive");
     return {
       faculty: staff.length,
       checkedIn: staff.filter((t) => t.checkIn.state === "present" || t.checkIn.state === "late").length,
       late: staff.filter((t) => t.checkIn.state === "late").length,
-      leave: list.filter((t) => t.status === "leave").length,
+      leave: profiles.filter((t) => t.status === "leave").length,
       classTeachers: staff.filter((t) => t.classTeacher).length,
-      inactive: list.length - staff.length,
+      inactive: profiles.length - staff.length,
     };
-  }, [list]);
+  }, [profiles]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return list
-      .filter((t) => !q || `${t.name} ${t.empId} ${t.email}`.toLowerCase().includes(q))
+    const matches = (t: Teacher) => !q || `${t.name} ${t.empId} ${t.email}`.toLowerCase().includes(q);
+    if (onPending) return pending.filter(matches).sort((a, b) => b.joined.localeCompare(a.joined));
+    return profiles
+      .filter(matches)
       .filter((t) => grade === "all" || teachesGrade(t, grade))
       .filter((t) => status === "all" || t.status === status)
       .sort((a, b) => Number(a.status === "inactive") - Number(b.status === "inactive") || a.name.localeCompare(b.name));
-  }, [list, query, grade, status]);
+  }, [onPending, profiles, pending, query, grade, status]);
+
+  const tabs: { key: BoardTab; label: string; count: number }[] = [
+    { key: "profiles", label: "Teacher Profiles", count: profiles.length },
+    { key: "pending", label: "Joined via Invite", count: pending.length },
+  ];
+  const { listRef, target, setHover } = useSlidingPill(onPending ? 1 : 0);
+  const switchTab = (t: BoardTab) => {
+    setTab(t);
+    setPage(1);
+  };
 
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const current = Math.min(page, pages);
@@ -206,7 +280,7 @@ export default function TeachersBoard({ startAdding = false }: { startAdding?: b
     setter(v);
     setPage(1);
   };
-  const filtersOn = query || grade !== "all" || status !== "all";
+  const filtersOn = query || (!onPending && (grade !== "all" || status !== "all"));
 
   const actions: Actions = {
     onView: (t) => setProfile({ t, tab: "profile" }),
@@ -216,14 +290,20 @@ export default function TeachersBoard({ startAdding = false }: { startAdding?: b
   };
 
   const save = (t: Teacher, credential?: { type: "password" | "invite"; value: string }) => {
-    const exists = list.some((x) => x.id === t.id);
+    const before = list.find((x) => x.id === t.id);
+    const exists = !!before;
     setList((l) => (exists ? l.map((x) => (x.id === t.id ? t : x)) : [t, ...l]));
+    // Show the teacher where they now live: new invites in the pending tab, finished profiles in Teacher Profiles.
+    if (!exists && t.pending) switchTab("pending");
+    if (before?.pending && !t.pending) switchTab("profiles");
     setToast({
-      text: exists
-        ? `${t.name}'s details were updated.`
-        : credential?.type === "invite"
-          ? `${t.name} onboarded. Invite link sent to ${credential.value}.`
-          : `${t.name}'s teacher profile was created.`,
+      text: before?.pending
+        ? `${t.name}'s profile is complete and now listed under Teacher Profiles.`
+        : exists
+          ? `${t.name}'s details were updated.`
+          : credential?.type === "invite"
+            ? `${t.name} onboarded. Invite link sent to ${credential.value}.`
+            : `${t.name}'s teacher profile was created.`,
     });
   };
 
@@ -258,29 +338,64 @@ export default function TeachersBoard({ startAdding = false }: { startAdding?: b
       </div>
 
       <section className="flex min-w-0 flex-col gap-4 rounded-[20px] border border-ink/8 bg-white p-4 shadow-[0_10px_30px_rgba(6,30,41,.05)] sm:p-6">
+        <div className="-mx-1 overflow-x-auto px-1 pb-1">
+          <ul ref={listRef} role="tablist" aria-label="Teacher lists" className="relative flex w-max gap-1 rounded-full bg-surface p-1" onMouseLeave={() => setHover(null)}>
+            <span data-pill aria-hidden className={pillClass} />
+            {tabs.map((t, i) => (
+              <li key={t.key} role="presentation">
+                <button
+                  data-pill-item
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === t.key}
+                  onClick={() => switchTab(t.key)}
+                  onMouseEnter={() => setHover(i)}
+                  onFocus={() => setHover(i)}
+                  onBlur={() => setHover(null)}
+                  className={`relative z-10 inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-[.86rem] font-semibold transition-colors duration-[350ms] ease-nav ${
+                    i === target ? "text-surface" : "text-ink/65 hover:text-ink"
+                  }`}
+                >
+                  {t.label}
+                  <span className={`rounded-full px-1.5 text-[.72rem] font-bold transition-colors ${i === target ? "bg-surface/20" : "bg-ink/8"}`}>{t.count}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {onPending && (
+          <p className="-mt-1 text-[.84rem] text-ink/60">These teachers accepted their invite link. Assign their classes and subjects to complete the profile and move them to Teacher Profiles.</p>
+        )}
+
         <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center">
           <label className="relative flex-1">
             <span className="sr-only">Search teachers</span>
             <Icon d="M11 4a7 7 0 1 0 0 14a7 7 0 1 0 0-14z M20 20l-4-4" className="pointer-events-none absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-ink/45" />
             <input type="search" value={query} onChange={(e) => filter(setQuery)(e.target.value)} placeholder="Search by name, employee ID or email" className={`${fieldClass} w-full pl-10`} />
           </label>
-          <div className="grid grid-cols-2 gap-2.5 lg:flex">
-            <Select label="Class / grade" value={grade} onChange={filter(setGrade)} className="lg:w-[170px]">
-              <option value="all">All classes</option>
-              {grades.map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-            </Select>
-            <Select label="Status" value={status} onChange={filter(setStatus)} className="lg:w-[160px]">
-              <option value="all">All statuses</option>
-              <option value="active">Active</option>
-              <option value="leave">On Leave</option>
-              <option value="inactive">Inactive</option>
-            </Select>
-          </div>
-          <ViewToggle view={view} onChange={setView} />
+          {/* Pending teachers have no classes or status yet, so only search applies there. */}
+          {!onPending && (
+            <>
+              <div className="grid grid-cols-2 gap-2.5 lg:flex">
+                <Select label="Class / grade" value={grade} onChange={filter(setGrade)} className="lg:w-[170px]">
+                  <option value="all">All classes</option>
+                  {grades.map((g) => (
+                    <option key={g} value={g}>
+                      {g}
+                    </option>
+                  ))}
+                </Select>
+                <Select label="Status" value={status} onChange={filter(setStatus)} className="lg:w-[160px]">
+                  <option value="all">All statuses</option>
+                  <option value="active">Active</option>
+                  <option value="leave">On Leave</option>
+                  <option value="inactive">Inactive</option>
+                </Select>
+              </div>
+              <ViewToggle view={view} onChange={setView} />
+            </>
+          )}
         </div>
 
         {filtersOn && (
@@ -309,9 +424,13 @@ export default function TeachersBoard({ startAdding = false }: { startAdding?: b
             <span className="grid size-14 place-items-center rounded-2xl bg-primary/8 text-primary">
               <Icon d="M9 11a4 4 0 1 0 0-8a4 4 0 1 0 0 8z M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7" className="size-7" />
             </span>
-            <p className="font-bold">No teachers match these filters</p>
-            <p className="max-w-[360px] text-[.86rem] text-ink/55">Try a different name, ID or class, or onboard a new teacher.</p>
+            <p className="font-bold">{onPending && !query ? "No teachers waiting for assignment" : "No teachers match these filters"}</p>
+            <p className="max-w-[360px] text-[.86rem] text-ink/55">
+              {onPending && !query ? "Teachers who join through an invite link appear here until you assign their classes and subjects." : "Try a different name, ID or class, or onboard a new teacher."}
+            </p>
           </div>
+        ) : onPending ? (
+          <PendingList list={visible} {...actions} />
         ) : (
           <>
             <ul className={`grid gap-3 sm:grid-cols-2 2xl:grid-cols-3 ${view === "table" ? "lg:hidden" : ""}`}>

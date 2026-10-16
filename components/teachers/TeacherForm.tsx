@@ -148,8 +148,10 @@ export default function TeacherForm({
         classes: invite ? [] : grades.filter((g) => f.classes.includes(g)),
         subjects: invite ? [] : subjects.filter((s) => f.subjects.includes(s)),
         status,
-        checkIn: initial && status === initial.status ? initial.checkIn : { state: status === "active" ? "absent" : status === "leave" ? "leave" : "none" },
+        // Invites wait in the pending tab; finishing a pending profile starts normal check-ins.
+        checkIn: invite ? { state: "none" } : initial && !initial.pending && status === initial.status ? initial.checkIn : { state: status === "active" ? "absent" : status === "leave" ? "leave" : "none" },
         joined: initial?.joined ?? new Date().toISOString().slice(0, 10),
+        ...(invite && { pending: true }),
       },
       initial ? undefined : { type: f.credential, value: f.credential === "password" ? password : f.email.trim() },
     );
@@ -158,7 +160,7 @@ export default function TeacherForm({
 
   return (
     <Drawer
-      title={initial ? "Edit Details / Class Assignment" : "Add New Teacher"}
+      title={initial?.pending ? "Assign Classes & Subjects" : initial ? "Edit Details / Class Assignment" : "Add New Teacher"}
       subtitle={
         initial
           ? `${initial.name} · ${initial.empId}`
@@ -174,7 +176,7 @@ export default function TeacherForm({
           </button>
           <button type="submit" form="teacher-form" className={buttonClass("primary", "md", "cursor-pointer max-sm:flex-1 sm:ml-auto")}>
             <Icon d={initial ? "M5 12l4 4 10-10" : invite ? inviteIcon : "M9 11a4 4 0 1 0 0-8a4 4 0 1 0 0 8z M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7 M19 8v6 M16 11h6"} className="size-[18px]" />
-            {initial ? "Save Changes" : invite ? "Send Invite Link" : "Save & Onboard Teacher"}
+            {initial?.pending ? "Complete Profile" : initial ? "Save Changes" : invite ? "Send Invite Link" : "Save & Onboard Teacher"}
           </button>
         </>
       )}

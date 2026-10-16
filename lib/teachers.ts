@@ -18,6 +18,8 @@ export type Teacher = {
   status: TeacherStatus;
   checkIn: CheckIn;
   joined: string;
+  /** Joined through an invite link and still waiting for the principal to assign classes and subjects. */
+  pending?: boolean;
 };
 
 export const subjects = ["Mathematics", "Physics", "Chemistry", "Biology", "English", "Urdu", "Islamiyat", "Pakistan Studies", "Computer Science", "General Science", "Social Studies", "Art", "Physical Education"];
@@ -88,6 +90,37 @@ export const teachers: Teacher[] = rows.map(([name, subs, ct, classes, status, c
   checkIn: toCheckIn(ci, status),
   joined,
 }));
+
+// Teachers who accepted an invite link but have no classes or subjects assigned yet.
+const invited: [name: string, phone: string, joined: string][] = [
+  ["Hira Mansoor", "+92 321 7788990", "2026-10-12"],
+  ["Usman Ghani", "", "2026-10-14"],
+  ["Sana Iqbal", "+92 333 2211445", "2026-10-15"],
+];
+
+teachers.push(
+  ...invited.map(([name, phone, joined], i): Teacher => ({
+    id: `t-inv${i + 1}`,
+    name,
+    empId: `TCH-${1001 + rows.length + i}`,
+    email: emailFor(name),
+    phone,
+    classTeacher: null,
+    classes: [],
+    subjects: [],
+    status: "active",
+    checkIn: { state: "none" },
+    joined,
+    pending: true,
+  })),
+);
+
+const shortMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** "2026-10-14" to "14 Oct 2026". */
+export const longDate = (iso: string) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  return `${d} ${shortMonths[m - 1]} ${y}`;
+};
 
 export function initials(name: string) {
   return name

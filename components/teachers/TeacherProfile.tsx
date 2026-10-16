@@ -4,15 +4,9 @@ import { useState, type ReactNode } from "react";
 import { Drawer, ghostBtn } from "@/components/dashboard/controls";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { days, periods, weeklySchedule, type Teacher } from "@/lib/teachers";
+import { days, longDate, periods, weeklySchedule, type Teacher } from "@/lib/teachers";
 import AttendanceHistory from "./AttendanceHistory";
 import { Avatar, CheckInChip, ScopeBadges, StatusBadge, SubjectPills } from "./parts";
-
-const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const longDate = (iso: string) => {
-  const [y, m, d] = iso.split("-").map(Number);
-  return `${d} ${months[m - 1]} ${y}`;
-};
 
 function Info({ label, children }: { label: string; children: ReactNode }) {
   return (
