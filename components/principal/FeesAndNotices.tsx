@@ -30,7 +30,7 @@ function FeeOverview() {
           <div key={a.bucket} className="relative overflow-hidden rounded-2xl border border-ink/8 bg-surface/60 p-3.5">
             <span aria-hidden className={`absolute inset-x-0 top-0 h-1 ${toneFill[a.tone]}`} />
             <p className={`text-[1.5rem] font-extrabold leading-none ${toneText[a.tone]}`}>{a.count}</p>
-            <p className="mt-1.5 text-[.78rem] font-semibold text-ink/70">students, {a.bucket} late</p>
+            <p className="mt-1.5 text-[.78rem] font-semibold text-ink/70">{a.bucket}</p>
           </div>
         ))}
       </div>
