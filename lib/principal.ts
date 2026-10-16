@@ -99,7 +99,7 @@ export const LOW_ATTENDANCE = 80;
 const lateBuckets = [
   { bucket: "1 month", match: (m: number) => m === 1, tone: "warn" as const },
   { bucket: "2 months", match: (m: number) => m === 2, tone: "serious" as const },
-  { bucket: "3+ months", match: (m: number) => m >= 3, tone: "danger" as const },
+  { bucket: "3 months", match: (m: number) => m >= 3, tone: "danger" as const },
 ];
 const lateMonths = accounts.map((a) => unpaidMonths(a));
 const overdueCount = lateMonths.filter((m) => m >= 1).length;
@@ -128,7 +128,7 @@ export const announcements: { title: string; text: string; audience: Audience; w
 ];
 
 export const notifications = [
-  { text: `${severeCount} students are 3+ months overdue on fees`, tone: "danger" as const, when: "10m ago" },
+  { text: `${severeCount} students are 3 or more months overdue on fees`, tone: "danger" as const, when: "10m ago" },
   { text: "Grade 8 attendance fell below 80% today", tone: "warn" as const, when: "35m ago" },
   { text: "2 teachers checked in late this morning", tone: "warn" as const, when: "1h ago" },
 ];
@@ -138,7 +138,7 @@ export const aiSuggestions = ["Who delayed fees this month?", "Show attendance s
 // Canned answers for the front-end preview of the AI copilot.
 export const aiMockAnswers: Record<string, string> = {
   "Who delayed fees this month?":
-    `124 of 642 students have not paid this month. ${overdueCount} are overdue, and ${severeCount} of them are 3+ months late. Grade 9 has the most unpaid students (9 of 66).`,
+    `124 of 642 students have not paid this month. ${overdueCount} are overdue, and ${severeCount} of them are 3 or more months late. Grade 9 has the most unpaid students (9 of 66).`,
   "Show attendance summary for Grade 10":
     "Grade 10 attendance today is 91% (58 of 64 present). This week's average is 92.4%, slightly above the school average.",
   "Register a new teacher":
