@@ -166,5 +166,36 @@ function build(): Student[] {
 
 export const students = build();
 
+/** Accepted an invite link but has no class, guardian or other details assigned yet. */
+export type PendingStudent = { id: string; name: string; email: string; joined: string };
+
+export const pendingStudents: PendingStudent[] = [
+  { id: "ps1", name: "Rayan Malik", email: "rayan.malik@gmail.com", joined: "2026-10-11" },
+  { id: "ps2", name: "Mahnoor Qureshi", email: "mahnoor.qureshi@gmail.com", joined: "2026-10-12" },
+  { id: "ps3", name: "Huzaifa Abbasi", email: "huzaifa.abbasi@gmail.com", joined: "2026-10-13" },
+];
+
+export type EnrollInput = Pick<Student, "name" | "gender" | "section" | "guardian" | "guardianRelation" | "phone" | "email" | "dob" | "address">;
+
+/** New admission enrolled today: next roll number in the section, a fresh registration ID and attendance from today. */
+export function enrollStudent(input: EnrollInput, roster: Student[]): Student {
+  const seed = Math.max(0, ...roster.map((s) => s.seed)) + 1;
+  const missRate = 0.01 + hash(seed * 31 + 13, 7) * 0.06;
+  const rollNo = Math.max(0, ...roster.filter((s) => s.section === input.section).map((s) => s.rollNo)) + 1;
+  const term = tally(attendanceLogs({ seed, missRate }, AS_OF));
+  return {
+    ...input,
+    id: `s${seed}`,
+    rollNo,
+    regId: `GPS-${AS_OF.slice(0, 4)}-${pad(seed, 4)}`,
+    enrolled: AS_OF,
+    today: dayLog(seed, missRate, AS_OF).status,
+    termRate: term.rate,
+    term: { present: term.present, absent: term.absent, leave: term.leave },
+    seed,
+    missRate,
+  };
+}
+
 /** "10-A" to "Grade 10-A". */
 export const sectionLabel = (section: string) => `Grade ${section}`;
