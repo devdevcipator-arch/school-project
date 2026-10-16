@@ -55,15 +55,19 @@ export default function NotificationBell() {
           {notifications.length}
         </span>
       </button>
-      <Popover open={open} onClose={close} className="w-[min(320px,calc(100vw-32px))]">
-        <p className="px-3 pb-1 pt-2 text-[.72rem] font-bold uppercase tracking-[.12em] text-ink/50">System alerts</p>
-        <ul>
+      <Popover open={open} onClose={close} className="w-[min(440px,calc(100vw-32px))]">
+        <div className="flex items-center justify-between gap-3 border-b border-ink/8 px-3 pb-3 pt-1.5">
+          <p className="text-[1rem] font-extrabold tracking-tight">System alerts</p>
+          <span className="rounded-full bg-danger/10 px-2.5 py-1 text-[.74rem] font-bold text-danger">{notifications.length} new</span>
+        </div>
+        {/* The list scrolls once it outgrows the popup; a very long message scrolls inside its own row. */}
+        <ul className="mt-2 grid max-h-[min(65vh,520px)] gap-1 overflow-y-auto overscroll-contain pr-1">
           {notifications.map((n) => (
-            <li key={n.text} className="flex gap-3 rounded-xl px-3 py-2.5 hover:bg-surface">
-              <span aria-hidden className={`mt-1.5 size-2 shrink-0 rounded-full ${toneDot[n.tone]}`} />
-              <span className="grid">
-                <span className="text-[.88rem] font-semibold leading-snug">{n.text}</span>
-                <span className="text-[.76rem] text-ink/50">{n.when}</span>
+            <li key={n.text} className="flex gap-3.5 rounded-xl px-3 py-3.5 hover:bg-surface">
+              <span aria-hidden className={`mt-2 size-2.5 shrink-0 rounded-full ${toneDot[n.tone]}`} />
+              <span className="grid min-w-0 gap-1">
+                <span className="max-h-32 overflow-y-auto overscroll-contain break-words pr-1 text-[.95rem] font-semibold leading-snug">{n.text}</span>
+                <span className="text-[.8rem] text-ink/50">{n.when}</span>
               </span>
             </li>
           ))}
