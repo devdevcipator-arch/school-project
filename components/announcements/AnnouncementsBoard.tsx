@@ -17,7 +17,7 @@ import {
 } from "@/lib/announcements";
 import { Select, Toast, fieldClass, ghostSm, type ToastData } from "@/components/dashboard/controls";
 import Composer, { type ComposerResult } from "./Composer";
-import { setEmergency, useEmergency } from "./emergency";
+import { saveCustomPresets, setEmergency, useCustomPresets, useEmergency } from "./emergency";
 import { AudienceTag, PriorityBadge, PriorityDot } from "./tags";
 
 type Tab = "all" | "school" | "staff" | "students" | "drafts";
@@ -59,11 +59,101 @@ function Metric({ label, value, icon, tone = "brand", note }: { label: string; v
 
 /* ---------------- Emergency controller ---------------- */
 
-const presets = ["Rain closure: school dismissed at 12:00 PM", "Security alert: all students stay inside classrooms", "Power outage: afternoon classes cancelled"];
+const defaultPresets = ["Rain closure: school dismissed at 12:00 PM", "Security alert: all students stay inside classrooms"];
+
+const chipClass = "rounded-full px-3 py-1 text-[.74rem] font-semibold transition-colors";
+const chipIdle = "bg-ink/5 text-ink/65 hover:bg-danger/10 hover:text-danger";
+const chipActive = "bg-danger/10 text-danger ring-1 ring-danger/30";
+
+/** Quick-select messages: the defaults plus any the principal saved, with a (+) to add new ones. */
+function PresetChips({ value, onPick }: { value: string; onPick: (msg: string) => void }) {
+  const custom = useCustomPresets();
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  const all = [...defaultPresets, ...custom.filter((p) => !defaultPresets.includes(p))];
+  const cancel = () => {
+    setAdding(false);
+    setDraft("");
+  };
+  const save = () => {
+    const text = draft.trim();
+    if (!text) return;
+    if (!all.includes(text)) saveCustomPresets([...custom, text]);
+    onPick(text);
+    cancel();
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {all.map((p) => {
+        const isCustom = !defaultPresets.includes(p);
+        const active = p === value;
+        return (
+          <span key={p} className={`inline-flex items-center ${chipClass} ${active ? chipActive : chipIdle} ${isCustom ? "pr-1.5" : ""}`}>
+            <button type="button" onClick={() => onPick(p)} aria-pressed={active} className="cursor-pointer text-left">
+              {p}
+            </button>
+            {isCustom && (
+              <button
+                type="button"
+                aria-label={`Remove preset: ${p}`}
+                onClick={() => saveCustomPresets(custom.filter((c) => c !== p))}
+                className="ml-1 grid size-4 cursor-pointer place-items-center rounded-full text-current/70 transition-colors hover:bg-danger hover:text-white"
+              >
+                <Icon d="M6 6l12 12 M18 6 6 18" className="size-2.5" />
+              </button>
+            )}
+          </span>
+        );
+      })}
+
+      {adding ? (
+        <span className="inline-flex items-center gap-1 rounded-full border border-danger/30 bg-white py-0.5 pl-3 pr-1">
+          <label htmlFor="emergency-preset" className="sr-only">
+            New preset message
+          </label>
+          <input
+            id="emergency-preset"
+            autoFocus
+            value={draft}
+            maxLength={140}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              // Keep Enter from submitting the outer form (which would push the banner).
+              if (e.key === "Enter") {
+                e.preventDefault();
+                save();
+              } else if (e.key === "Escape") cancel();
+            }}
+            placeholder="Type a new preset"
+            className="w-[min(240px,50vw)] bg-transparent text-[.74rem] font-semibold outline-none placeholder:text-ink/40"
+          />
+          <button type="button" onClick={save} disabled={!draft.trim()} aria-label="Save preset" className="grid size-6 cursor-pointer place-items-center rounded-full bg-danger text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40">
+            <Icon d="M5 12l4 4 10-10" className="size-3.5" />
+          </button>
+          <button type="button" onClick={cancel} aria-label="Cancel" className="grid size-6 cursor-pointer place-items-center rounded-full text-ink/50 transition-colors hover:bg-ink/8 hover:text-ink">
+            <Icon d="M6 6l12 12 M18 6 6 18" className="size-3.5" />
+          </button>
+        </span>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setAdding(true)}
+          aria-label="Add preset option"
+          title="Add preset option"
+          className="grid size-[26px] cursor-pointer place-items-center rounded-full border border-dashed border-ink/25 text-ink/55 transition-colors hover:border-danger hover:bg-danger/10 hover:text-danger"
+        >
+          <Icon d="M12 5v14 M5 12h14" className="size-3.5" />
+        </button>
+      )}
+    </div>
+  );
+}
 
 function EmergencyController() {
   const live = useEmergency();
-  const [msg, setMsg] = useState(presets[0]);
+  const [msg, setMsg] = useState(defaultPresets[0]);
 
   return (
     <section
@@ -115,13 +205,7 @@ function EmergencyController() {
                 Push Banner Now
               </button>
             </div>
-            <div className="flex flex-wrap gap-1.5">
-              {presets.map((p) => (
-                <button key={p} type="button" onClick={() => setMsg(p)} className="cursor-pointer rounded-full bg-ink/5 px-3 py-1 text-[.74rem] font-semibold text-ink/65 transition-colors hover:bg-danger/10 hover:text-danger">
-                  {p}
-                </button>
-              ))}
-            </div>
+            <PresetChips value={msg} onPick={setMsg} />
           </form>
         )}
       </div>
