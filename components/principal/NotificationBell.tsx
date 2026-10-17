@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { notifications } from "@/lib/principal";
+import { notifications as principalNotifications } from "@/lib/principal";
+
+type Notice = { text: string; tone: "danger" | "warn"; when: string };
 
 /** Small popover that closes on outside click or Escape. */
 function Popover({ open, onClose, children, className = "" }: { open: boolean; onClose: () => void; children: ReactNode; className?: string }) {
@@ -35,7 +37,7 @@ function Popover({ open, onClose, children, className = "" }: { open: boolean; o
 const toneDot = { danger: "bg-danger", warn: "bg-warn" };
 
 /** Notifications bell for the portal top bar, sized to sit beside the profile card. */
-export default function NotificationBell() {
+export default function NotificationBell({ notifications = principalNotifications }: { notifications?: Notice[] }) {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
 

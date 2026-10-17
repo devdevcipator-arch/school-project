@@ -15,7 +15,7 @@ type PageTitle = { eyebrow: string; title: string; description?: string };
  * off-canvas drawer on small screens, and a top bar with the page title + profile.
  * Shared by every role portal.
  */
-export default function DashboardShell({ nav, titles = {}, footer, profile, banner, children }: { nav: NavItem[]; titles?: Record<string, PageTitle>; footer?: ReactNode; profile?: ReactNode; banner?: ReactNode; children: ReactNode }) {
+export default function DashboardShell({ nav, portalLabel = "Principal portal", titles = {}, footer, profile, banner, children }: { nav: NavItem[]; portalLabel?: string; titles?: Record<string, PageTitle>; footer?: ReactNode; profile?: ReactNode; banner?: ReactNode; children: ReactNode }) {
   const pathname = usePathname();
   const activeIndex = Math.max(0, nav.findIndex((l) => l.href === pathname));
   const navItem = nav.find((l) => l.href === pathname);
@@ -66,7 +66,7 @@ export default function DashboardShell({ nav, titles = {}, footer, profile, bann
         </div>
 
         <nav aria-label="Dashboard" className="flex-1 overflow-y-auto px-4 py-4">
-          <p className="mb-2 px-3 text-[.7rem] font-bold uppercase tracking-[.14em] text-surface/45">Principal portal</p>
+          <p className="mb-2 px-3 text-[.7rem] font-bold uppercase tracking-[.14em] text-surface/45">{portalLabel}</p>
           <ul ref={listRef} className="relative flex flex-col gap-1" onMouseLeave={() => setHover(null)}>
             <span data-pill aria-hidden className={pillClass} />
             {nav.map((item, i) => (
