@@ -3,13 +3,14 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
 import { Toast, ghostBtn, type ToastData } from "@/components/dashboard/controls";
 import { Icon } from "@/components/ui/Icon";
-import { respond, seedAudit, seedVault, suggestions, type AuditEntry, type AuditKind, type DraftAction, type Reply, type VaultDoc } from "@/lib/copilot";
-import { principal } from "@/lib/principal";
+import { generateQuestions } from "@/lib/assessments";
+import { seedVault, type AuditEntry, type AuditKind, type DraftAction, type Reply, type VaultDoc } from "@/lib/copilot";
 import { AS_OF, sectionLabel } from "@/lib/students";
 import { teachers } from "@/lib/teachers";
 import ActionCard, { type ActionState } from "./ActionCard";
 import AuditDrawer from "./AuditDrawer";
 import ReplyView from "./ReplyView";
+import { personas, type PersonaKey } from "./personas";
 import VaultDrawer, { type UploadMeta } from "./VaultDrawer";
 
 type Message = { id: string; from: "user" | "ai"; text: string; reply?: Reply; state?: ActionState; result?: string };
@@ -17,11 +18,7 @@ type Message = { id: string; from: "user" | "ai"; text: string; reply?: Reply; s
 const spark = "M12 3v4 M12 17v4 M3 12h4 M17 12h4 M6 6l2.5 2.5 M15.5 15.5 18 18 M6 18l2.5-2.5 M15.5 8.5 18 6";
 const noop = () => () => {};
 
-const greeting = (): Message => ({
-  id: "m0",
-  from: "ai",
-  text: `Good day, ${principal.name.split(" ").slice(0, 2).join(" ")}. I have live access to every school record and your knowledge vault. Ask a question, tell me to take an action, or ask about a book or policy.`,
-});
+const greeting = (text: string): Message => ({ id: "m0", from: "ai", text });
 
 /** Snapshot date with the real clock time, e.g. "2026-10-13T14:05". */
 const now = () => {
@@ -48,12 +45,14 @@ function Badge({ icon, children, live = false }: { icon: string; children: React
   );
 }
 
-export default function CopilotWorkspace() {
-  const [messages, setMessages] = useState<Message[]>(() => [greeting()]);
+/** Shared AI workspace. `persona` picks the scope: the principal sees the whole school, a teacher only their classes. */
+export default function CopilotWorkspace({ persona: key = "principal" }: { persona?: PersonaKey }) {
+  const persona = personas[key];
+  const [messages, setMessages] = useState<Message[]>(() => [greeting(persona.greeting)]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState<{ steps: string[]; at: number } | null>(null);
   const [vault, setVault] = useState<VaultDoc[]>(seedVault);
-  const [audit, setAudit] = useState<AuditEntry[]>(seedAudit);
+  const [audit, setAudit] = useState<AuditEntry[]>(persona.audit);
   const [vaultOpen, setVaultOpen] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
   const [toast, setToast] = useState<ToastData | null>(null);
@@ -100,7 +99,7 @@ export default function CopilotWorkspace() {
   const ask = (q: string) => {
     const text = q.trim();
     if (!text || thinking) return;
-    const reply = respond(text, vault);
+    const reply = persona.respond(text, vault);
     const steps = reply.tools.length ? reply.tools.map((t) => `Querying ${t}`) : ["Understanding your request"];
     setMessages((m) => [...m, { id: uid("u"), from: "user", text }]);
     setInput("");
@@ -136,6 +135,27 @@ export default function CopilotWorkspace() {
       const result = `${d.name} enrolled in ${sectionLabel(d.section)}. Guardian ${d.guardian} (${d.phone}) will receive portal login details.`;
       settle(id, "executed", result);
       log("student", "Enrolled student", `${d.name} in ${sectionLabel(d.section)}, guardian ${d.guardian}`);
+    } else if (d.type === "quiz") {
+      const questions = generateQuestions({ subject: d.subject, topic: d.topic, types: ["mcq", "tf", "fill", "short"], count: d.count, marks: 2 });
+      settle(id, "executed", `Quiz written: ${d.count} ${d.difficulty.toLowerCase()} questions on ${d.topic} for ${sectionLabel(d.section)} (${d.count * 2} marks).`);
+      log("assessment", "Generated quiz", `${d.topic}, ${d.count} questions for ${sectionLabel(d.section)}`);
+      const paper: Reply = {
+        text: `Here is the ${d.topic} paper with its answer key. Open the AI Test builder in Assessments to fine-tune it and publish it to ${sectionLabel(d.section)}.`,
+        tools: ["AI test maker"],
+        blocks: [
+          { kind: "list", items: questions.map((q, i) => `Q${i + 1}. ${q.text}${q.options ? ` (${q.options.join(" / ")})` : ""} Answer: ${q.answer}`) },
+          { kind: "links", items: [{ label: "Open Assessments", href: "/teacher/assessments?new=1" }] },
+        ],
+      };
+      setMessages((m) => [...m, { id: uid("r"), from: "ai", text: paper.text, reply: paper }]);
+    } else if (d.type === "class-notice") {
+      const to = `${d.audience === "parents" ? "parents of" : "students of"} ${sectionLabel(d.section)}`;
+      settle(id, "executed", `Notice "${d.title}" sent to ${to}${d.priority !== "normal" ? ` as ${d.priority}` : ""}.`);
+      log("announcement", "Sent class notice", `"${d.title}" to ${to}`);
+    } else if (d.type === "remark") {
+      navigator.clipboard?.writeText(d.text).catch(() => {});
+      settle(id, "executed", `Remark for ${d.student} copied to your clipboard. Paste it into their report card in Reports.`);
+      log("report", "Report remark", `Remark drafted for ${d.student} (${sectionLabel(d.section)})`);
     } else {
       const to = d.audience === "staff" ? "Teachers & staff" : d.audience === "students" ? "Students & parents" : "the whole school";
       settle(id, "executed", `Announcement "${d.title}" posted to ${to}${d.priority !== "normal" ? ` as ${d.priority}` : ""}.`);
@@ -145,9 +165,16 @@ export default function CopilotWorkspace() {
 
   const cancel = (id: string, d: DraftAction) => {
     settle(id, "cancelled");
-    const what = d.type === "teacher" ? "Add teacher" : d.type === "student" ? "Enroll student" : "Post announcement";
-    const who = d.type === "announcement" ? `"${d.title || "Untitled"}"` : d.name || "unnamed";
-    log(d.type, what, `Draft for ${who} discarded`, "cancelled");
+    const labels: Record<DraftAction["type"], [AuditKind, string]> = {
+      teacher: ["teacher", "Add teacher"],
+      student: ["student", "Enroll student"],
+      announcement: ["announcement", "Post announcement"],
+      quiz: ["assessment", "Generate quiz"],
+      "class-notice": ["announcement", "Send class notice"],
+      remark: ["report", "Report remark"],
+    };
+    const who = d.type === "announcement" || d.type === "class-notice" ? `"${d.title || "Untitled"}"` : d.type === "quiz" ? d.topic || "untitled quiz" : d.type === "remark" ? d.student : d.name || "unnamed";
+    log(labels[d.type][0], labels[d.type][1], `Draft for ${who} discarded`, "cancelled");
   };
 
   const upload = (files: File[], meta: UploadMeta) => {
@@ -183,7 +210,7 @@ export default function CopilotWorkspace() {
   };
 
   const newSession = () => {
-    setMessages([greeting()]);
+    setMessages([greeting(persona.greeting)]);
     setThinking(null);
     setInput("");
     log("session", "Started new session", "Chat cleared; the audit trail and vault are kept");
@@ -196,7 +223,7 @@ export default function CopilotWorkspace() {
     <main className="mx-auto flex max-w-[1500px] flex-col gap-5 px-[clamp(16px,3vw,36px)] py-6 lg:gap-6 lg:py-8">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
-          <Badge icon="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z M8.5 12l2.5 2.5 4.5-5">Full Administrative Access · RBAC Level 0</Badge>
+          <Badge icon="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z M8.5 12l2.5 2.5 4.5-5">{persona.access}</Badge>
           <Badge icon="" live>
             Live SMS Database Connected
           </Badge>
@@ -230,8 +257,8 @@ export default function CopilotWorkspace() {
             <Icon d={spark} className="size-5" />
           </span>
           <div className="min-w-0">
-            <p className="font-extrabold tracking-tight">Executive Copilot</p>
-            <p className="truncate text-[.78rem] text-surface/55">Queries school data · executes admin actions with your confirmation · cites your vault</p>
+            <p className="font-extrabold tracking-tight">{persona.name}</p>
+            <p className="truncate text-[.78rem] text-surface/55">{persona.tagline}</p>
           </div>
         </div>
 
@@ -280,7 +307,7 @@ export default function CopilotWorkspace() {
           )}
           {onlyGreeting && !thinking && (
             <div className="grid gap-3 pt-2 sm:grid-cols-3">
-              {suggestions.map((g) => (
+              {persona.suggestions.map((g) => (
                 <div key={g.group} className="rounded-2xl border border-surface/10 bg-surface/5 p-3.5">
                   <p className="mb-2 text-[.7rem] font-bold uppercase tracking-[.12em] text-accent">{g.group}</p>
                   <div className="grid gap-1.5">
@@ -308,7 +335,7 @@ export default function CopilotWorkspace() {
               <Icon d="M21 12.5l-8.5 8.5a5 5 0 0 1-7-7l9-9a3.5 3.5 0 0 1 5 5l-9 9a2 2 0 0 1-3-3l8-8" className="size-5" />
             </button>
             <label htmlFor="copilot-input" className="sr-only">
-              Ask the executive copilot
+              Ask the {persona.name.toLowerCase()}
             </label>
             <textarea
               id="copilot-input"
@@ -317,7 +344,7 @@ export default function CopilotWorkspace() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onKey}
-              placeholder="Ask about any record, say 'Add a teacher...', or ask about a syllabus or policy"
+              placeholder={persona.placeholder}
               className="max-h-32 min-h-11 min-w-0 flex-1 resize-none bg-transparent px-2 py-2.5 text-[.92rem] text-surface outline-none [field-sizing:content] placeholder:text-surface/45"
             />
             <button
@@ -348,7 +375,7 @@ export default function CopilotWorkspace() {
           onClose={() => setVaultOpen(false)}
         />
       )}
-      {hydrated && auditOpen && <AuditDrawer entries={audit} onClose={() => setAuditOpen(false)} />}
+      {hydrated && auditOpen && <AuditDrawer entries={audit} owner={persona.owner} kinds={persona.auditKinds} onClose={() => setAuditOpen(false)} />}
       {toast && <Toast {...toast} onDone={closeToast} />}
     </main>
   );

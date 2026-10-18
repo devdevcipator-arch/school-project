@@ -167,7 +167,7 @@ export const formatBytes = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)} M
 
 /* ---------------- Audit trail ---------------- */
 
-export type AuditKind = "teacher" | "student" | "announcement" | "vault" | "session";
+export type AuditKind = "teacher" | "student" | "announcement" | "assessment" | "report" | "vault" | "session";
 export type AuditEntry = { id: string; at: string; kind: AuditKind; action: string; detail: string; status: "executed" | "cancelled" };
 
 export const seedAudit: AuditEntry[] = [
@@ -190,7 +190,11 @@ export type Block =
 export type DraftAction =
   | { type: "teacher"; name: string; subject: string; email: string; phone: string; classTeacher: string }
   | { type: "student"; name: string; section: string; guardian: string; phone: string }
-  | { type: "announcement"; title: string; body: string; audience: "school" | "staff" | "students"; priority: "normal" | "important" | "urgent" };
+  | { type: "announcement"; title: string; body: string; audience: "school" | "staff" | "students"; priority: "normal" | "important" | "urgent" }
+  // Teacher copilot actions, limited to the teacher's own classes.
+  | { type: "quiz"; topic: string; section: string; subject: string; count: number; difficulty: "Easy" | "Medium" | "Hard" | "Adaptive" }
+  | { type: "class-notice"; section: string; title: string; body: string; audience: "students" | "parents"; priority: "normal" | "important" | "urgent" }
+  | { type: "remark"; studentId: string; student: string; section: string; text: string };
 
 export type Reply = {
   text: string;
@@ -203,13 +207,13 @@ export type Reply = {
 
 /* ---------------- Intent engine ---------------- */
 
-const has = (q: string, re: RegExp) => re.test(q);
-const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
-const pct = (n: number, of: number) => (of ? Math.round((n / of) * 1000) / 10 : 0);
-const title = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase());
+export const has = (q: string, re: RegExp) => re.test(q);
+export const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
+export const pct = (n: number, of: number) => (of ? Math.round((n / of) * 1000) / 10 : 0);
+export const title = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase());
 
 /** "grade 9", "grade 10-b", "class 7 b" to { grade, section? }. */
-function findClass(q: string) {
+export function findClass(q: string) {
   const m = q.match(/(?:grade|class)\s*(\d{1,2})(?:\s*[- ]?\s*([abc])\b)?/i);
   if (!m) return null;
   const grade = Number(m[1]);
@@ -228,7 +232,7 @@ function findTeacher(q: string) {
 }
 
 /** Name in quotes, or the capitalised words after "named"/"called"/"for". */
-function extractName(raw: string) {
+export function extractName(raw: string) {
   const quoted = raw.match(/["']([^"']{3,60})["']/);
   if (quoted) return title(quoted[1].trim());
   const after = raw.match(/\b(?:named|called|name is|for)\s+([A-Za-z][A-Za-z.]+(?:\s+[A-Za-z][A-Za-z.]+){0,3})/i);
@@ -454,7 +458,7 @@ function studentReply(q: string): Reply {
   };
 }
 
-function vaultReply(q: string, vault: VaultDoc[]): Reply {
+export function vaultReply(q: string, vault: VaultDoc[]): Reply {
   const ready = vault.filter((d) => d.status === "indexed");
   const words = q.split(/[^a-z0-9]+/).filter((w) => w.length > 2);
   const scored = ready

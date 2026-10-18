@@ -53,8 +53,8 @@ export const teacherTitles: Record<string, { eyebrow: string; title: string; des
   },
   "/teacher/ai": {
     eyebrow: "AI Assistant",
-    title: "Teacher AI Assistant",
-    description: "Generate quizzes, lesson ideas and feedback in seconds.",
+    title: "Teacher AI Teaching Copilot",
+    description: "Your classroom intelligence partner for class queries, AI quizzes, report remarks and curriculum answers.",
   },
 };
 

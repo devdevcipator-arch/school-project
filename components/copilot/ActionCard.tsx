@@ -4,6 +4,8 @@ import { useState, type ReactNode } from "react";
 import { ghostBtn } from "@/components/dashboard/controls";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
+import { sectionSubjects } from "@/lib/assessments";
+import { mySections } from "@/lib/classAttendance";
 import type { DraftAction } from "@/lib/copilot";
 import { sectionLabel, sections } from "@/lib/students";
 import { emailFor, subjects } from "@/lib/teachers";
@@ -14,6 +16,9 @@ const meta: Record<DraftAction["type"], { label: string; icon: string; confirm: 
   teacher: { label: "Add new teacher", icon: "M9 11a4 4 0 1 0 0-8a4 4 0 1 0 0 8z M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7 M19 8v6 M16 11h6", confirm: "Create Teacher Account" },
   student: { label: "Enroll student", icon: "M3 9l9-5 9 5-9 5z M7 11.5V16c0 1.5 2.2 3 5 3s5-1.5 5-3v-4.5", confirm: "Enroll Student" },
   announcement: { label: "Post announcement", icon: "M3 11l15-6v14L3 13z M7 13v5h3v-4", confirm: "Post Announcement" },
+  quiz: { label: "Generate AI quiz", icon: "M9 4h6 M8 4H6v17h12V4h-2 M9 10h6 M9 14h6 M9 18h3", confirm: "Generate Quiz" },
+  "class-notice": { label: "Send class notice", icon: "M3 11l15-6v14L3 13z M7 13v5h3v-4", confirm: "Send Notice" },
+  remark: { label: "Report card remark", icon: "M4 20h4L19 9l-4-4L4 16z M14 6l4 4", confirm: "Use This Remark" },
 };
 
 const input = (bad?: boolean) =>
@@ -35,7 +40,7 @@ const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const phoneRe = /^\+?\d[\d\s-]{9,15}$/;
 
 /**
- * Direct action drafted by the copilot. Nothing runs until the principal reviews the fields and confirms.
+ * Direct action drafted by the copilot. Nothing runs until the user reviews the fields and confirms.
  */
 export default function ActionCard({
   id,
@@ -70,9 +75,13 @@ export default function ActionCard({
       if (!sections.includes(d.section)) e.section = "Choose a class and section.";
       if (d.guardian.trim().length < 3) e.guardian = "Enter the guardian's name.";
       if (!phoneRe.test(d.phone)) e.phone = "Enter the guardian's phone number.";
+    } else if (d.type === "quiz") {
+      if (d.topic.trim().length < 3) e.topic = "Name the topic or chapter.";
+    } else if (d.type === "remark") {
+      if (d.text.trim().length < 10) e.text = "Write the remark.";
     } else {
       if (d.title.trim().length < 4) e.title = "Add a title.";
-      if (d.body.trim().length < 10) e.body = "Write the announcement.";
+      if (d.body.trim().length < 10) e.body = "Write the message.";
     }
     setErrors(e);
     if (!Object.keys(e).length) onExecute(d);
@@ -152,6 +161,74 @@ export default function ActionCard({
               <input id={f("phone")} value={d.phone} onChange={(e) => set({ phone: e.target.value })} placeholder="+92 3XX XXXXXXX" className={input(!!errors.phone)} />
             </Field>
           </>
+        )}
+        {d.type === "quiz" && (
+          <>
+            <Field id={f("topic")} label="Topic / chapter" error={errors.topic} wide>
+              <input id={f("topic")} value={d.topic} onChange={(e) => set({ topic: e.target.value })} placeholder="e.g. Quadratic Equations" className={input(!!errors.topic)} />
+            </Field>
+            <Field id={f("section")} label="Class">
+              <select
+                id={f("section")}
+                value={d.section}
+                onChange={(e) => set({ section: e.target.value, subject: sectionSubjects(e.target.value).includes(d.subject) ? d.subject : sectionSubjects(e.target.value)[0] })}
+                className={`${input()} cursor-pointer`}
+              >
+                {mySections.map((s) => (
+                  <option key={s.section} value={s.section}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field id={f("subject")} label="Subject">
+              <select id={f("subject")} value={d.subject} onChange={(e) => set({ subject: e.target.value })} className={`${input()} cursor-pointer`}>
+                {sectionSubjects(d.section).map((s) => (
+                  <option key={s}>{s}</option>
+                ))}
+              </select>
+            </Field>
+            <Field id={f("count")} label="Questions">
+              <input id={f("count")} type="number" min={3} max={30} value={d.count} onChange={(e) => set({ count: Math.max(3, Math.min(30, Number(e.target.value) || 3)) })} className={input()} />
+            </Field>
+            <Field id={f("difficulty")} label="Difficulty">
+              <select id={f("difficulty")} value={d.difficulty} onChange={(e) => set({ difficulty: e.target.value as typeof d.difficulty })} className={`${input()} cursor-pointer`}>
+                {["Easy", "Medium", "Hard", "Adaptive"].map((x) => (
+                  <option key={x}>{x}</option>
+                ))}
+              </select>
+            </Field>
+          </>
+        )}
+        {d.type === "class-notice" && (
+          <>
+            <Field id={f("title")} label="Title" error={errors.title} wide>
+              <input id={f("title")} value={d.title} onChange={(e) => set({ title: e.target.value })} className={input(!!errors.title)} />
+            </Field>
+            <Field id={f("body")} label="Message" error={errors.body} wide>
+              <textarea id={f("body")} rows={4} value={d.body} onChange={(e) => set({ body: e.target.value })} className={`${input(!!errors.body)} resize-y`} />
+            </Field>
+            <Field id={f("section")} label="Class">
+              <select id={f("section")} value={d.section} onChange={(e) => set({ section: e.target.value })} className={`${input()} cursor-pointer`}>
+                {mySections.map((s) => (
+                  <option key={s.section} value={s.section}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field id={f("audience")} label="Send to">
+              <select id={f("audience")} value={d.audience} onChange={(e) => set({ audience: e.target.value as typeof d.audience })} className={`${input()} cursor-pointer`}>
+                <option value="students">Students of this class</option>
+                <option value="parents">Parents of this class</option>
+              </select>
+            </Field>
+          </>
+        )}
+        {d.type === "remark" && (
+          <Field id={f("text")} label={`Remark for ${d.student} (${sectionLabel(d.section)})`} error={errors.text} wide>
+            <textarea id={f("text")} rows={4} value={d.text} onChange={(e) => set({ text: e.target.value })} className={`${input(!!errors.text)} resize-y`} />
+          </Field>
         )}
         {d.type === "announcement" && (
           <>
