@@ -5,12 +5,11 @@ import { Toast, type ToastData } from "@/components/dashboard/controls";
 import { Card } from "@/components/dashboard/ui";
 import AttendanceHistory from "@/components/teachers/AttendanceHistory";
 import { leavePolicy, leaveRequests, leaveUsed, me, myHistory, onTimeStreak, type LeaveRequest } from "@/lib/myAttendance";
-import { summarize, type DayRecord } from "@/lib/teacherAttendance";
+import { summarize } from "@/lib/teacherAttendance";
 import CalendarCard from "./CalendarCard";
 import KpiRow from "./KpiRow";
 import LeaveCard from "./LeaveCard";
 import TodayBar from "./TodayBar";
-import { ExceptionsCard, TrendCard, WeekdayCard } from "./insights";
 import { isoOf, monthNames, weekdayNames } from "./shared";
 
 // The record depends on the viewer's date, so the page renders on the client only.
@@ -34,7 +33,6 @@ function Board({ todayIso }: { todayIso: string }) {
   const records = useMemo(() => myHistory(new Date(`${todayIso}T12:00:00`)), [todayIso]);
   const [requests, setRequests] = useState<LeaveRequest[]>(leaveRequests);
   const [checkOut, setCheckOut] = useState<string | null>(null);
-  const [corrected, setCorrected] = useState<Set<string>>(() => new Set());
   const [toast, setToast] = useState<ToastData | null>(null);
   const clearToast = useCallback(() => setToast(null), []);
 
@@ -73,11 +71,6 @@ function Board({ todayIso }: { todayIso: string }) {
     setToast({ text: "Leave request withdrawn.", action: { label: "Undo", run: () => (setRequests(prev), setToast(null)) } });
   };
 
-  const correct = (r: DayRecord) => {
-    setCorrected((s) => new Set(s).add(r.date));
-    setToast({ text: "Correction request sent to the principal." });
-  };
-
   const d = new Date(`${todayIso}T12:00:00`);
   const dateLabel = `${weekdayNames[d.getDay()]}, ${d.getDate()} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
   const allowed = leavePolicy.reduce((s, p) => s + p.allowed, 0);
@@ -99,14 +92,6 @@ function Board({ todayIso }: { todayIso: string }) {
           <CalendarCard records={records} todayIso={todayIso} pendingLeave={pendingLeave} />
         </div>
         <LeaveCard todayIso={todayIso} used={used} requests={requests} onRequest={addRequest} onWithdraw={withdraw} />
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-        <TrendCard records={records} />
-        <WeekdayCard records={records} />
-        <div className="grid lg:col-span-2 xl:col-span-1">
-          <ExceptionsCard records={records} todayIso={todayIso} corrected={corrected} onCorrect={correct} />
-        </div>
       </div>
 
       <Card>

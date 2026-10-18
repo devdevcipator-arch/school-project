@@ -31,8 +31,6 @@ export function workingDaysBetween(from: string, to: string) {
   return n;
 }
 
-export const weekdayOf = (isoDate: string) => utc(isoDate).getUTCDay();
-
 /** Short detail line for a day: "12 min late", "08:04 AM to 02:20 PM", or the leave note. */
 export function detailOf(r: DayRecord, clock: (t: string) => string) {
   if (r.state === "absent" || r.state === "leave") return r.note ?? "";

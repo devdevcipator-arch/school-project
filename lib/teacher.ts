@@ -28,8 +28,8 @@ export const teacherTitles: Record<string, { eyebrow: string; title: string; des
   },
   "/teacher/class-attendance": {
     eyebrow: "Class Attendance",
-    title: "Class Attendance Register",
-    description: "Mark and review attendance for every class you teach.",
+    title: "Class Attendance",
+    description: "Take daily roll call. All students are marked Present by default, toggle only Absent or Leave.",
   },
   "/teacher/talents": {
     eyebrow: "Talents",
