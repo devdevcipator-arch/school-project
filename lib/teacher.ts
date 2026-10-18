@@ -48,8 +48,8 @@ export const teacherTitles: Record<string, { eyebrow: string; title: string; des
   },
   "/teacher/resources": {
     eyebrow: "Resources",
-    title: "Teaching Resources",
-    description: "Helping books, syllabus guides and study material for your classes.",
+    title: "Resource Hub & Helping Books",
+    description: "Universal academic vault. Browse, organize, and retrieve curriculum guides, textbooks, and class materials.",
   },
   "/teacher/ai": {
     eyebrow: "AI Assistant",

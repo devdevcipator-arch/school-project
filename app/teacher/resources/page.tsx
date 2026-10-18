@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import ComingSoon from "@/components/teacher/ComingSoon";
-import { teacherNav } from "@/lib/teacher";
+import ResourceHub from "@/components/resources/ResourceHub";
+import { teacher } from "@/lib/teacher";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: `Resources | Teacher Portal | ${site.name}`,
 };
 
-// Placeholder until the Resources page spec is shared.
+// Resource Hub & Helping Books: universal library with teacher-only upload and management tools
 export default function ResourcesPage() {
-  return <ComingSoon title="Resources" icon={teacherNav[6].icon} />;
+  return <ResourceHub role="teacher" user={teacher.name} allowStudentPreview />;
 }
