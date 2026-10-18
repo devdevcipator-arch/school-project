@@ -33,8 +33,8 @@ export const teacherTitles: Record<string, { eyebrow: string; title: string; des
   },
   "/teacher/talents": {
     eyebrow: "Talents",
-    title: "Student Talents",
-    description: "Spot and endorse talented students in your classes.",
+    title: "Talent & Co-Curricular Directory",
+    description: "Spot, endorse and shortlist talented students in your classes.",
   },
   "/teacher/assessments": {
     eyebrow: "Assessments",

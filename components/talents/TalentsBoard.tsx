@@ -34,8 +34,6 @@ import TalentProfile from "./TalentProfile";
 const PAGE_SIZE = 12;
 const noop = () => () => {};
 
-const grades = [...new Set(sections.map(gradeNum))];
-const letters = [...new Set(sections.map((s) => s.split("-")[1]))].sort();
 const order = (t: Talent) => -levelRank(t.level) * 1000 - gradeNum(t.student.section) * 10;
 
 /* ---------------- Actions ---------------- */
@@ -191,8 +189,14 @@ const topSkills = (list: Talent[], cat: string, n = 3) => {
   return [...count].sort((a, b) => b[1] - a[1]).slice(0, n);
 };
 
-export default function TalentsBoard() {
-  const [list, setList] = useState<Talent[]>(seed);
+/** Who endorses from this board, and which sections it covers (all of them for the principal). */
+type Scope = { sections?: string[]; endorser?: { name: string; role: string } };
+
+export default function TalentsBoard({ sections: scope = sections, endorser = { name: principal.name, role: "Principal" } }: Scope) {
+  const pool = useMemo(() => students.filter((s) => scope.includes(s.section)), [scope]);
+  const grades = useMemo(() => [...new Set(scope.map(gradeNum))].sort((a, b) => a - b), [scope]);
+  const letters = useMemo(() => [...new Set(scope.map((s) => s.split("-")[1]))].sort(), [scope]);
+  const [list, setList] = useState<Talent[]>(() => seed.filter((t) => scope.includes(t.student.section)));
   const [shortlist, setShortlist] = useState<Record<string, string>>(initialShortlist);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
@@ -216,7 +220,7 @@ export default function TalentsBoard() {
     const debate = list.filter((t) => categoriesOf(t).includes(DEBATE));
     return {
       total: list.length,
-      share: Math.round((list.length / students.length) * 100),
+      share: Math.round((list.length / pool.length) * 100),
       multi: list.filter((t) => t.extra.length).length,
       sports: sports.length,
       sportsNote: topSkills(sports, SPORTS).map(([k, n]) => `${k} ${n}`).join(" · "),
@@ -224,7 +228,7 @@ export default function TalentsBoard() {
       mun: list.filter((t) => skillsOf(t).includes("Model UN")).length,
       orators: list.filter((t) => skillsOf(t).some((k) => k === "Urdu Speech" || k === "English Speech")).length,
     };
-  }, [list]);
+  }, [list, pool]);
 
   const catalog = useMemo(() => catalogFrom(list), [list]);
 
@@ -314,7 +318,7 @@ export default function TalentsBoard() {
     const event = e.achievement
       ? [{ date: AS_OF, title: e.achievement, scope: levelRank(e.level) >= 3 ? ("District" as const) : ("School" as const), result: levelOf(e.level).short, ...tag }]
       : [];
-    const remark = e.remark ? [{ by: principal.name, role: "Principal", date: AS_OF, text: e.remark }] : [];
+    const remark = e.remark ? [{ by: endorser.name, role: endorser.role, date: AS_OF, text: e.remark }] : [];
 
     if (existing) {
       const isPrimary = same(existing.primary.skill, e.skill);
@@ -339,7 +343,7 @@ export default function TalentsBoard() {
         primary: { ...tag, role: e.role },
         extra: [],
         level: e.level,
-        achievement: e.achievement || `Endorsed in ${e.skill} by the principal, ${AS_OF.slice(0, 4)}`,
+        achievement: e.achievement || `Endorsed in ${e.skill} by the ${endorser.role.toLowerCase()}, ${AS_OF.slice(0, 4)}`,
         history: event,
         remarks: remark.length ? remark : [{ by: mentorFor(e.category).name, role: mentorFor(e.category).role, date: AS_OF, text: "Newly profiled talent. Progress will be reviewed at the end of term." }],
       };
@@ -475,7 +479,7 @@ export default function TalentsBoard() {
           onClose={() => setProfileId(null)}
         />
       )}
-      {hydrated && endorsing && <EndorseForm talents={list} onSave={endorse} onClose={() => setEndorsing(false)} />}
+      {hydrated && endorsing && <EndorseForm talents={list} pool={pool} onSave={endorse} onClose={() => setEndorsing(false)} />}
       {picking && <ShortlistDialog t={picking} onPick={(event) => shortlistFor(picking, event)} onClose={closePick} />}
       {toast && <Toast {...toast} onDone={closeToast} />}
     </main>

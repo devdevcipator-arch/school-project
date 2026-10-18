@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
-import ComingSoon from "@/components/teacher/ComingSoon";
-import { teacherNav } from "@/lib/teacher";
+import TalentsBoard from "@/components/talents/TalentsBoard";
+import { mySections } from "@/lib/classAttendance";
+import { teacher } from "@/lib/teacher";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: `Talents | Teacher Portal | ${site.name}`,
 };
 
-// Placeholder until the Talents page spec is shared.
+const sections = mySections.map((s) => s.section);
+
+// Same talent directory and flow as the principal portal, limited to the teacher's own classes.
 export default function TalentsPage() {
-  return <ComingSoon title="Talents" icon={teacherNav[3].icon} />;
+  return <TalentsBoard sections={sections} endorser={{ name: teacher.name, role: teacher.role }} />;
 }

@@ -43,7 +43,18 @@ function NewTag({ label, tone, kind }: { label: string; tone: string; kind: "cat
 const input = (bad?: string) =>
   `w-full rounded-xl border bg-white px-4 py-3 text-[.92rem] outline-none transition-colors hover:border-accent focus:border-primary ${bad ? "border-danger" : "border-ink/12"}`;
 
-export default function EndorseForm({ talents, onSave, onClose }: { talents: Talent[]; onSave: (e: Endorsement) => void; onClose: () => void }) {
+export default function EndorseForm({
+  talents,
+  pool = students,
+  onSave,
+  onClose,
+}: {
+  talents: Talent[];
+  /** Students who can be endorsed (a teacher only sees their own classes). */
+  pool?: Student[];
+  onSave: (e: Endorsement) => void;
+  onClose: () => void;
+}) {
   const [query, setQuery] = useState("");
   const [student, setStudent] = useState<Student | null>(null);
   const [category, setCategory] = useState("");
@@ -57,8 +68,8 @@ export default function EndorseForm({ talents, onSave, onClose }: { talents: Tal
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    return students.filter((s) => `${s.name} ${s.regId} ${s.section}`.toLowerCase().includes(q) || String(s.rollNo) === q).slice(0, 6);
-  }, [query]);
+    return pool.filter((s) => `${s.name} ${s.regId} ${s.section}`.toLowerCase().includes(q) || String(s.rollNo) === q).slice(0, 6);
+  }, [query, pool]);
 
   const existing = student && talents.find((t) => t.student.id === student.id);
 
