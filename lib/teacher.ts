@@ -38,8 +38,8 @@ export const teacherTitles: Record<string, { eyebrow: string; title: string; des
   },
   "/teacher/assessments": {
     eyebrow: "Assessments",
-    title: "Assessments & Quizzes",
-    description: "Create, schedule and grade tests for your classes.",
+    title: "Assessments & Tasks Hub",
+    description: "Create AI-powered tests, assign homework/tasks, monitor student submissions, and record marks.",
   },
   "/teacher/reports": {
     eyebrow: "Reports",
