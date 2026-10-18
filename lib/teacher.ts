@@ -43,8 +43,8 @@ export const teacherTitles: Record<string, { eyebrow: string; title: string; des
   },
   "/teacher/reports": {
     eyebrow: "Reports",
-    title: "Student Reports",
-    description: "Prepare and send digital report cards.",
+    title: "Student Academic Reports & Dispatches",
+    description: "Generate, review, finalize, and dispatch term progress report cards directly to student dashboards.",
   },
   "/teacher/resources": {
     eyebrow: "Resources",

@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
-import ComingSoon from "@/components/teacher/ComingSoon";
-import { teacherNav } from "@/lib/teacher";
+import ReportsHub from "@/components/teacher/reports/ReportsHub";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: `Reports | Teacher Portal | ${site.name}`,
 };
 
-// Placeholder until the Reports page spec is shared.
+// Student Academic Reports & Dispatches: compile, review and send term report cards
 export default function ReportsPage() {
-  return <ComingSoon title="Reports" icon={teacherNav[5].icon} />;
+  return <ReportsHub />;
 }
