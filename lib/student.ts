@@ -65,6 +65,69 @@ export const studentNotifications = [
   { text: "School closed on Friday for a public holiday", tone: "danger" as const, when: "1d ago" },
 ];
 
+// ---------- Overview ("My Day") ----------
+
+export type NoticeSource = "Principal" | "Class teacher";
+
+export const urgentNotices: { source: NoticeSource; title: string; body: string; when: string; tone: "warn" | "danger" }[] = [
+  {
+    source: "Principal",
+    title: "School closed on Friday",
+    body: "The school will remain closed this Friday for a public holiday. Classes resume on Monday.",
+    when: "Yesterday",
+    tone: "danger",
+  },
+  {
+    source: "Class teacher",
+    title: "Science lab coats required",
+    body: "Bring your lab coat for Thursday's practical. Students without one will not enter the lab.",
+    when: "Today, 8:10 AM",
+    tone: "warn",
+  },
+];
+
+export const studentAttendance = { present: 68, absent: 3, leave: 2, streak: 12 };
+
+export type PendingState = "Closes today" | "Open" | "Due this week";
+
+export const pendingWork: { title: string; subject: string; kind: "Quiz" | "Test" | "Homework"; state: PendingState }[] = [
+  { title: "Algebra Mid-Term Quiz", subject: "Mathematics", kind: "Quiz", state: "Closes today" },
+  { title: "Photosynthesis Check", subject: "Biology", kind: "Quiz", state: "Open" },
+  { title: "Essay: My Hometown", subject: "English", kind: "Homework", state: "Due this week" },
+  { title: "Chemical Bonding Worksheet", subject: "Chemistry", kind: "Homework", state: "Due this week" },
+];
+
+export const latestResult = {
+  title: "Physics Unit Test 2",
+  subject: "Physics",
+  score: 42,
+  total: 50,
+  classAverage: 71,
+  gradedOn: "18 Oct",
+};
+
+export type Period = { start: string; end: string; subject: string; teacher: string; room: string; isBreak?: boolean };
+
+/** Today's timetable. Times are 24h "HH:MM" so the current period can be found from the clock. */
+export const todaySchedule: Period[] = [
+  { start: "08:00", end: "08:45", subject: "Mathematics", teacher: "Mr. Usman Ali", room: "Room 10A" },
+  { start: "08:45", end: "09:30", subject: "Physics", teacher: "Ms. Sana Iqbal", room: "Physics Lab" },
+  { start: "09:30", end: "10:15", subject: "English", teacher: "Mrs. Hina Shah", room: "Room 10A" },
+  { start: "10:15", end: "10:35", subject: "Break", teacher: "", room: "", isBreak: true },
+  { start: "10:35", end: "11:20", subject: "Chemistry", teacher: "Mr. Bilal Ahmed", room: "Chemistry Lab" },
+  { start: "11:20", end: "12:05", subject: "Biology", teacher: "Dr. Farah Naz", room: "Biology Lab" },
+  { start: "12:05", end: "12:50", subject: "Urdu", teacher: "Mr. Kamran Raza", room: "Room 10A" },
+  { start: "12:50", end: "13:30", subject: "Computer Science", teacher: "Ms. Ayesha Malik", room: "Computer Lab" },
+];
+
+export const dueSoon: { title: string; subject: string; day: string; date: string; urgent?: boolean }[] = [
+  { title: "Algebra Mid-Term Quiz", subject: "Mathematics", day: "Today", date: "21 Oct", urgent: true },
+  { title: "Lab coat for practical", subject: "Chemistry", day: "Thu", date: "23 Oct" },
+  { title: "Essay: My Hometown", subject: "English", day: "Thu", date: "23 Oct" },
+  { title: "Chemical Bonding Worksheet", subject: "Chemistry", day: "Sat", date: "25 Oct" },
+  { title: "Urdu poem recitation", subject: "Urdu", day: "Mon", date: "27 Oct" },
+];
+
 // ---------- Page blueprints: the planned sections of each page ----------
 
 /** One planned section on a page. `span` is its width on the 12-column desktop grid. */
