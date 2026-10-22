@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import PageScaffold from "@/components/student/PageScaffold";
+import ResourceHub from "@/components/resources/ResourceHub";
+import { student } from "@/lib/student";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: `Resources | Student Portal | ${site.name}`,
 };
 
-// Resources: read-only subject folders, textbooks, helping materials and lecture slides
+// Resources: the same library as the teacher Resource Hub, read-only (browse, preview and download; no upload or management)
 export default function ResourcesPage() {
-  return <PageScaffold path="/student/resources" />;
+  return <ResourceHub role="student" user={student.name} />;
 }
