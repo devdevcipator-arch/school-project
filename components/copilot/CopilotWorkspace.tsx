@@ -45,7 +45,7 @@ function Badge({ icon, children, live = false }: { icon: string; children: React
   );
 }
 
-/** Shared AI workspace. `persona` picks the scope: the principal sees the whole school, a teacher only their classes. */
+/** Shared AI workspace. `persona` picks the scope: the principal sees the whole school, a teacher only their classes, a student only their studies. */
 export default function CopilotWorkspace({ persona: key = "principal" }: { persona?: PersonaKey }) {
   const persona = personas[key];
   const [messages, setMessages] = useState<Message[]>(() => [greeting(persona.greeting)]);
@@ -62,7 +62,9 @@ export default function CopilotWorkspace({ persona: key = "principal" }: { perso
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const closeToast = useCallback(() => setToast(null), []);
 
-  const indexed = vault.filter((d) => d.status === "indexed");
+  // Students see textbooks, syllabi and student policies, not staff handbooks.
+  const shelf = persona.studyOnly ? vault.filter((d) => d.category !== "Handbook") : vault;
+  const indexed = shelf.filter((d) => d.status === "indexed");
   const processing = vault.some((d) => d.status !== "indexed" && d.status !== "failed");
 
   const log = useCallback((kind: AuditKind, action: string, detail: string, status: AuditEntry["status"] = "executed") => {
@@ -99,7 +101,7 @@ export default function CopilotWorkspace({ persona: key = "principal" }: { perso
   const ask = (q: string) => {
     const text = q.trim();
     if (!text || thinking) return;
-    const reply = persona.respond(text, vault);
+    const reply = persona.respond(text, shelf);
     const steps = reply.tools.length ? reply.tools.map((t) => `Querying ${t}`) : ["Understanding your request"];
     setMessages((m) => [...m, { id: uid("u"), from: "user", text }]);
     setInput("");
@@ -225,7 +227,7 @@ export default function CopilotWorkspace({ persona: key = "principal" }: { perso
         <div className="flex flex-wrap gap-2">
           <Badge icon="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z M8.5 12l2.5 2.5 4.5-5">{persona.access}</Badge>
           <Badge icon="" live>
-            Live SMS Database Connected
+            {persona.live}
           </Badge>
           <Badge icon="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z M8 7h6">
             Knowledge Vault: {indexed.length} {indexed.length === 1 ? "Document" : "Books / Documents"} Indexed
@@ -238,12 +240,14 @@ export default function CopilotWorkspace({ persona: key = "principal" }: { perso
           </button>
           <button type="button" onClick={() => setVaultOpen(true)} className={`${ghostBtn} max-sm:flex-1`}>
             <Icon d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z M8 7h6" className="size-[18px]" />
-            Manage Document Vault
+            {persona.studyOnly ? "Browse Textbooks" : "Manage Document Vault"}
           </button>
-          <button type="button" onClick={() => setAuditOpen(true)} className={`${ghostBtn} max-sm:w-full`}>
-            <Icon d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z M12 7v5l3 2" className="size-[18px]" />
-            Audit Trail
-          </button>
+          {!persona.studyOnly && (
+            <button type="button" onClick={() => setAuditOpen(true)} className={`${ghostBtn} max-sm:w-full`}>
+              <Icon d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z M12 7v5l3 2" className="size-[18px]" />
+              Audit Trail
+            </button>
+          )}
         </div>
       </header>
 
@@ -331,9 +335,11 @@ export default function CopilotWorkspace({ persona: key = "principal" }: { perso
           className="border-t border-surface/10 px-[max(12px,calc((100%-1100px)/2))] py-3 sm:py-4"
         >
           <div className="flex items-end gap-2 rounded-2xl border border-surface/15 bg-surface/8 p-2 transition-colors focus-within:border-accent">
-            <button type="button" onClick={() => setVaultOpen(true)} title="Upload to the knowledge vault" aria-label="Upload books or documents" className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-xl text-surface/70 transition-colors hover:bg-surface/10 hover:text-surface">
-              <Icon d="M21 12.5l-8.5 8.5a5 5 0 0 1-7-7l9-9a3.5 3.5 0 0 1 5 5l-9 9a2 2 0 0 1-3-3l8-8" className="size-5" />
-            </button>
+            {!persona.studyOnly && (
+              <button type="button" onClick={() => setVaultOpen(true)} title="Upload to the knowledge vault" aria-label="Upload books or documents" className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-xl text-surface/70 transition-colors hover:bg-surface/10 hover:text-surface">
+                <Icon d="M21 12.5l-8.5 8.5a5 5 0 0 1-7-7l9-9a3.5 3.5 0 0 1 5 5l-9 9a2 2 0 0 1-3-3l8-8" className="size-5" />
+              </button>
+            )}
             <label htmlFor="copilot-input" className="sr-only">
               Ask the {persona.name.toLowerCase()}
             </label>
@@ -358,13 +364,14 @@ export default function CopilotWorkspace({ persona: key = "principal" }: { perso
               </svg>
             </button>
           </div>
-          <p className="mt-2 px-1 text-[.7rem] text-surface/40">Enter to send · Shift + Enter for a new line · Actions never run without your confirmation</p>
+          <p className="mt-2 px-1 text-[.7rem] text-surface/40">{persona.footnote}</p>
         </form>
       </section>
 
       {hydrated && vaultOpen && (
         <VaultDrawer
-          docs={vault}
+          docs={shelf}
+          readOnly={persona.studyOnly}
           onUpload={upload}
           onRemove={removeDoc}
           onAsk={(d) => {

@@ -3,9 +3,11 @@ import { respond, seedAudit, suggestions, type AuditEntry, type AuditKind, type 
 import { principal } from "@/lib/principal";
 import { sectionLabel } from "@/lib/students";
 import { teacher } from "@/lib/teacher";
+import { student } from "@/lib/student";
+import { respondStudent, studentSuggestions } from "@/lib/studentCopilot";
 import { respondTeacher, teacherAudit, teacherSuggestions } from "@/lib/teacherCopilot";
 
-export type PersonaKey = "principal" | "teacher";
+export type PersonaKey = "principal" | "teacher" | "student";
 
 /** Everything that differs between the principal's and a teacher's copilot; the UI is shared. */
 export type Persona = {
@@ -19,6 +21,12 @@ export type Persona = {
   respond: (raw: string, vault: VaultDoc[]) => Reply;
   audit: AuditEntry[];
   auditKinds: AuditKind[];
+  /** Second header badge, e.g. the live data connection. */
+  live: string;
+  /** Composer footnote under the input. */
+  footnote: string;
+  /** Student view: browse the vault only, no uploads, no audit trail. */
+  studyOnly?: boolean;
 };
 
 export const personas: Record<PersonaKey, Persona> = {
@@ -33,6 +41,8 @@ export const personas: Record<PersonaKey, Persona> = {
     respond,
     audit: seedAudit,
     auditKinds: ["teacher", "student", "announcement", "vault", "session"],
+    live: "Live SMS Database Connected",
+    footnote: "Enter to send · Shift + Enter for a new line · Actions never run without your confirmation",
   },
   teacher: {
     owner: teacher.name,
@@ -45,5 +55,22 @@ export const personas: Record<PersonaKey, Persona> = {
     respond: respondTeacher,
     audit: teacherAudit,
     auditKinds: ["assessment", "announcement", "report", "vault", "session"],
+    live: "Live SMS Database Connected",
+    footnote: "Enter to send · Shift + Enter for a new line · Actions never run without your confirmation",
+  },
+  student: {
+    owner: student.name,
+    name: "Study Copilot",
+    tagline: "Explains topics · writes practice questions · plans your revision · cites your textbooks",
+    access: `Student Access · Study Mode · ${student.classLabel}`,
+    greeting: `Hi ${student.firstName}! I am your study assistant for ${student.classLabel}. Ask me to explain a topic, quiz you, plan your revision around upcoming work, or find something in your textbooks. I only help with your courses and studies, not personal information.`,
+    placeholder: "Ask about a topic, say 'Quiz me on...', or ask what is due this week",
+    suggestions: studentSuggestions,
+    respond: respondStudent,
+    audit: [],
+    auditKinds: [],
+    live: "Course Data Connected",
+    footnote: "Enter to send · Shift + Enter for a new line · Study questions only: no personal data",
+    studyOnly: true,
   },
 };

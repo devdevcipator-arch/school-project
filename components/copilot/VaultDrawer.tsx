@@ -33,12 +33,15 @@ export default function VaultDrawer({
   onRemove,
   onAsk,
   onClose,
+  readOnly = false,
 }: {
   docs: VaultDoc[];
   onUpload: (files: File[], meta: UploadMeta) => void;
   onRemove: (d: VaultDoc) => void;
   onAsk: (d: VaultDoc) => void;
   onClose: () => void;
+  /** Browse and ask only: no upload or remove (student view). */
+  readOnly?: boolean;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [meta, setMeta] = useState<UploadMeta>({ category: "Textbook", subject: "", grade: "" });
@@ -84,6 +87,7 @@ export default function VaultDrawer({
     >
       {() => (
         <div className="grid gap-6 px-5 py-6 sm:px-7">
+          {!readOnly && (
           <section className="grid gap-3">
             <h3 className="text-[1rem] font-extrabold tracking-tight">Upload books & documents</h3>
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
@@ -132,6 +136,7 @@ export default function VaultDrawer({
               </p>
             )}
           </section>
+          )}
 
           <section className="grid gap-3">
             <div className="flex flex-wrap items-end justify-between gap-2">
@@ -217,10 +222,12 @@ export default function VaultDrawer({
                                   Ask about this
                                 </button>
                               )}
+                              {!readOnly && (
                               <button type="button" onClick={() => setRemoving(d.id)} className={ghostSm} aria-label={`Remove ${d.title}`}>
                                 <Icon d="M4 7h16 M10 11v6 M14 11v6 M6 7l1 13h10l1-13 M9 7V4h6v3" className="size-4" />
                                 Remove
                               </button>
+                              )}
                             </>
                           )}
                         </div>

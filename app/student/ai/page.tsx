@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import PageScaffold from "@/components/student/PageScaffold";
+import CopilotWorkspace from "@/components/copilot/CopilotWorkspace";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: `Student AI | Student Portal | ${site.name}`,
 };
 
-// Student AI: concept tutoring, question explanations and curriculum-aligned study help
+// Student AI Study Copilot: same workspace as the principal's, limited to course and study questions (no personal data).
 export default function AiPage() {
-  return <PageScaffold path="/student/ai" />;
+  return <CopilotWorkspace persona="student" />;
 }
