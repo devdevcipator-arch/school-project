@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { EmergencyBanner } from "@/components/announcements/emergency";
 import DashboardShell from "@/components/dashboard/DashboardShell";
 import NotificationBell from "@/components/principal/NotificationBell";
 import { student, studentNav, studentNotifications, studentTitles } from "@/lib/student";
@@ -15,6 +16,7 @@ export default function StudentLayout({ children }: LayoutProps<"/student">) {
     <DashboardShell
       nav={studentNav}
       portalLabel="Student portal"
+      banner={<EmergencyBanner />}
       titles={studentTitles}
       profile={
         <div className="flex shrink-0 items-center gap-3">

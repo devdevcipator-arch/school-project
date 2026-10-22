@@ -44,7 +44,7 @@ export const studentTitles: Record<string, { eyebrow: string; title: string; des
   "/student/notices": {
     eyebrow: "Notices",
     title: "Notices & Circulars",
-    description: "School-wide alerts from the Principal and class circulars from your teachers.",
+    description: "Announcements from the Principal Office for the whole school, students and your grade. Read-only.",
   },
   "/student/ai": {
     eyebrow: "Student AI",

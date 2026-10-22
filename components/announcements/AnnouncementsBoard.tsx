@@ -18,6 +18,7 @@ import {
 import { Select, Toast, fieldClass, ghostSm, type ToastData } from "@/components/dashboard/controls";
 import Composer, { type ComposerResult } from "./Composer";
 import { savePresets, setEmergency, useEmergency, usePresets } from "./emergency";
+import { readNotices, saveNotices, useNoticeList } from "./store";
 import { AudienceTag, PriorityBadge, PriorityDot } from "./tags";
 
 type Tab = "all" | "school" | "staff" | "students" | "drafts";
@@ -422,7 +423,9 @@ const currentMonth = () => monthKey(new Date());
 const seedMonth = monthKey(new Date(seed.reduce((a, n) => (n.date > a ? n.date : a), seed[0].date)));
 
 export default function AnnouncementsBoard({ startComposing = false }: { startComposing?: boolean }) {
-  const [list, setList] = useState<Notice[]>(seed);
+  // Shared store, so published notices reach the student portal.
+  const list = useNoticeList();
+  const setList = useCallback((next: Notice[] | ((l: Notice[]) => Notice[])) => saveNotices(typeof next === "function" ? next(readNotices()) : next), []);
   const [tab, setTab] = useState<Tab>("all");
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState("all");

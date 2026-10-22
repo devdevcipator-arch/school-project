@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import PageScaffold from "@/components/student/PageScaffold";
+import NoticesFeed from "@/components/student/notices/NoticesFeed";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: `Notices | Student Portal | ${site.name}`,
 };
 
-// Notices: school-wide alerts from the Principal and class circulars from teachers
+// Notices: the Principal's published announcements addressed to this student (school-wide, students and their grade)
 export default function NoticesPage() {
-  return <PageScaffold path="/student/notices" />;
+  return <NoticesFeed />;
 }

@@ -227,6 +227,13 @@ export function formatSize(bytes: number) {
   return bytes >= 1_000_000 ? `${(bytes / 1_000_000).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1_000))} KB`;
 }
 
+const SAFE_TAGS = new Set(["p", "br", "ul", "ol", "li", "strong", "b", "em", "i", "u", "h3", "h4"]);
+
+/** Keeps only the composer's formatting tags, without attributes, before rendering rich text to readers. */
+export function safeHtml(html: string) {
+  return html.replace(/<(\/?)([a-z][a-z0-9]*)\b[^>]*>/gi, (_, slash: string, tag: string) => (SAFE_TAGS.has(tag.toLowerCase()) ? `<${slash}${tag.toLowerCase()}>` : ""));
+}
+
 export function plainText(html: string) {
   // Block ends become spaces; inline tags vanish so "<b>PM</b>." stays "PM.".
   return html
