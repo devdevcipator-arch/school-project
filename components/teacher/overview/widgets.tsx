@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Badge, Bar, Card, CardLink } from "@/components/dashboard/ui";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { PASS_MARK, assessmentStateTone, type AssessmentFormat, type ClassOverview } from "@/lib/teacher";
+import { assessmentStateTone, type AssessmentFormat, type ClassOverview } from "@/lib/teacher";
 
 const sectionLabel = "mb-3 mt-6 text-[.74rem] font-bold uppercase tracking-[.12em] text-ink/50";
 const plus = "M12 5v14 M5 12h14";
@@ -94,63 +94,6 @@ export function AttendanceWidget({ c }: { c: ClassOverview }) {
           )}
         </div>
       </div>
-    </Card>
-  );
-}
-
-/* ---------- 4. Academic progress & syllabus ---------- */
-
-/** Half-circle gauge for the class average score. */
-function Gauge({ value }: { value: number }) {
-  const r = 70;
-  const half = Math.PI * r;
-  return (
-    <svg viewBox="0 0 170 96" className="w-full max-w-[220px]" role="img" aria-label={`Class average ${value}%`}>
-      <path d="M15 85a70 70 0 0 1 140 0" fill="none" strokeWidth="14" strokeLinecap="round" className="stroke-ink/6" />
-      <path d="M15 85a70 70 0 0 1 140 0" fill="none" strokeWidth="14" strokeLinecap="round" className="stroke-primary" strokeDasharray={`${(value / 100) * half} ${half}`} />
-      <text x="85" y="72" textAnchor="middle" className="fill-ink text-[28px] font-extrabold">
-        {value}%
-      </text>
-      <text x="85" y="91" textAnchor="middle" className="fill-ink/50 text-[10px] font-semibold">
-        class average
-      </text>
-    </svg>
-  );
-}
-
-export function ProgressWidget({ c }: { c: ClassOverview }) {
-  return (
-    <Card title="Academic Progress" subtitle="Syllabus completion and class performance">
-      {/* Full-width row: syllabus bars on the left, overall performance on the right. */}
-      <div className="grid gap-x-10 lg:grid-cols-2">
-        <ul className="grid content-start gap-3.5">
-          {c.subjects.map((s) => (
-            <li key={s.name} className="grid gap-1.5">
-              <span className="flex items-center justify-between text-[.86rem]">
-                <span className="font-semibold text-ink/75">{s.name}</span>
-                <strong className="tabular-nums">{s.percent}%</strong>
-              </span>
-              <Bar value={s.percent} fill={s.percent >= 75 ? "bg-primary" : "bg-accent"} label={`${s.name} syllabus ${s.percent}% complete`} />
-            </li>
-          ))}
-        </ul>
-
-        <div>
-          <h3 className={`${sectionLabel} lg:mt-0`}>Overall class performance</h3>
-          <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-ink/8 bg-surface/50 p-4">
-            <Gauge value={c.avgScore} />
-            <ul className="grid min-w-[150px] flex-1 gap-2 text-[.82rem]">
-              {c.lastScores.map((s) => (
-                <li key={s.title} className="flex items-center justify-between gap-2">
-                  <span className="truncate text-ink/65">{s.title}</span>
-                  <strong className={`tabular-nums ${s.percent < PASS_MARK ? "text-danger" : ""}`}>{s.percent}%</strong>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
-      <CardLink href="/teacher/talents">View Detailed Class Progress & Talents</CardLink>
     </Card>
   );
 }
