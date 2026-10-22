@@ -16,7 +16,7 @@ export const studentTitles: Record<string, { eyebrow: string; title: string; des
   "/student": {
     eyebrow: "Overview",
     title: "My Day",
-    description: "Your daily hub: urgent notices, attendance, pending quizzes and today's schedule.",
+    description: "Your daily hub: attendance, pending quizzes and homework, and your latest result.",
   },
   "/student/attendance": {
     eyebrow: "My Attendance",
@@ -67,25 +67,6 @@ export const studentNotifications = [
 
 // ---------- Overview ("My Day") ----------
 
-export type NoticeSource = "Principal" | "Class teacher";
-
-export const urgentNotices: { source: NoticeSource; title: string; body: string; when: string; tone: "warn" | "danger" }[] = [
-  {
-    source: "Principal",
-    title: "School closed on Friday",
-    body: "The school will remain closed this Friday for a public holiday. Classes resume on Monday.",
-    when: "Yesterday",
-    tone: "danger",
-  },
-  {
-    source: "Class teacher",
-    title: "Science lab coats required",
-    body: "Bring your lab coat for Thursday's practical. Students without one will not enter the lab.",
-    when: "Today, 8:10 AM",
-    tone: "warn",
-  },
-];
-
 export const studentAttendance = { present: 68, absent: 3, leave: 2, streak: 12 };
 
 export type PendingState = "Closes today" | "Open" | "Due this week";
@@ -118,14 +99,6 @@ export const todaySchedule: Period[] = [
   { start: "11:20", end: "12:05", subject: "Biology", teacher: "Dr. Farah Naz", room: "Biology Lab" },
   { start: "12:05", end: "12:50", subject: "Urdu", teacher: "Mr. Kamran Raza", room: "Room 10A" },
   { start: "12:50", end: "13:30", subject: "Computer Science", teacher: "Ms. Ayesha Malik", room: "Computer Lab" },
-];
-
-export const dueSoon: { title: string; subject: string; day: string; date: string; urgent?: boolean }[] = [
-  { title: "Algebra Mid-Term Quiz", subject: "Mathematics", day: "Today", date: "21 Oct", urgent: true },
-  { title: "Lab coat for practical", subject: "Chemistry", day: "Thu", date: "23 Oct" },
-  { title: "Essay: My Hometown", subject: "English", day: "Thu", date: "23 Oct" },
-  { title: "Chemical Bonding Worksheet", subject: "Chemistry", day: "Sat", date: "25 Oct" },
-  { title: "Urdu poem recitation", subject: "Urdu", day: "Mon", date: "27 Oct" },
 ];
 
 // ---------- Page blueprints: the planned sections of each page ----------

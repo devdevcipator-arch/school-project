@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
-/** KPI card: header and body. */
-export function Kpi({ label, icon, children }: { label: string; icon: string; children: ReactNode }) {
+/** KPI card: header and body. `fill` stretches the body so its last row sits on the card bottom. */
+export function Kpi({ label, icon, fill, children }: { label: string; icon: string; fill?: boolean; children: ReactNode }) {
   return (
     <section
       className="flex min-w-0 flex-col rounded-[20px] border border-ink/8 bg-white p-5 shadow-[0_10px_30px_rgba(6,30,41,.05)] transition-[translate,box-shadow] duration-300 ease-soft hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(6,30,41,.1)]"
@@ -14,7 +14,7 @@ export function Kpi({ label, icon, children }: { label: string; icon: string; ch
           </svg>
         </span>
       </div>
-      <div className="mt-4 grid gap-4">{children}</div>
+      <div className={`mt-4 grid gap-4 ${fill ? "flex-1 content-between" : ""}`}>{children}</div>
     </section>
   );
 }

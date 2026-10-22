@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: `Overview | Student Portal | ${site.name}`,
 };
 
-// Student Overview: urgent notices, attendance, pending work, latest result, daily schedule and deadlines
+// Student Overview: greeting, attendance, pending work and latest result
 export default function StudentOverviewPage() {
   return <StudentOverview />;
 }
