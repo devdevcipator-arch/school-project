@@ -6,7 +6,7 @@ import { Card } from "@/components/dashboard/ui";
 import AttendanceHistory from "@/components/teachers/AttendanceHistory";
 import { leavePolicy, leaveRequests, leaveUsed, me, myHistory, onTimeStreak } from "@/lib/myAttendance";
 import { summarize } from "@/lib/teacherAttendance";
-import CalendarCard from "./CalendarCard";
+import DayLog from "./DayLog";
 import KpiRow from "./KpiRow";
 import TodayBar from "./TodayBar";
 import { isoOf, monthNames, weekdayNames } from "./shared";
@@ -17,13 +17,7 @@ const clientToday = () => isoOf(new Date());
 
 const pending = leaveRequests.filter((r) => r.status === "Pending");
 
-// Days covered by pending requests, for the dashed calendar outline.
-const pendingLeave = new Set<string>();
-for (const r of pending) {
-  for (const d = new Date(`${r.from}T00:00:00`); isoOf(d) <= r.to; d.setDate(d.getDate() + 1)) pendingLeave.add(isoOf(d));
-}
-
-/** Teacher's own attendance: today, this month, calendar and full history. */
+/** Teacher's own attendance: today, this month, day-by-day log and full history. */
 export default function MyAttendance() {
   const todayIso = useSyncExternalStore(noop, clientToday, () => "");
   if (!todayIso) {
@@ -71,7 +65,7 @@ function Board({ todayIso }: { todayIso: string }) {
         leave={{ allowed, used: usedTotal, pending: pending.reduce((s, r) => s + r.days, 0) }}
       />
 
-      <CalendarCard records={records} todayIso={todayIso} pendingLeave={pendingLeave} />
+      <DayLog records={records} todayIso={todayIso} />
 
       <Card>
         <AttendanceHistory t={me} />

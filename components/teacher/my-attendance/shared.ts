@@ -1,5 +1,5 @@
 import type { Tone } from "@/components/dashboard/ui";
-import type { DayRecord, DayState } from "@/lib/teacherAttendance";
+import type { DayState } from "@/lib/teacherAttendance";
 
 export const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 export const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -23,17 +23,3 @@ export function shortDay(isoDate: string) {
 
 /** "2026-10" to "October 2026". */
 export const monthLabel = (key: string) => `${monthNames[Number(key.slice(5, 7)) - 1]} ${key.slice(0, 4)}`;
-
-/** Mon-Fri days between two ISO dates, inclusive. */
-export function workingDaysBetween(from: string, to: string) {
-  let n = 0;
-  for (const d = utc(from); d <= utc(to); d.setUTCDate(d.getUTCDate() + 1)) if (d.getUTCDay() % 6 !== 0) n++;
-  return n;
-}
-
-/** Short detail line for a day: "12 min late", "08:04 AM to 02:20 PM", or the leave note. */
-export function detailOf(r: DayRecord, clock: (t: string) => string) {
-  if (r.state === "absent" || r.state === "leave") return r.note ?? "";
-  const times = r.checkIn ? `${clock(r.checkIn)}${r.checkOut ? ` to ${clock(r.checkOut)}` : ""}` : "";
-  return r.state === "late" ? `${r.minutesLate} min late · ${times}` : times;
-}
