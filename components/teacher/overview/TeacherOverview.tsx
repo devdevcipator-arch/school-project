@@ -25,12 +25,11 @@ export default function TeacherOverview() {
       <div key={`kpi-${c.id}`} className={fade}>
         <KpiRow c={c} />
       </div>
-      <div key={`row1-${c.id}`} className={`grid gap-4 lg:grid-cols-2 xl:grid-cols-3 ${fade}`}>
+      {/* One full-width row per widget. */}
+      <div key={`rows-${c.id}`} className={`grid gap-5 lg:gap-6 ${fade}`}>
         <AttendanceWidget c={c} />
         <ProgressWidget c={c} />
-        <div className="grid lg:col-span-2 xl:col-span-1">
-          <AssessmentsWidget c={c} />
-        </div>
+        <AssessmentsWidget c={c} />
       </div>
     </main>
   );

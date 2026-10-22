@@ -42,51 +42,58 @@ export function AttendanceWidget({ c }: { c: ClassOverview }) {
   ];
   return (
     <Card title="Class Attendance" subtitle={`Today's breakdown · updated ${updatedAt}`}>
-      <div className="flex flex-wrap items-center gap-5">
-        <div className="relative">
-          <Donut parts={parts} />
-          <span className="absolute inset-0 grid place-content-center text-center">
-            <span className="text-[1.5rem] font-extrabold leading-none">{Math.round((present / total) * 100)}%</span>
-            <span className="mt-1 text-[.7rem] font-semibold text-ink/50">present</span>
-          </span>
+      {/* Full-width row: breakdown and action on the left, today's absentees on the right. */}
+      <div className="grid gap-x-10 lg:grid-cols-2">
+        <div>
+          <div className="flex flex-wrap items-center gap-5">
+            <div className="relative">
+              <Donut parts={parts} />
+              <span className="absolute inset-0 grid place-content-center text-center">
+                <span className="text-[1.5rem] font-extrabold leading-none">{Math.round((present / total) * 100)}%</span>
+                <span className="mt-1 text-[.7rem] font-semibold text-ink/50">present</span>
+              </span>
+            </div>
+            <ul className="grid flex-1 gap-2.5">
+              {parts.map((p) => (
+                <li key={p.label} className="flex items-center justify-between gap-3 rounded-xl bg-surface/70 px-3 py-2">
+                  <span className="inline-flex items-center gap-2 text-[.86rem] font-semibold text-ink/70">
+                    <span aria-hidden className={`size-2.5 rounded-full ${p.fill}`} />
+                    {p.label}
+                  </span>
+                  <strong className="tabular-nums">{p.value}</strong>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <Link href="/teacher/class-attendance" className={buttonClass("primary", "md", "mt-5 w-full")}>
+            <Icon d="M8 3v3 M16 3v3 M4 7h16v13H4z M8 14l2.5 2.5L16 11" className="size-[18px]" />
+            Mark / Update Class Attendance
+          </Link>
         </div>
-        <ul className="grid flex-1 gap-2.5">
-          {parts.map((p) => (
-            <li key={p.label} className="flex items-center justify-between gap-3 rounded-xl bg-surface/70 px-3 py-2">
-              <span className="inline-flex items-center gap-2 text-[.86rem] font-semibold text-ink/70">
-                <span aria-hidden className={`size-2.5 rounded-full ${p.fill}`} />
-                {p.label}
-              </span>
-              <strong className="tabular-nums">{p.value}</strong>
-            </li>
-          ))}
-        </ul>
+
+        <div>
+          <h3 className={`${sectionLabel} lg:mt-0`}>Absent or on leave today</h3>
+          {c.absentees.length === 0 ? (
+            <p className="rounded-xl bg-ok/8 px-3 py-2.5 text-[.86rem] font-semibold text-ok">Everyone is in class today.</p>
+          ) : (
+            <ul className="divide-y divide-ink/6">
+              {c.absentees.map((s) => (
+                <li key={s.name} className="flex items-center gap-3 py-2.5">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/10 text-[.78rem] font-bold text-primary">
+                    {s.name.split(" ").map((w) => w[0]).join("")}
+                  </span>
+                  <span className="grid min-w-0 flex-1">
+                    <span className="truncate text-[.9rem] font-semibold">{s.name}</span>
+                    <span className="truncate text-[.78rem] text-ink/55">{s.roll}</span>
+                  </span>
+                  <Badge tone={s.tone}>{s.note}</Badge>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
-
-      <Link href="/teacher/class-attendance" className={buttonClass("primary", "md", "mt-5 w-full")}>
-        <Icon d="M8 3v3 M16 3v3 M4 7h16v13H4z M8 14l2.5 2.5L16 11" className="size-[18px]" />
-        Mark / Update Class Attendance
-      </Link>
-
-      <h3 className={sectionLabel}>Absent or on leave today</h3>
-      {c.absentees.length === 0 ? (
-        <p className="rounded-xl bg-ok/8 px-3 py-2.5 text-[.86rem] font-semibold text-ok">Everyone is in class today.</p>
-      ) : (
-        <ul className="divide-y divide-ink/6">
-          {c.absentees.map((s) => (
-            <li key={s.name} className="flex items-center gap-3 py-2.5">
-              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/10 text-[.78rem] font-bold text-primary">
-                {s.name.split(" ").map((w) => w[0]).join("")}
-              </span>
-              <span className="grid min-w-0 flex-1">
-                <span className="truncate text-[.9rem] font-semibold">{s.name}</span>
-                <span className="truncate text-[.78rem] text-ink/55">{s.roll}</span>
-              </span>
-              <Badge tone={s.tone}>{s.note}</Badge>
-            </li>
-          ))}
-        </ul>
-      )}
     </Card>
   );
 }
@@ -114,29 +121,34 @@ function Gauge({ value }: { value: number }) {
 export function ProgressWidget({ c }: { c: ClassOverview }) {
   return (
     <Card title="Academic Progress" subtitle="Syllabus completion and class performance">
-      <ul className="grid gap-3.5">
-        {c.subjects.map((s) => (
-          <li key={s.name} className="grid gap-1.5">
-            <span className="flex items-center justify-between text-[.86rem]">
-              <span className="font-semibold text-ink/75">{s.name}</span>
-              <strong className="tabular-nums">{s.percent}%</strong>
-            </span>
-            <Bar value={s.percent} fill={s.percent >= 75 ? "bg-primary" : "bg-accent"} label={`${s.name} syllabus ${s.percent}% complete`} />
-          </li>
-        ))}
-      </ul>
-
-      <h3 className={sectionLabel}>Overall class performance</h3>
-      <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-ink/8 bg-surface/50 p-4">
-        <Gauge value={c.avgScore} />
-        <ul className="grid min-w-[150px] flex-1 gap-2 text-[.82rem]">
-          {c.lastScores.map((s) => (
-            <li key={s.title} className="flex items-center justify-between gap-2">
-              <span className="truncate text-ink/65">{s.title}</span>
-              <strong className={`tabular-nums ${s.percent < PASS_MARK ? "text-danger" : ""}`}>{s.percent}%</strong>
+      {/* Full-width row: syllabus bars on the left, overall performance on the right. */}
+      <div className="grid gap-x-10 lg:grid-cols-2">
+        <ul className="grid content-start gap-3.5">
+          {c.subjects.map((s) => (
+            <li key={s.name} className="grid gap-1.5">
+              <span className="flex items-center justify-between text-[.86rem]">
+                <span className="font-semibold text-ink/75">{s.name}</span>
+                <strong className="tabular-nums">{s.percent}%</strong>
+              </span>
+              <Bar value={s.percent} fill={s.percent >= 75 ? "bg-primary" : "bg-accent"} label={`${s.name} syllabus ${s.percent}% complete`} />
             </li>
           ))}
         </ul>
+
+        <div>
+          <h3 className={`${sectionLabel} lg:mt-0`}>Overall class performance</h3>
+          <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-ink/8 bg-surface/50 p-4">
+            <Gauge value={c.avgScore} />
+            <ul className="grid min-w-[150px] flex-1 gap-2 text-[.82rem]">
+              {c.lastScores.map((s) => (
+                <li key={s.title} className="flex items-center justify-between gap-2">
+                  <span className="truncate text-ink/65">{s.title}</span>
+                  <strong className={`tabular-nums ${s.percent < PASS_MARK ? "text-danger" : ""}`}>{s.percent}%</strong>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
       </div>
       <CardLink href="/teacher/talents">View Detailed Class Progress & Talents</CardLink>
     </Card>
@@ -163,7 +175,7 @@ export function AssessmentsWidget({ c }: { c: ClassOverview }) {
         </Link>
       }
     >
-      <ul className="grid gap-2.5">
+      <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {c.assessments.map((a) => {
           const pct = Math.round((a.submitted / a.total) * 100);
           return (
