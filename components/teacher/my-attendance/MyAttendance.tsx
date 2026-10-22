@@ -4,11 +4,10 @@ import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
 import { Toast, type ToastData } from "@/components/dashboard/controls";
 import { Card } from "@/components/dashboard/ui";
 import AttendanceHistory from "@/components/teachers/AttendanceHistory";
-import { leavePolicy, leaveRequests, leaveUsed, me, myHistory, onTimeStreak, type LeaveRequest } from "@/lib/myAttendance";
+import { leavePolicy, leaveRequests, leaveUsed, me, myHistory, onTimeStreak } from "@/lib/myAttendance";
 import { summarize } from "@/lib/teacherAttendance";
 import CalendarCard from "./CalendarCard";
 import KpiRow from "./KpiRow";
-import LeaveCard from "./LeaveCard";
 import TodayBar from "./TodayBar";
 import { isoOf, monthNames, weekdayNames } from "./shared";
 
@@ -16,7 +15,15 @@ import { isoOf, monthNames, weekdayNames } from "./shared";
 const noop = () => () => {};
 const clientToday = () => isoOf(new Date());
 
-/** Teacher's own attendance: today, this month, calendar, leave and full history. */
+const pending = leaveRequests.filter((r) => r.status === "Pending");
+
+// Days covered by pending requests, for the dashed calendar outline.
+const pendingLeave = new Set<string>();
+for (const r of pending) {
+  for (const d = new Date(`${r.from}T00:00:00`); isoOf(d) <= r.to; d.setDate(d.getDate() + 1)) pendingLeave.add(isoOf(d));
+}
+
+/** Teacher's own attendance: today, this month, calendar and full history. */
 export default function MyAttendance() {
   const todayIso = useSyncExternalStore(noop, clientToday, () => "");
   if (!todayIso) {
@@ -31,7 +38,6 @@ export default function MyAttendance() {
 
 function Board({ todayIso }: { todayIso: string }) {
   const records = useMemo(() => myHistory(new Date(`${todayIso}T12:00:00`)), [todayIso]);
-  const [requests, setRequests] = useState<LeaveRequest[]>(leaveRequests);
   const [checkOut, setCheckOut] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastData | null>(null);
   const clearToast = useCallback(() => setToast(null), []);
@@ -41,34 +47,12 @@ function Board({ todayIso }: { todayIso: string }) {
   const monthKey = todayIso.slice(0, 7);
   const month = summarize(records.filter((r) => r.date.startsWith(monthKey)));
   const used = useMemo(() => leaveUsed(records), [records]);
-  const pending = requests.filter((r) => r.status === "Pending");
-
-  // Days covered by pending requests, for the dashed calendar outline.
-  const pendingLeave = useMemo(() => {
-    const s = new Set<string>();
-    for (const r of requests) {
-      if (r.status !== "Pending") continue;
-      for (const d = new Date(`${r.from}T00:00:00`); isoOf(d) <= r.to; d.setDate(d.getDate() + 1)) s.add(isoOf(d));
-    }
-    return s;
-  }, [requests]);
 
   const doCheckOut = () => {
     const d = new Date();
     const t = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
     setCheckOut(t);
     setToast({ text: "Checked out. Have a good evening!", action: { label: "Undo", run: () => (setCheckOut(null), setToast(null)) } });
-  };
-
-  const addRequest = (r: Omit<LeaveRequest, "id" | "status" | "submitted">) => {
-    setRequests((rs) => [{ ...r, id: `lr${Date.now()}`, status: "Pending", submitted: todayIso }, ...rs]);
-    setToast({ text: `${r.type} request for ${r.days} ${r.days === 1 ? "day" : "days"} sent to the principal.` });
-  };
-
-  const withdraw = (id: string) => {
-    const prev = requests;
-    setRequests((rs) => rs.filter((r) => r.id !== id));
-    setToast({ text: "Leave request withdrawn.", action: { label: "Undo", run: () => (setRequests(prev), setToast(null)) } });
   };
 
   const d = new Date(`${todayIso}T12:00:00`);
@@ -87,12 +71,7 @@ function Board({ todayIso }: { todayIso: string }) {
         leave={{ allowed, used: usedTotal, pending: pending.reduce((s, r) => s + r.days, 0) }}
       />
 
-      <div className="grid gap-4 xl:grid-cols-3">
-        <div className="grid xl:col-span-2">
-          <CalendarCard records={records} todayIso={todayIso} pendingLeave={pendingLeave} />
-        </div>
-        <LeaveCard todayIso={todayIso} used={used} requests={requests} onRequest={addRequest} onWithdraw={withdraw} />
-      </div>
+      <CalendarCard records={records} todayIso={todayIso} pendingLeave={pendingLeave} />
 
       <Card>
         <AttendanceHistory t={me} />
