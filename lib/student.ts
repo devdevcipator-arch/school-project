@@ -139,12 +139,6 @@ function groupBy(keyOf: (d: AttendanceDay) => string, labelOf: (key: string) => 
   }));
 }
 
-/** Week groups keyed by their Monday. */
-export const attendanceByWeek = groupBy(
-  (d) => isoDay(utcMs(d.date) - ((new Date(utcMs(d.date)).getUTCDay() + 6) % 7) * DAY_MS),
-  shortDate,
-);
-
 /** Month groups keyed "YYYY-MM". */
 export const attendanceByMonth = groupBy(
   (d) => d.date.slice(0, 7),

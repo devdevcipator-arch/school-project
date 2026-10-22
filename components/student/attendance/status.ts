@@ -8,9 +8,6 @@ export const statusMeta: Record<DayStatus, { label: string; fill: string; soft: 
   H: { label: "Holiday", fill: "bg-ink/15", soft: "bg-ink/4 text-ink/45", icon: "M12 3l2.2 5.3L20 9l-4.4 3.8L17 19l-5-3-5 3 1.4-6.2L4 9l5.8-.7z" },
 };
 
-/** Stack order, bottom to top, for charts and legends. */
-export const stackOrder = ["P", "L", "A"] as const;
-
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 export const weekdayOf = (iso: string) => WEEKDAYS[new Date(utcMs(iso)).getUTCDay()];
 /** "Tue 6 Oct" */
