@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { Badge, Bar, Card, CardLink, toneFill } from "@/components/dashboard/ui";
-import { ghostBtn } from "@/components/dashboard/controls";
+import { Badge, Bar, Card, CardLink } from "@/components/dashboard/ui";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { PASS_MARK, assessmentStateTone, type AssessmentFormat, type ClassOverview, type ResourceKind } from "@/lib/teacher";
+import { PASS_MARK, assessmentStateTone, type AssessmentFormat, type ClassOverview } from "@/lib/teacher";
 
 const sectionLabel = "mb-3 mt-6 text-[.74rem] font-bold uppercase tracking-[.12em] text-ink/50";
 const plus = "M12 5v14 M5 12h14";
@@ -201,116 +200,6 @@ export function AssessmentsWidget({ c }: { c: ClassOverview }) {
         })}
       </ul>
       <CardLink href="/teacher/assessments">Open Assessments & AI Test Maker</CardLink>
-    </Card>
-  );
-}
-
-/* ---------- 6. Helping books & resources ---------- */
-
-const kindIcon: Record<ResourceKind, string> = {
-  Textbook: "M4 5a2 2 0 0 1 2-2h12v15H6a2 2 0 0 0-2 2z M4 20a2 2 0 0 0 2 1h12v-3",
-  "Reference PDF": "M7 3h7l5 5v13H7z M14 3v5h5 M10 13h6 M10 17h6",
-  "Syllabus guide": "M9 4h6 M8 4H6v17h12V4h-2 M9 10h6 M9 14h6 M9 18h3",
-};
-
-export function ResourcesWidget({ c }: { c: ClassOverview }) {
-  const { books, guides, materials, top } = c.resources;
-  return (
-    <Card
-      title="Helping Books & Class Resources"
-      subtitle={`${books + guides + materials} items uploaded for ${c.label}`}
-      action={
-        <div className="flex flex-wrap gap-2">
-          <Link href="/teacher/resources" className={`${ghostBtn} !px-4 !py-2 text-[.84rem]`}>
-            Browse All Resources
-          </Link>
-          <Link href="/teacher/resources?add=1" className={buttonClass("primary", "md", "!px-4 !py-2 text-[.84rem]")}>
-            <Icon d={plus} className="size-4" />
-            Add New Helping Book
-          </Link>
-        </div>
-      }
-    >
-      <div className="grid grid-cols-3 gap-2.5">
-        {[
-          { label: "Helping books", value: books },
-          { label: "Syllabus guides", value: guides },
-          { label: "Study material", value: materials },
-        ].map((s) => (
-          <div key={s.label} className="rounded-2xl border border-ink/8 bg-surface/60 p-3">
-            <p className="text-[1.5rem] font-extrabold leading-none text-primary">{s.value}</p>
-            <p className="mt-1.5 text-[.78rem] font-semibold text-ink/60">{s.label}</p>
-          </div>
-        ))}
-      </div>
-
-      <h3 className={sectionLabel}>Most used this month</h3>
-      <ul className="grid gap-3 md:grid-cols-3">
-        {top.map((r) => (
-          <li key={r.title} className="group flex flex-col rounded-2xl border border-ink/8 p-4 transition-[border-color,translate,box-shadow] duration-300 ease-soft hover:-translate-y-1 hover:border-accent/60 hover:shadow-[0_14px_30px_rgba(6,30,41,.08)]">
-            <div className="flex items-start gap-3">
-              <span className="grid h-14 w-11 shrink-0 place-items-center rounded-lg bg-linear-to-b from-primary to-ink text-surface shadow-[inset_-3px_0_0_rgba(243,244,244,.25)]">
-                <Icon d={kindIcon[r.kind]} className="size-5" />
-              </span>
-              <span className="grid min-w-0 gap-0.5">
-                <span className="line-clamp-2 text-[.88rem] font-bold leading-snug">{r.title}</span>
-                <span className="text-[.74rem] text-ink/55">{r.kind} · {r.meta}</span>
-              </span>
-            </div>
-            <div className="mt-auto flex items-center justify-between gap-2 pt-4">
-              <span className="text-[.74rem] text-ink/50">Opened {r.opens} times</span>
-              <Link href="/teacher/resources" className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-[.78rem] font-bold text-primary transition-colors hover:bg-primary hover:text-surface">
-                Open / View
-              </Link>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </Card>
-  );
-}
-
-/* ---------- 7. Reports ---------- */
-
-export function ReportsWidget({ c }: { c: ClassOverview }) {
-  const { generated, pending, attention } = c.reports;
-  const total = generated + pending;
-  return (
-    <Card title="Reports & Performance" subtitle="Monthly progress report status">
-      <div className="rounded-2xl bg-linear-135 from-ink to-primary p-5 text-surface">
-        <p className="text-[.78rem] font-bold uppercase tracking-[.12em] text-surface/60">Monthly progress reports</p>
-        <p className="mt-1 text-[1.6rem] font-extrabold leading-none">
-          {generated} <span className="text-[.85rem] font-semibold text-surface/65">of {total} generated</span>
-        </p>
-        <div role="meter" aria-label="Reports generated" aria-valuemin={0} aria-valuemax={total} aria-valuenow={generated} className="mt-4 h-3 overflow-hidden rounded-r-full bg-surface/15">
-          <div className="h-full rounded-r-full bg-linear-to-r from-accent to-surface" style={{ width: `${(generated / total) * 100}%` }} />
-        </div>
-        <p className="mt-3 inline-flex items-center gap-2 text-[.82rem] text-surface/80">
-          <span aria-hidden className={`size-2 rounded-full ${toneFill.warn}`} />
-          {pending} pending your review
-        </p>
-      </div>
-
-      <div className="mt-6 mb-3 flex items-center justify-between gap-2">
-        <h3 className="text-[.74rem] font-bold uppercase tracking-[.12em] text-ink/50">Needs academic attention</h3>
-        <Badge tone={attention.length > 0 ? "danger" : "ok"}>{attention.length} students</Badge>
-      </div>
-      <ul className="grid gap-2">
-        {attention.map((s) => (
-          <li key={s.name} className="flex items-center gap-3 rounded-xl border border-danger/15 bg-danger/5 px-3 py-2.5">
-            <Icon d="M12 7v6 M12 17h.01 M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z" className="size-[18px] shrink-0 text-danger" />
-            <span className="grid min-w-0">
-              <span className="truncate text-[.88rem] font-semibold">{s.name}</span>
-              <span className="truncate text-[.78rem] text-ink/60">{s.note}</span>
-            </span>
-          </li>
-        ))}
-      </ul>
-
-      <Link href="/teacher/reports" className={buttonClass("dark", "md", "mt-auto w-full")}>
-        <Icon d="M4 12l16-8-6 16-2-6z" className="size-[18px]" />
-        Review & Send Reports to Students
-      </Link>
     </Card>
   );
 }

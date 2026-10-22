@@ -19,7 +19,7 @@ export const teacherTitles: Record<string, { eyebrow: string; title: string; des
   "/teacher": {
     eyebrow: "Overview",
     title: "Teacher Overview",
-    description: "Your daily command center for attendance, progress, assessments and reports.",
+    description: "Your daily command center for attendance, progress and assessments.",
   },
   "/teacher/my-attendance": {
     eyebrow: "My Attendance",

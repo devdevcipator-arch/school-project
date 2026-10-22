@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: `Overview | Teacher Portal | ${site.name}`,
 };
 
-// Teacher Overview: greeting + class selector, KPIs, attendance, progress, assessments, resources, reports
+// Teacher Overview: greeting + class selector, KPIs, attendance, progress and assessments
 export default function TeacherOverviewPage() {
   return <TeacherOverview />;
 }
