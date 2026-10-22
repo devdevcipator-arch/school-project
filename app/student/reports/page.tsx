@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import PageScaffold from "@/components/student/PageScaffold";
+import ReportsView from "@/components/student/reports/ReportsView";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: `Reports | Student Portal | ${site.name}`,
 };
 
-// Reports: term report vault, grades ledger, teacher remarks and PDF download
+// Reports: the term report cards the class teacher has dispatched, identical to the teacher's card, with PDF download
 export default function ReportsPage() {
-  return <PageScaffold path="/student/reports" />;
+  return <ReportsView />;
 }
