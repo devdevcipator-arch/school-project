@@ -21,7 +21,7 @@ export const studentTitles: Record<string, { eyebrow: string; title: string; des
   "/student/attendance": {
     eyebrow: "My Attendance",
     title: "My Attendance Record",
-    description: "Your term attendance, monthly log and absence breakdown. Read-only.",
+    description: "See which days you were present, absent or on leave this term. Read-only.",
   },
   "/student/assessments": {
     eyebrow: "Assessments",
@@ -67,7 +67,89 @@ export const studentNotifications = [
 
 // ---------- Overview ("My Day") ----------
 
-export const studentAttendance = { present: 68, absent: 3, leave: 2, streak: 12 };
+// ---------- Attendance ----------
+
+/** P = present, A = absent, L = on leave, H = school holiday. */
+export type DayStatus = "P" | "A" | "L" | "H";
+export type AttendanceDay = { date: string; status: DayStatus; note?: string };
+
+/** Term runs Monday to Friday from the start date up to the "as of" date (mock today). */
+export const attendanceTerm = { name: "Term 1", start: "2026-08-03", asOf: "2026-10-22" };
+
+const holidays: Record<string, string> = {
+  "2026-08-14": "Independence Day",
+  "2026-08-26": "Eid Milad-un-Nabi",
+};
+
+const missedDays: Record<string, { status: "A" | "L"; note: string }> = {
+  "2026-08-20": { status: "A", note: "Fever" },
+  "2026-09-15": { status: "A", note: "Medical appointment" },
+  "2026-09-24": { status: "L", note: "Family wedding" },
+  "2026-09-25": { status: "L", note: "Family wedding" },
+  "2026-10-06": { status: "A", note: "Not reported" },
+};
+
+const DAY_MS = 86_400_000;
+const isoDay = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+export const utcMs = (iso: string) => Date.parse(`${iso}T00:00:00Z`);
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** "6 Oct": fixed 3-letter months so labels never vary by locale. */
+export const shortDate = (iso: string) => `${Number(iso.slice(8, 10))} ${MONTHS[Number(iso.slice(5, 7)) - 1]}`;
+
+/** Every school day (Mon to Fri) of the term so far, oldest first. */
+export const attendanceLog: AttendanceDay[] = (() => {
+  const days: AttendanceDay[] = [];
+  for (let t = utcMs(attendanceTerm.start); t <= utcMs(attendanceTerm.asOf); t += DAY_MS) {
+    const weekday = new Date(t).getUTCDay();
+    if (weekday === 0 || weekday === 6) continue;
+    const date = isoDay(t);
+    if (holidays[date]) days.push({ date, status: "H", note: holidays[date] });
+    else if (missedDays[date]) days.push({ date, ...missedDays[date] });
+    else days.push({ date, status: "P" });
+  }
+  return days;
+})();
+
+const count = (days: AttendanceDay[], s: DayStatus) => days.filter((d) => d.status === s).length;
+
+/** Term totals; the streak counts present days back from today, skipping holidays. */
+export const studentAttendance = (() => {
+  let streak = 0;
+  for (const d of [...attendanceLog].reverse()) {
+    if (d.status === "H") continue;
+    if (d.status !== "P") break;
+    streak++;
+  }
+  return { present: count(attendanceLog, "P"), absent: count(attendanceLog, "A"), leave: count(attendanceLog, "L"), streak };
+})();
+
+export type AttendanceGroup = { key: string; label: string; present: number; absent: number; leave: number; holidays: number; days: AttendanceDay[] };
+
+function groupBy(keyOf: (d: AttendanceDay) => string, labelOf: (key: string) => string): AttendanceGroup[] {
+  const groups = new Map<string, AttendanceDay[]>();
+  for (const d of attendanceLog) groups.set(keyOf(d), [...(groups.get(keyOf(d)) ?? []), d]);
+  return [...groups].map(([key, days]) => ({
+    key,
+    label: labelOf(key),
+    present: count(days, "P"),
+    absent: count(days, "A"),
+    leave: count(days, "L"),
+    holidays: count(days, "H"),
+    days,
+  }));
+}
+
+/** Week groups keyed by their Monday. */
+export const attendanceByWeek = groupBy(
+  (d) => isoDay(utcMs(d.date) - ((new Date(utcMs(d.date)).getUTCDay() + 6) % 7) * DAY_MS),
+  shortDate,
+);
+
+/** Month groups keyed "YYYY-MM". */
+export const attendanceByMonth = groupBy(
+  (d) => d.date.slice(0, 7),
+  (key) => new Date(utcMs(`${key}-01`)).toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" }),
+);
 
 export type PendingState = "Closes today" | "Open" | "Due this week";
 
