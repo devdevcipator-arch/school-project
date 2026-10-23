@@ -120,7 +120,7 @@ function studentReply(s: Student): Reply {
         ],
       },
       { kind: "list", items: [`Guardian: ${s.guardian} (${s.guardianRelation}), ${s.phone}`, `System ID: ${s.regId}`] },
-      { kind: "links", items: [{ label: "Open Reports", href: "/teacher/reports" }] },
+      { kind: "links", items: [{ label: "Open Result Card", href: "/teacher/reports" }] },
     ],
   };
 }
@@ -142,7 +142,7 @@ function performance(q: string): Reply {
     tools: ["report cards", "assessment marks"],
     blocks: [
       { kind: "table", columns: ["Student", "Class", "Overall", "Grade", "Attendance"], rows: list.map((x) => [x.s.name, x.s.section, `${x.t.pct}%`, x.t.grade, `${x.s.termRate}%`]) },
-      { kind: "links", items: [{ label: "Open Reports", href: "/teacher/reports" }] },
+      { kind: "links", items: [{ label: "Open Result Card", href: "/teacher/reports" }] },
     ],
   };
 }

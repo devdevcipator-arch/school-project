@@ -31,7 +31,7 @@ const privacyReply = (who?: string): Reply => ({
   tools: ["privacy guard"],
   blocks: [
     { kind: "list", items: ["Explain Newton's laws of motion", "Quiz me on chemical bonding", "Make a study plan for this week"] },
-    { kind: "links", items: [{ label: "Open My Attendance", href: "/student/attendance" }, { label: "Open Reports", href: "/student/reports" }] },
+    { kind: "links", items: [{ label: "Open My Attendance", href: "/student/attendance" }, { label: "Open Result Card", href: "/student/reports" }] },
   ],
 });
 

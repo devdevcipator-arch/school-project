@@ -3,7 +3,7 @@ import ReportsHub from "@/components/teacher/reports/ReportsHub";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: `Reports | Teacher Portal | ${site.name}`,
+  title: `Result Card | Teacher Portal | ${site.name}`,
 };
 
 // Student Academic Reports & Dispatches: compile, review and send term report cards

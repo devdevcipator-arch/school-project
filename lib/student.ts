@@ -8,7 +8,7 @@ export const studentNav = [
   { href: "/student", label: "Overview", icon: "M4 4h7v7H4z M13 4h7v4h-7z M13 10h7v10h-7z M4 13h7v7H4z" },
   { href: "/student/attendance", label: "My Attendance", icon: "M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z M12 7v5l3 2" },
   { href: "/student/assessments", label: "Assessments", icon: "M9 4h6 M8 4H6v17h12V4h-2 M9 10h6 M9 14h6 M9 18h3" },
-  { href: "/student/reports", label: "Reports", icon: "M4 19V5 M4 19h16 M8 15l3-4 3 2 5-6" },
+  { href: "/student/reports", label: "Result Card", icon: "M4 19V5 M4 19h16 M8 15l3-4 3 2 5-6" },
   { href: "/student/resources", label: "Resources", icon: "M4 5a2 2 0 0 1 2-2h5v18H6a2 2 0 0 1-2-2z M11 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7 M14 8h3 M14 12h3" },
   { href: "/student/notices", label: "Notices", icon: "M3 11l15-6v14L3 13z M7 13v5h3v-4" },
   { href: "/student/ai", label: "Student AI", icon: "M12 3v4 M12 17v4 M3 12h4 M17 12h4 M6 6l2.5 2.5 M15.5 15.5 18 18 M6 18l2.5-2.5 M15.5 8.5 18 6" },
@@ -32,9 +32,9 @@ export const studentTitles: Record<string, { eyebrow: string; title: string; des
     description: "Your quizzes, tests and homework with their due dates. View-only reminders.",
   },
   "/student/reports": {
-    eyebrow: "Reports",
-    title: "Report Cards & Transcripts",
-    description: "Report cards sent by your class teacher, with marks, grades and remarks. Read-only.",
+    eyebrow: "Result Card",
+    title: "Result Cards & Transcripts",
+    description: "Result cards sent by your class teacher, with marks, grades and remarks. Read-only.",
   },
   "/student/resources": {
     eyebrow: "Resources",

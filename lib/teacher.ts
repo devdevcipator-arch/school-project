@@ -9,7 +9,7 @@ export const teacherNav = [
   { href: "/teacher/class-attendance", label: "Class Attendance", icon: "M8 3v3 M16 3v3 M4 7h16v13H4z M8 14l2.5 2.5L16 11" },
   { href: "/teacher/talents", label: "Talents", icon: "M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" },
   { href: "/teacher/assessments", label: "Assessments", icon: "M9 4h6 M8 4H6v17h12V4h-2 M9 10h6 M9 14h6 M9 18h3" },
-  { href: "/teacher/reports", label: "Reports", icon: "M4 19V5 M4 19h16 M8 15l3-4 3 2 5-6" },
+  { href: "/teacher/reports", label: "Result Card", icon: "M4 19V5 M4 19h16 M8 15l3-4 3 2 5-6" },
   { href: "/teacher/resources", label: "Resources", icon: "M4 5a2 2 0 0 1 2-2h5v18H6a2 2 0 0 1-2-2z M11 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7 M14 8h3 M14 12h3" },
   { href: "/teacher/ai", label: "AI Assistant", icon: "M12 3v4 M12 17v4 M3 12h4 M17 12h4 M6 6l2.5 2.5 M15.5 15.5 18 18 M6 18l2.5-2.5 M15.5 8.5 18 6" },
 ];
@@ -42,9 +42,9 @@ export const teacherTitles: Record<string, { eyebrow: string; title: string; des
     description: "Create AI-powered tests, assign homework/tasks, monitor student submissions, and record marks.",
   },
   "/teacher/reports": {
-    eyebrow: "Reports",
-    title: "Student Academic Reports & Dispatches",
-    description: "Generate, review, finalize, and dispatch term progress report cards directly to student dashboards.",
+    eyebrow: "Result Card",
+    title: "Student Result Cards & Dispatches",
+    description: "Generate, review, finalize, and dispatch term result cards directly to student dashboards.",
   },
   "/teacher/resources": {
     eyebrow: "Resources",
