@@ -4,8 +4,8 @@ import { useRef } from "react";
 import { Chip, Select, fieldClass } from "@/components/dashboard/controls";
 import { Badge, Card } from "@/components/dashboard/ui";
 import { Icon } from "@/components/ui/Icon";
-import { accountOf, feeRemarkPresets, feeStanding, type FeeMark, type FeeMarks, type FeeMarkStatus } from "@/lib/classFees";
-import { planOf, shortDate } from "@/lib/fees";
+import { feeStanding, type FeeMark, type FeeMarks, type FeeMarkStatus } from "@/lib/classFees";
+import { shortDate } from "@/lib/fees";
 import type { Student } from "@/lib/students";
 
 export type StatusFilter = "all" | FeeMarkStatus;
@@ -65,31 +65,14 @@ function RemarkField({ name, mark, locked, onChange }: { name: string; mark: Fee
     ) : null;
   }
   return (
-    <div className="grid animate-fade-in gap-2">
-      <input
-        type="text"
-        value={mark.remark}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Remarks, e.g. Parent promised to pay this week"
-        aria-label={`Remarks for ${name}`}
-        className={`${fieldClass} w-full !py-2`}
-      />
-      <div className="flex flex-wrap gap-1.5">
-        {feeRemarkPresets.map((p) => (
-          <button
-            key={p}
-            type="button"
-            tabIndex={-1}
-            onClick={() => onChange(p)}
-            className={`cursor-pointer rounded-full border px-2.5 py-1 text-[.72rem] font-semibold transition-colors ${
-              mark.remark === p ? "border-primary bg-primary text-surface" : "border-ink/12 bg-white text-ink/60 hover:border-accent hover:text-primary"
-            }`}
-          >
-            {p}
-          </button>
-        ))}
-      </div>
-    </div>
+    <input
+      type="text"
+      value={mark.remark}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder="Remarks, e.g. Parent promised to pay this week"
+      aria-label={`Remarks for ${name}`}
+      className={`${fieldClass} w-full animate-fade-in !py-2`}
+    />
   );
 }
 
@@ -207,10 +190,7 @@ export default function Roster({
                     <span className={`grid size-10 shrink-0 place-items-center rounded-full text-[.8rem] font-bold ${s.gender === "Female" ? "bg-accent/18 text-[#3d6e71]" : "bg-primary/12 text-primary"}`}>{initials(s.name)}</span>
                     <span className="grid min-w-0">
                       <span className="truncate text-[.94rem] font-bold">{s.name}</span>
-                      <span className="flex flex-wrap items-center gap-1.5 text-[.74rem] text-ink/55">
-                        {s.regId}
-                        <span className="rounded-full bg-ink/6 px-2 py-px font-semibold text-ink/60">{planOf(accountOf(s).plan).short} plan</span>
-                      </span>
+                      <span className="text-[.74rem] text-ink/55">{s.regId}</span>
                     </span>
                   </div>
                 </div>
