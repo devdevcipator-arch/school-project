@@ -116,7 +116,7 @@ export type Talent = {
   primary: SkillTag & { role: string };
   extra: SkillTag[];
   level: Level;
-  achievement: string;
+  achievements: string[];
   history: TalentEvent[];
   remarks: MentorRemark[];
 };
@@ -241,7 +241,7 @@ function build(): Talent[] {
       primary: { skill: primary.name, category: labelOf(primary.category), role: pick(primary.roles, r(9)) },
       extra: extra.map((n) => ({ skill: n, category: labelOf(skillOf(n).category) })),
       level,
-      achievement: headline(level, primary, r(10), Number(history[0].date.slice(0, 4))),
+      achievements: [headline(level, primary, r(10), Number(history[0].date.slice(0, 4)))],
       history,
       remarks: [
         { by: mentor.name, role: mentor.role, date: `2026-${pad(8 + Math.floor(r(11) * 2))}-${pad(2 + Math.floor(r(12) * 26))}`, text: pick(remarkText[level], r(13)) },

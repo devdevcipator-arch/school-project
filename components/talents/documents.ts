@@ -15,7 +15,7 @@ export function printCertificate(t: Talent) {
       <p class="muted">${e(sectionLabel(s.section))} &middot; Roll No. ${s.rollNo} &middot; ${e(s.regId)}</p>
       <p>in recognition of outstanding ability in <strong>${e(t.primary.skill)}${t.primary.role ? ` (${e(t.primary.role)})` : ""}</strong>,<br/>
       endorsed at the level of <strong>${e(levelOf(t.level).label)}</strong>.</p>
-      ${t.achievement ? `<p><em>${e(t.achievement)}</em></p>` : ""}
+      ${t.achievements.map((a) => `<p><em>${e(a)}</em></p>`).join("")}
       <div class="sign">
         ${t.remarks[0] ? `<div>${e(t.remarks[0].by)}<br/><span class="muted">${e(t.remarks[0].role)}</span></div>` : ""}
         <div>${e(AS_OF_LABEL)}<br/><span class="muted">Date</span></div>

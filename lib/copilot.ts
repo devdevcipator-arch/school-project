@@ -355,7 +355,7 @@ function talentReply(q: string): Reply {
     tools: ["talent roster"],
     blocks: list.length
       ? [
-          { kind: "table", columns: ["Student", "Class", "Primary talent", "Level", "Key achievement"], rows: list.slice(0, 8).map((t) => [t.student.name, t.student.section, `${t.primary.skill}${t.primary.role ? ` - ${t.primary.role}` : ""}`, levelOf(t.level).short, t.achievement]) },
+          { kind: "table", columns: ["Student", "Class", "Primary talent", "Level", "Key achievement"], rows: list.slice(0, 8).map((t) => [t.student.name, t.student.section, `${t.primary.skill}${t.primary.role ? ` - ${t.primary.role}` : ""}`, levelOf(t.level).short, t.achievements.join("; ") || "-"]) },
           { kind: "links", items: [{ label: "Open Talents", href: "/principal/talents" }] },
         ]
       : undefined,

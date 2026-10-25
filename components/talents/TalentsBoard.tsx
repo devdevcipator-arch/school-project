@@ -140,7 +140,7 @@ export default function TalentsBoard({ sections: scope = sections, endorser = { 
       .filter((t) => {
         if (!q) return true;
         const s = t.student;
-        const hay = `${s.name} ${s.regId} ${t.primary.skill} ${t.primary.role} ${t.primary.category} ${t.extra.map((g) => `${g.skill} ${g.category}`).join(" ")} ${t.achievement} ${levelOf(t.level).label}`.toLowerCase();
+        const hay = `${s.name} ${s.regId} ${t.primary.skill} ${t.primary.role} ${t.primary.category} ${t.extra.map((g) => `${g.skill} ${g.category}`).join(" ")} ${t.achievements.join(" ")} ${levelOf(t.level).label}`.toLowerCase();
         return hay.includes(q) || (digits !== "" && digits === q && String(s.rollNo) === digits);
       })
       .filter((t) => category === "all" || categoriesOf(t).includes(category))
@@ -186,41 +186,43 @@ export default function TalentsBoard({ sections: scope = sections, endorser = { 
 
   const endorse = (e: Endorsement) => {
     const existing = list.find((t) => t.student.id === e.student.id);
-    const tag = { skill: e.skill, category: e.category };
-    const event = e.achievement
-      ? [{ date: AS_OF, title: e.achievement, scope: levelRank(e.level) >= 3 ? ("District" as const) : ("School" as const), result: levelOf(e.level).short, ...tag }]
-      : [];
+    const tags = e.skills.map((skill) => ({ skill, category: e.category }));
+    const [tag] = tags;
+    const events = e.achievements.map((title) => ({ date: AS_OF, title, scope: levelRank(e.level) >= 3 ? ("District" as const) : ("School" as const), result: levelOf(e.level).short, ...tag }));
+    const names = e.skills.join(", ");
     const remark = e.remark ? [{ by: endorser.name, role: endorser.role, date: AS_OF, text: e.remark }] : [];
 
     if (existing) {
-      const isPrimary = same(existing.primary.skill, e.skill);
-      const hasExtra = existing.extra.some((g) => same(g.skill, e.skill));
+      const primaryTag = tags.find((g) => same(g.skill, existing.primary.skill));
+      // Skills already on the record are refreshed in place; new ones are appended.
+      const others = tags.filter((g) => g !== primaryTag);
+      const extra = [...existing.extra.map((g) => others.find((o) => same(o.skill, g.skill)) ?? g), ...others.filter((o) => !existing.extra.some((g) => same(g.skill, o.skill)))];
       const raised = levelRank(e.level) > levelRank(existing.level);
       const updated: Talent = {
         ...existing,
-        primary: isPrimary ? { ...tag, role: e.role || existing.primary.role } : existing.primary,
-        extra: isPrimary ? existing.extra : hasExtra ? existing.extra.map((g) => (same(g.skill, e.skill) ? tag : g)) : [...existing.extra, tag],
+        primary: primaryTag ? { ...primaryTag, role: e.role || existing.primary.role } : existing.primary,
+        extra,
         level: raised ? e.level : existing.level,
-        achievement: e.achievement && (raised || isPrimary) ? e.achievement : existing.achievement,
-        history: [...event, ...existing.history],
+        achievements: [...e.achievements, ...existing.achievements.filter((a) => !e.achievements.some((n) => same(n, a)))],
+        history: [...events, ...existing.history],
         remarks: [...remark, ...existing.remarks],
       };
       setList((l) => l.map((t) => (t.id === existing.id ? updated : t)));
-      setToast({ text: `${e.skill} endorsement added to ${e.student.name}'s talent record.`, action: { label: "View", run: () => (setProfileId(existing.id), setToast(null)) } });
+      setToast({ text: `${names} endorsement added to ${e.student.name}'s talent record.`, action: { label: "View", run: () => (setProfileId(existing.id), setToast(null)) } });
     } else {
       const id = `t${e.student.seed}`;
       const fresh: Talent = {
         id,
         student: e.student,
         primary: { ...tag, role: e.role },
-        extra: [],
+        extra: tags.slice(1),
         level: e.level,
-        achievement: e.achievement,
-        history: event,
+        achievements: e.achievements,
+        history: events,
         remarks: remark,
       };
       setList((l) => [fresh, ...l]);
-      setToast({ text: `${e.student.name} added to the talent directory for ${e.skill}.`, action: { label: "View", run: () => (setProfileId(id), setToast(null)) } });
+      setToast({ text: `${e.student.name} added to the talent directory for ${names}.`, action: { label: "View", run: () => (setProfileId(id), setToast(null)) } });
     }
   };
 

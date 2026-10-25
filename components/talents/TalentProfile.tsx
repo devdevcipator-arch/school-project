@@ -8,6 +8,18 @@ import { Icon } from "@/components/ui/Icon";
 import { sectionLabel } from "@/lib/students";
 import { levelOf, type Talent } from "@/lib/talents";
 
+function Tags({ list }: { list: string[] }) {
+  return (
+    <span className="flex flex-wrap gap-1.5">
+      {list.map((x) => (
+        <span key={x} className="rounded-full bg-primary/10 px-3 py-1 text-[.82rem] font-semibold text-primary">
+          {x}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 function Info({ label, children, wide = false }: { label: string; children: ReactNode; wide?: boolean }) {
   return (
     <div className={`min-w-0 ${wide ? "sm:col-span-2" : ""}`}>
@@ -20,6 +32,9 @@ function Info({ label, children, wide = false }: { label: string; children: Reac
 /** Shows exactly what the Endorse / Tag Student Skill form records, under the same labels. */
 export default function TalentProfile({ t, onCertificate, onClose }: { t: Talent; onCertificate: () => void; onClose: () => void }) {
   const s = t.student;
+  // Skills tagged in the same category sit with the primary skill; others are listed separately.
+  const sameCat = t.extra.filter((g) => g.category === t.primary.category);
+  const otherCat = t.extra.filter((g) => g.category !== t.primary.category);
 
   return (
     <Drawer
@@ -53,12 +68,14 @@ export default function TalentProfile({ t, onCertificate, onClose }: { t: Talent
 
           <dl className="grid gap-4 rounded-2xl border border-ink/8 bg-surface/50 p-5 sm:grid-cols-2">
             <Info label="Talent category">{t.primary.category}</Info>
-            <Info label="Specific skill">{t.primary.skill}</Info>
+            <Info label="Specific skill">
+              <Tags list={[t.primary.skill, ...sameCat.map((g) => g.skill)]} />
+            </Info>
             {t.primary.role && <Info label="Position / specialisation">{t.primary.role}</Info>}
             <Info label="Proficiency / honor level">{levelOf(t.level).label}</Info>
-            {t.achievement && (
+            {t.achievements.length > 0 && (
               <Info label="Achievement / honor" wide>
-                {t.achievement}
+                <Tags list={t.achievements} />
               </Info>
             )}
             {t.remarks.length > 0 && (
@@ -70,9 +87,9 @@ export default function TalentProfile({ t, onCertificate, onClose }: { t: Talent
                 </span>
               </Info>
             )}
-            {t.extra.length > 0 && (
+            {otherCat.length > 0 && (
               <Info label="Other endorsed skills" wide>
-                {t.extra.map((g) => `${g.skill} (${g.category})`).join(", ")}
+                {otherCat.map((g) => `${g.skill} (${g.category})`).join(", ")}
               </Info>
             )}
           </dl>

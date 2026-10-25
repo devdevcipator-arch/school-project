@@ -9,7 +9,7 @@ import { sectionLabel, students, type Student } from "@/lib/students";
 import { canonical, catalogCategoryOf, catalogFrom, categories, levels, rolesFor, skills, type Level, type Talent } from "@/lib/talents";
 import { categoryTone } from "./parts";
 
-export type Endorsement = { student: Student; category: string; skill: string; role: string; level: Level; achievement: string; remark: string };
+export type Endorsement = { student: Student; category: string; skills: string[]; role: string; level: Level; achievements: string[]; remark: string };
 type Errors = Partial<Record<"student" | "category" | "skill", string>>;
 
 const uniq = (list: string[]) => [...new Map(list.map((v) => [v.toLowerCase(), v])).values()];
@@ -43,6 +43,60 @@ function NewTag({ label, tone, kind }: { label: string; tone: string; kind: "cat
 const input = (bad?: string) =>
   `w-full rounded-xl border bg-white px-4 py-3 text-[.92rem] outline-none transition-colors hover:border-accent focus:border-primary ${bad ? "border-danger" : "border-ink/12"}`;
 
+/** Type a value and press Enter or comma to add it as a tag; Backspace on an empty field removes the last one. */
+function TagField({
+  id,
+  tags,
+  onChange,
+  list,
+  placeholder,
+  error,
+}: {
+  id: string;
+  tags: string[];
+  onChange: (tags: string[]) => void;
+  list?: string;
+  placeholder: string;
+  error?: string;
+}) {
+  const [draft, setDraft] = useState("");
+  const add = (raw: string) => {
+    const v = raw.trim().replace(/s+/g, " ");
+    setDraft("");
+    if (v && !tags.some((t) => same(t, v))) onChange([...tags, v]);
+  };
+  return (
+    <div className={`flex flex-wrap items-center gap-1.5 rounded-xl border bg-white px-2.5 py-2 transition-colors focus-within:border-primary hover:border-accent ${error ? "border-danger" : "border-ink/12"}`}>
+      {tags.map((t) => (
+        <span key={t} className="inline-flex items-center gap-1 rounded-full bg-primary/10 py-1 pl-3 pr-1 text-[.82rem] font-semibold text-primary">
+          {t}
+          <button type="button" onClick={() => onChange(tags.filter((x) => x !== t))} aria-label={`Remove ${t}`} className="grid size-5 cursor-pointer place-items-center rounded-full hover:bg-primary/15">
+            <Icon d="M6 6l12 12 M18 6 6 18" className="size-3" />
+          </button>
+        </span>
+      ))}
+      <input
+        id={id}
+        list={list}
+        autoComplete="off"
+        value={draft}
+        onChange={(e) => (e.target.value.endsWith(",") ? add(e.target.value.slice(0, -1)) : setDraft(e.target.value))}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            add(draft);
+          } else if (e.key === "Backspace" && !draft && tags.length) onChange(tags.slice(0, -1));
+        }}
+        onBlur={() => add(draft)}
+        placeholder={tags.length ? "Add another" : placeholder}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${id}-error` : undefined}
+        className="min-w-[140px] flex-1 bg-transparent px-1.5 py-1.5 text-[.92rem] outline-none"
+      />
+    </div>
+  );
+}
+
 export default function EndorseForm({
   talents,
   pool = students,
@@ -58,10 +112,10 @@ export default function EndorseForm({
   const [query, setQuery] = useState("");
   const [student, setStudent] = useState<Student | null>(null);
   const [category, setCategory] = useState("");
-  const [skill, setSkill] = useState("");
+  const [skillTags, setSkillTags] = useState<string[]>([]);
   const [role, setRole] = useState("");
   const [level, setLevel] = useState<Level>("team");
-  const [achievement, setAchievement] = useState("");
+  const [achievements, setAchievements] = useState<string[]>([]);
   const [remark, setRemark] = useState("");
   const [errors, setErrors] = useState<Errors>({});
 
@@ -81,17 +135,20 @@ export default function EndorseForm({
     const inCat = category.trim() ? allSkills.filter((k) => same(k.category, category)) : [];
     return uniq((inCat.length ? inCat : allSkills).map((k) => k.skill)).sort((a, b) => a.localeCompare(b));
   }, [allSkills, category]);
+  const lead = skillTags[0] ?? "";
   const roleList = useMemo(
-    () => uniq([...rolesFor(skill), ...talents.filter((t) => same(t.primary.skill, skill)).map((t) => t.primary.role)].filter(Boolean)),
-    [talents, skill],
+    () => uniq([...rolesFor(lead), ...talents.filter((t) => same(t.primary.skill, lead)).map((t) => t.primary.role)].filter(Boolean)),
+    [talents, lead],
   );
   const isNewCategory = category.trim() !== "" && !categoryList.some((c) => same(c, category));
-  const isNewSkill = skill.trim() !== "" && !allSkills.some((k) => same(k.skill, skill));
+  const newSkills = skillTags.filter((t) => !allSkills.some((k) => same(k.skill, t)));
 
-  /** Typing a known skill with no category fills the category in for the principal. */
-  const fillCategory = () => {
-    if (category.trim() || !skill.trim()) return;
-    const known = catalogCategoryOf(skill) ?? allSkills.find((k) => same(k.skill, skill))?.category;
+  /** Adding a known skill with no category fills the category in for the principal. */
+  const changeSkills = (next: string[]) => {
+    setSkillTags(next);
+    if (next.length) setErrors((e) => ({ ...e, skill: undefined }));
+    if (category.trim() || !next[0]) return;
+    const known = catalogCategoryOf(next[0]) ?? allSkills.find((k) => same(k.skill, next[0]))?.category;
     if (known) setCategory(known);
   };
 
@@ -99,17 +156,17 @@ export default function EndorseForm({
     const next: Errors = {};
     if (!student) next.student = "Choose the student you are endorsing.";
     if (!category.trim()) next.category = "Type a talent category, e.g. Sports & Athletics or Swimming.";
-    if (!skill.trim()) next.skill = "Type the specific skill, e.g. Cricket or Quran Recitation.";
+    if (!skillTags.length) next.skill = "Add at least one skill, e.g. Cricket or Quran Recitation.";
     setErrors(next);
     if (!student || Object.keys(next).length) return;
     const cat = canonical(category, categoryList);
     onSave({
       student,
       category: cat,
-      skill: canonical(skill, allSkills.filter((k) => same(k.category, cat)).map((k) => k.skill)),
+      skills: skillTags.map((k) => canonical(k, allSkills.filter((x) => same(x.category, cat)).map((x) => x.skill))),
       role: role.trim().replace(/\s+/g, " "),
       level,
-      achievement: achievement.trim(),
+      achievements,
       remark: remark.trim(),
     });
     close();
@@ -222,25 +279,16 @@ export default function EndorseForm({
               {isNewCategory && <NewTag label={category.trim()} tone={categoryTone(category).chip} kind="category" />}
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field id="endorse-skill" label="Specific skill" error={errors.skill}>
-                <input
-                  id="endorse-skill"
-                  list="endorse-skill-list"
-                  autoComplete="off"
-                  value={skill}
-                  onChange={(e) => setSkill(e.target.value)}
-                  onBlur={fillCategory}
-                  placeholder="e.g. Cricket, Naat, Swimming"
-                  aria-invalid={!!errors.skill}
-                  aria-describedby={errors.skill ? "endorse-skill-error" : undefined}
-                  className={input(errors.skill)}
-                />
+              <Field id="endorse-skill" label="Specific skill" hint="(press Enter to add each)" error={errors.skill}>
+                <TagField id="endorse-skill" list="endorse-skill-list" tags={skillTags} onChange={changeSkills} placeholder="e.g. Cricket, Naat, Swimming" error={errors.skill} />
                 <datalist id="endorse-skill-list">
                   {skillList.map((k) => (
                     <option key={k} value={k} />
                   ))}
                 </datalist>
-                {isNewSkill && <NewTag label={skill.trim()} tone="border-ink/12 bg-white text-ink/70" kind="skill" />}
+                {newSkills.map((k) => (
+                  <NewTag key={k} label={k} tone="border-ink/12 bg-white text-ink/70" kind="skill" />
+                ))}
               </Field>
               <Field id="endorse-role" label="Position / specialisation" hint="(optional)">
                 <input
@@ -272,8 +320,8 @@ export default function EndorseForm({
             </div>
           </fieldset>
 
-          <Field id="endorse-achievement" label="Achievement / honor" hint="(optional)">
-            <input id="endorse-achievement" value={achievement} onChange={(e) => setAchievement(e.target.value)} placeholder="e.g. Best Speaker - Regional Debate 2026" className={input()} />
+          <Field id="endorse-achievement" label="Achievement / honor" hint="(optional, press Enter to add each)">
+            <TagField id="endorse-achievement" tags={achievements} onChange={setAchievements} placeholder="e.g. Best Speaker - Regional Debate 2026" />
           </Field>
 
           <Field id="endorse-remark" label="Coach or coordinator remark" hint="(optional)">
