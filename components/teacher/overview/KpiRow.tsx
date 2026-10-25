@@ -2,18 +2,15 @@ import { Kpi, Ring, SplitBar, kpiBig as big, kpiSub as sub } from "@/components/
 import { Badge } from "@/components/dashboard/ui";
 import type { ClassOverview } from "@/lib/teacher";
 
-/** The four snapshot metrics for the selected class. */
+/** The three snapshot metrics for the teacher's class. */
 export default function KpiRow({ c }: { c: ClassOverview }) {
   const { present, absent, leave } = c.attendance;
   const total = present + absent + leave;
   const rate = ((present / total) * 100).toFixed(1);
   const resources = c.resources.books + c.resources.guides + c.resources.materials;
-  const active = c.assessments.filter((a) => a.state === "Active").length;
-  const dueToday = c.assessments.filter((a) => a.state === "Due today").length;
-  const scheduled = c.assessments.filter((a) => a.state === "Scheduled").length;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       <Kpi label="Class Overall Progress" icon="M4 19V5 M4 19h16 M8 15l3-4 3 2 5-6">
         <div className="flex items-center gap-4">
           <Ring percent={c.curriculum} label={`${c.curriculum}% of curriculum covered`} />
@@ -48,18 +45,6 @@ export default function KpiRow({ c }: { c: ClassOverview }) {
             { label: "Material", value: c.resources.materials, fill: "bg-ink/30" },
           ]}
         />
-      </Kpi>
-
-      <Kpi label="Active & Upcoming Assessments" icon="M9 4h6 M8 4H6v17h12V4h-2 M9 10h6 M9 14h6 M9 18h3">
-        <p className={big}>
-          {active} <span className={sub}>active</span>
-          <span className="mx-2 text-ink/25">/</span>
-          {dueToday} <span className={sub}>due today</span>
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {dueToday > 0 && <Badge tone="warn">{dueToday} due today</Badge>}
-          <Badge tone="neutral">{scheduled} scheduled</Badge>
-        </div>
       </Kpi>
     </div>
   );
