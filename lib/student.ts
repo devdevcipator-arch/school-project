@@ -195,7 +195,7 @@ export type Assessment = {
 export const schoolToday = attendanceTerm.asOf;
 
 export const studentAssessments: Assessment[] = [
-  { id: "AS-118", title: "Algebra Mid-Term Quiz", subject: "Mathematics", kind: "Quiz", teacher: "Mr. Usman Ali", assigned: "2026-10-19", due: "2026-10-22", details: "Chapters 3 to 5: linear equations and inequalities. 20 questions, 30 minutes." },
+  { id: "AS-118", title: "Algebra Mid-Term Quiz", subject: "Mathematics", kind: "Quiz", teacher: "Mr. Ali Raza", assigned: "2026-10-19", due: "2026-10-22", details: "Chapters 3 to 5: linear equations and inequalities. 20 questions, 30 minutes." },
   { id: "AS-121", title: "Python Loops Practice", subject: "Computer Science", kind: "Homework", teacher: "Ms. Ayesha Malik", assigned: "2026-10-22", due: "2026-10-22", details: "Exercises 1 to 6 from the lab sheet. Bring the printed output to class." },
   { id: "AS-119", title: "Photosynthesis Check", subject: "Biology", kind: "Quiz", teacher: "Dr. Farah Naz", assigned: "2026-10-21", due: "2026-10-23", details: "Short quiz on light and dark reactions. Revise the diagram on page 64." },
   { id: "AS-114", title: "Essay: My Hometown", subject: "English", kind: "Homework", teacher: "Mrs. Hina Shah", assigned: "2026-10-16", due: "2026-10-26", extendedFrom: "2026-10-21", details: "350 to 400 words, handwritten. Use at least five new vocabulary words." },
@@ -203,7 +203,7 @@ export const studentAssessments: Assessment[] = [
   { id: "AS-120", title: "Urdu Poem Recitation", subject: "Urdu", kind: "Homework", teacher: "Mr. Kamran Raza", assigned: "2026-10-21", due: "2026-10-27", details: "Learn the first four stanzas of the assigned poem for recitation in class." },
   { id: "AS-116", title: "Physics Unit Test 3", subject: "Physics", kind: "Test", teacher: "Ms. Sana Iqbal", assigned: "2026-10-15", due: "2026-10-28", details: "Covers motion and forces. Calculators allowed. Held in the Physics Lab." },
   { id: "AS-122", title: "Grammar Quiz: Tenses", subject: "English", kind: "Quiz", teacher: "Mrs. Hina Shah", assigned: "2026-10-22", due: "2026-10-29", extendedFrom: "2026-10-23", details: "Present, past and future perfect tenses. 15 questions." },
-  { id: "AS-115", title: "Trigonometry Homework", subject: "Mathematics", kind: "Homework", teacher: "Mr. Usman Ali", assigned: "2026-10-14", due: "2026-10-19", details: "Exercise 6.2, questions 1 to 12." },
+  { id: "AS-115", title: "Trigonometry Homework", subject: "Mathematics", kind: "Homework", teacher: "Mr. Ali Raza", assigned: "2026-10-14", due: "2026-10-19", details: "Exercise 6.2, questions 1 to 12." },
   { id: "AS-112", title: "Physics Unit Test 2", subject: "Physics", kind: "Test", teacher: "Ms. Sana Iqbal", assigned: "2026-10-05", due: "2026-10-16", details: "Covered work, energy and power." },
   { id: "AS-110", title: "Cell Structure Quiz", subject: "Biology", kind: "Quiz", teacher: "Dr. Farah Naz", assigned: "2026-10-12", due: "2026-10-14", details: "Plant and animal cell organelles." },
 ];
@@ -228,7 +228,7 @@ export type Period = { start: string; end: string; subject: string; teacher: str
 
 /** Today's timetable. Times are 24h "HH:MM" so the current period can be found from the clock. */
 export const todaySchedule: Period[] = [
-  { start: "08:00", end: "08:45", subject: "Mathematics", teacher: "Mr. Usman Ali", room: "Room 10A" },
+  { start: "08:00", end: "08:45", subject: "Mathematics", teacher: "Mr. Ali Raza", room: "Room 10A" },
   { start: "08:45", end: "09:30", subject: "Physics", teacher: "Ms. Sana Iqbal", room: "Physics Lab" },
   { start: "09:30", end: "10:15", subject: "English", teacher: "Mrs. Hina Shah", room: "Room 10A" },
   { start: "10:15", end: "10:35", subject: "Break", teacher: "", room: "", isBreak: true },

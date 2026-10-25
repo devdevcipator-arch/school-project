@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useMemo, useState, type ReactNode } from "react";
 import { Pagination, Select, fieldClass, ghostSm } from "@/components/dashboard/controls";
 import { StatCard } from "@/components/dashboard/ui";
 import { Icon } from "@/components/ui/Icon";
@@ -11,8 +11,10 @@ type BoardTab = "today" | "upcoming" | "closed";
 
 const PAGE_SIZE = 8;
 const DAY_MS = 86_400_000;
-const kinds: AssessmentKind[] = ["Quiz", "Test", "Homework"];
-const subjects = [...new Set(studentAssessments.map((a) => a.subject))].sort();
+export const kinds: AssessmentKind[] = ["Quiz", "Test", "Homework"];
+
+/** The column that names who set the work (students) or who it is for (teachers). */
+type Who<T> = { label: string; of: (a: T) => string };
 
 const kindMeta: Record<AssessmentKind, { icon: string; chip: string }> = {
   Quiz: { icon: "M9 4h6 M8 4H6v17h12V4h-2 M9 10h6 M9 14h6 M9 18h3", chip: "bg-primary/10 text-primary" },
@@ -41,7 +43,7 @@ function DueChip({ due }: { due: string }) {
   );
 }
 
-function AssessmentTable({ list, open, onToggle }: { list: Assessment[]; open: string | null; onToggle: (id: string) => void }) {
+function AssessmentTable<T extends Assessment>({ list, who, open, onToggle, onEdit }: { list: T[]; who: Who<T>; open: string | null; onToggle: (id: string) => void; onEdit?: (a: T) => void }) {
   return (
     <div className="overflow-x-auto rounded-[18px] border border-ink/8 bg-white">
       <table className="w-full min-w-[900px] text-left text-[.86rem]">
@@ -49,7 +51,7 @@ function AssessmentTable({ list, open, onToggle }: { list: Assessment[]; open: s
           <tr>
             <th scope="col" className="px-5 py-3.5">Assessment</th>
             <th scope="col" className="px-3 py-3.5">Type</th>
-            <th scope="col" className="px-3 py-3.5">Teacher</th>
+            <th scope="col" className="px-3 py-3.5">{who.label}</th>
             <th scope="col" className="px-3 py-3.5">Assigned</th>
             <th scope="col" className="px-3 py-3.5">Due</th>
             <th scope="col" className="px-3 py-3.5">Status</th>
@@ -81,7 +83,7 @@ function AssessmentTable({ list, open, onToggle }: { list: Assessment[]; open: s
                   <td className="px-3 py-3">
                     <span className={`inline-flex rounded-full px-2.5 py-1 text-[.72rem] font-bold ${kindMeta[a.kind].chip}`}>{a.kind}</span>
                   </td>
-                  <td className="whitespace-nowrap px-3 py-3 text-ink/75">{a.teacher}</td>
+                  <td className="whitespace-nowrap px-3 py-3 text-ink/75">{who.of(a)}</td>
                   <td className="whitespace-nowrap px-3 py-3 text-ink/60">{shortDate(a.assigned)}</td>
                   <td className="px-3 py-3">
                     <p className="whitespace-nowrap font-bold">
@@ -98,6 +100,18 @@ function AssessmentTable({ list, open, onToggle }: { list: Assessment[]; open: s
                     <DueChip due={a.due} />
                   </td>
                   <td className="px-3 py-3 text-right">
+                    <div className="flex justify-end gap-0.5">
+                    {onEdit && (
+                      <button
+                        type="button"
+                        onClick={() => onEdit(a)}
+                        title="Edit / extend deadline"
+                        aria-label={`Edit ${a.title}`}
+                        className="grid size-9 cursor-pointer place-items-center rounded-lg text-ink/55 transition-colors hover:bg-primary/8 hover:text-primary"
+                      >
+                        <Icon d="M4 20h4L19 9l-4-4L4 16z M14 6l4 4" className="size-[18px]" />
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => onToggle(a.id)}
@@ -107,6 +121,7 @@ function AssessmentTable({ list, open, onToggle }: { list: Assessment[]; open: s
                     >
                       <Icon d="M6 9l6 6 6-6" className={`size-[18px] transition-transform duration-300 ${expanded ? "rotate-180" : ""}`} />
                     </button>
+                    </div>
                   </td>
                 </tr>
                 {expanded && (
@@ -136,8 +151,26 @@ function AssessmentTable({ list, open, onToggle }: { list: Assessment[]; open: s
   );
 }
 
-/** View-only reminder board of quizzes, tests and homework, grouped by due today, upcoming and closed. */
-export default function AssessmentsBoard() {
+const teacherColumn: Who<Assessment> = { label: "Teacher", of: (a) => a.teacher };
+
+/**
+ * Reminder board of quizzes, tests and homework, grouped by due today, upcoming and closed.
+ * Students see it view-only; the teacher portal reuses it with its own list, an edit action and a create button.
+ */
+export default function AssessmentsBoard<T extends Assessment = Assessment>({
+  items = studentAssessments as T[],
+  who = teacherColumn as Who<T>,
+  note = "View only. Your teachers set deadlines and may extend them by up to a week.",
+  toolbar,
+  onEdit,
+}: {
+  items?: T[];
+  who?: Who<T>;
+  note?: string;
+  toolbar?: ReactNode;
+  onEdit?: (a: T) => void;
+}) {
+  const subjects = useMemo(() => [...new Set(items.map((a) => a.subject))].sort(), [items]);
   const [tab, setTab] = useState<BoardTab>("today");
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState("all");
@@ -146,28 +179,28 @@ export default function AssessmentsBoard() {
   const [open, setOpen] = useState<string | null>(null);
 
   const stats = useMemo(() => {
-    const live = studentAssessments.filter((a) => a.due >= schoolToday);
+    const live = items.filter((a) => a.due >= schoolToday);
     return {
       today: live.filter((a) => a.due === schoolToday).length,
       week: live.filter((a) => daysUntil(a.due) > 0 && daysUntil(a.due) <= 7).length,
       extended: live.filter((a) => a.extendedFrom).length,
-      closed: studentAssessments.length - live.length,
+      closed: items.length - live.length,
     };
-  }, []);
+  }, [items]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return studentAssessments
+    return items
       .filter((a) => tabOf(a) === tab)
-      .filter((a) => !q || `${a.title} ${a.subject} ${a.teacher} ${a.id}`.toLowerCase().includes(q))
+      .filter((a) => !q || `${a.title} ${a.subject} ${who.of(a)} ${a.id}`.toLowerCase().includes(q))
       .filter((a) => kind === "all" || a.kind === kind)
       .filter((a) => subject === "all" || a.subject === subject)
       .sort((a, b) => (tab === "closed" ? b.due.localeCompare(a.due) : a.due.localeCompare(b.due)));
-  }, [tab, query, kind, subject]);
+  }, [items, who, tab, query, kind, subject]);
 
   const tabs: { key: BoardTab; label: string; count: number }[] = [
     { key: "today", label: "Due Today", count: stats.today },
-    { key: "upcoming", label: "Upcoming", count: studentAssessments.filter((a) => tabOf(a) === "upcoming").length },
+    { key: "upcoming", label: "Upcoming", count: items.filter((a) => tabOf(a) === "upcoming").length },
     { key: "closed", label: "Closed", count: stats.closed },
   ];
   const { listRef, target, setHover } = useSlidingPill(tabs.findIndex((t) => t.key === tab));
@@ -189,6 +222,7 @@ export default function AssessmentsBoard() {
 
   return (
     <main className="mx-auto grid max-w-[1500px] gap-5 px-[clamp(16px,3vw,36px)] py-6 lg:gap-6 lg:py-8">
+      {toolbar && <header className="flex justify-end">{toolbar}</header>}
       <div className="grid gap-5 sm:grid-cols-2 lg:gap-6 xl:grid-cols-4">
         <StatCard label="Due Today" value={stats.today} icon="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z M12 7v5l3 2" note="Finish by end of day" />
         <StatCard label="Due This Week" value={stats.week} icon="M8 3v3 M16 3v3 M4 7h16v13H4z M4 11h16" note="Over the next 7 days" />
@@ -225,7 +259,7 @@ export default function AssessmentsBoard() {
           </div>
           <p className="inline-flex items-center gap-1.5 text-[.8rem] text-ink/55">
             <Icon d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z M12 8h.01 M12 11v6" className="size-4 shrink-0 text-primary" />
-            View only. Your teachers set deadlines and may extend them by up to a week.
+            {note}
           </p>
         </div>
 
@@ -233,7 +267,7 @@ export default function AssessmentsBoard() {
           <label className="relative flex-1">
             <span className="sr-only">Search assessments</span>
             <Icon d="M11 4a7 7 0 1 0 0 14a7 7 0 1 0 0-14z M20 20l-4-4" className="pointer-events-none absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-ink/45" />
-            <input type="search" value={query} onChange={(e) => filter(setQuery)(e.target.value)} placeholder="Search by title, subject or teacher" className={`${fieldClass} w-full pl-10`} />
+            <input type="search" value={query} onChange={(e) => filter(setQuery)(e.target.value)} placeholder={`Search by title, subject or ${who.label.toLowerCase()}`} className={`${fieldClass} w-full pl-10`} />
           </label>
           <div className="grid grid-cols-2 gap-2.5 lg:flex">
             <Select label="Type" value={kind} onChange={filter(setKind)} className="lg:w-[160px]">
@@ -277,7 +311,7 @@ export default function AssessmentsBoard() {
         )}
 
         {visible.length > 0 ? (
-          <AssessmentTable list={visible} open={open} onToggle={(id) => setOpen((o) => (o === id ? null : id))} />
+          <AssessmentTable list={visible} who={who} open={open} onToggle={(id) => setOpen((o) => (o === id ? null : id))} onEdit={onEdit} />
         ) : (
           <p className="rounded-[18px] border border-dashed border-ink/12 px-5 py-10 text-center text-[.88rem] text-ink/55">
             {filtersOn ? "Nothing matches these filters." : tab === "today" ? "Nothing is due today." : "Nothing here yet."}

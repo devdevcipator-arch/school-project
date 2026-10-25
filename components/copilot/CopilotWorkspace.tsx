@@ -146,7 +146,7 @@ export default function CopilotWorkspace({ persona: key = "principal" }: { perso
         tools: ["AI test maker"],
         blocks: [
           { kind: "list", items: questions.map((q, i) => `Q${i + 1}. ${q.text}${q.options ? ` (${q.options.join(" / ")})` : ""} Answer: ${q.answer}`) },
-          { kind: "links", items: [{ label: "Open Assessments", href: "/teacher/assessments?new=1" }] },
+          { kind: "links", items: [{ label: "Open Assessments", href: "/teacher/assessments" }] },
         ],
       };
       setMessages((m) => [...m, { id: uid("r"), from: "ai", text: paper.text, reply: paper }]);

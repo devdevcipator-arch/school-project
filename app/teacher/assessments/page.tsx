@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: `Assessments | Teacher Portal | ${site.name}`,
 };
 
-// Assessments & Tasks Hub: AI test generator, manual assignments, submission tracking and grading
+// Assessments: the same board students see, with create and edit for the teacher
 export default function AssessmentsPage() {
   return <AssessmentsHub />;
 }
