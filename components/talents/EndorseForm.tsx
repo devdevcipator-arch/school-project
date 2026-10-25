@@ -274,7 +274,7 @@ export default function EndorseForm({
               </datalist>
               {isNewCategory && <NewTag label={category.trim()} tone={categoryTone(category).chip} kind="category" />}
             </Field>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4">
               <Field id="endorse-skill" label="Specific skill" hint="(press Enter to add each)" error={errors.skill}>
                 <TagField id="endorse-skill" tags={skillTags} onChange={changeSkills} placeholder="e.g. Cricket, Naat, Swimming" error={errors.skill} />
                 {newSkills.map((k) => (
