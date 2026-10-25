@@ -11,10 +11,7 @@ import {
   DEFAULTER_MONTHS,
   accounts as seed,
   behaviorFor,
-  behaviors,
   periods,
-  planOf,
-  plans,
   recordFor,
   settle,
   shortDate,
@@ -28,7 +25,7 @@ import { sectionLabel, sections } from "@/lib/students";
 import { downloadFeeCsv, printFeeReport, printPaymentHistory } from "./documents";
 import FeeLedger from "./FeeLedger";
 import PaymentLog from "./PaymentLog";
-import { Aging, BehaviorBadge, FeeStatusBadge, Legend, Timeline } from "./parts";
+import { Aging, FeeStatusBadge } from "./parts";
 import ReminderPanel, { type Channel } from "./ReminderPanel";
 
 const PAGE_SIZE = 15;
@@ -103,38 +100,6 @@ function RowActions({ r, alerted, onLedger, onAlert, compact = false }: Actions 
 
 /* ---------------- Directory views ---------------- */
 
-function PlanCell({ r }: { r: Row }) {
-  const i = r.current[0];
-  return (
-    <div className="grid gap-0.5 text-[.78rem]">
-      <span className="font-bold text-ink">{r.current.length > 1 ? `${r.current.length} installments` : (i?.label ?? "None")}</span>
-      <span className="text-ink/55">{planOf(r.account.plan).label}</span>
-      {r.arrears.length > 0 && (
-        <span className="font-semibold text-danger">
-          + {r.arrears.length} earlier {r.arrears.length === 1 ? "installment" : "installments"} unpaid
-        </span>
-      )}
-    </div>
-  );
-}
-
-/** Behavior since enrollment, with the current year's month strip. */
-function BehaviorCell({ b, since }: { b: Behavior; since: string }) {
-  return (
-    <div className="grid min-w-[200px] gap-1.5">
-      <div className="flex items-center justify-between gap-2">
-        <BehaviorBadge k={b.key} />
-        <span className="text-[.74rem] font-bold text-ink/60">{b.rate}% on time</span>
-      </div>
-      <Timeline b={b} />
-      <span className="text-[.72rem] text-ink/50">
-        Since {since.slice(0, 4)}: {b.onTime} on time · {b.late} late{b.avgDelay ? ` (avg ${b.avgDelay}d)` : ""}
-        {b.partials ? ` · ${b.partials} in parts` : ""}
-      </span>
-    </div>
-  );
-}
-
 function FeeCard({ r, ...actions }: Actions & { r: Row }) {
   const s = r.account.student;
   return (
@@ -150,27 +115,12 @@ function FeeCard({ r, ...actions }: Actions & { r: Row }) {
           </span>
         </div>
       </div>
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+      <div className="mb-4 mt-3 flex flex-wrap items-center justify-between gap-2">
         <FeeStatusBadge r={r} />
-        <Aging r={r} />
-      </div>
-      <div className="mt-3 rounded-xl bg-surface/70 p-3">
-        <BehaviorCell b={r.behavior} since={r.account.student.enrolled} />
-      </div>
-      <div className="mb-4 mt-3 grid gap-1 text-[.8rem] text-ink/65">
-        <span className="truncate">
-          <Icon d="M9 11a4 4 0 1 0 0-8a4 4 0 1 0 0 8z M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7" className="mr-1.5 inline size-4 align-[-3px] text-accent" />
-          {s.guardian} ·{" "}
-          <a href={`tel:${s.phone.replace(/\s/g, "")}`} className="hover:text-primary">
-            {s.phone}
-          </a>
+        <span className="text-[.8rem] text-ink/65">
+          {r.dueDate && <>Due {shortDate(r.dueDate)} · </>}
+          <Aging r={r} />
         </span>
-        <span>
-          <Icon d="M8 3v3 M16 3v3 M4 7h16v13H4z" className="mr-1.5 inline size-4 align-[-3px] text-accent" />
-          {planOf(r.account.plan).short} plan{r.current[0] && ` · ${r.current[0].label}`}
-          {r.dueDate && ` · due ${shortDate(r.dueDate)}`}
-        </span>
-        {r.arrears.length > 0 && <span className="font-semibold text-danger">{r.arrears.length} earlier installment(s) unpaid</span>}
       </div>
       <div className="mt-auto flex justify-end border-t border-ink/8 pt-3">
         <RowActions r={r} {...actions} />
@@ -183,14 +133,11 @@ function FeeTable({ list, ...actions }: Actions & { list: Row[] }) {
   return (
     // The table scrolls inside its own frame so the header row stays pinned.
     <div className="max-h-[72vh] overflow-auto rounded-[18px] border border-ink/8 bg-white">
-      <table className="w-full min-w-[1180px] text-left text-[.86rem]">
+      <table className="w-full min-w-[820px] text-left text-[.86rem]">
         <thead className="sticky top-0 z-10 bg-[#eef0f0] text-[.72rem] font-bold uppercase tracking-[.1em] text-ink/55 shadow-[0_1px_0_rgba(6,30,41,.08)]">
           <tr>
             <th scope="col" className="px-5 py-3.5">Student</th>
-            <th scope="col" className="px-3 py-3.5">Guardian contact</th>
-            <th scope="col" className="px-3 py-3.5">Installment plan</th>
-            <th scope="col" className="px-3 py-3.5">Due date & aging</th>
-            <th scope="col" className="px-3 py-3.5">Behavior since enrollment</th>
+            <th scope="col" className="px-3 py-3.5">Due date</th>
             <th scope="col" className="px-3 py-3.5">Status</th>
             <th scope="col" className="px-3 py-3.5 text-right">
               <span className="sr-only">Actions</span>
@@ -216,21 +163,9 @@ function FeeTable({ list, ...actions }: Actions & { list: Row[] }) {
                     </div>
                   </div>
                 </td>
-                <td className="px-3 py-3.5 text-[.8rem]">
-                  <span className="block max-w-[170px] truncate text-ink/75">{s.guardian}</span>
-                  <a href={`tel:${s.phone.replace(/\s/g, "")}`} className="whitespace-nowrap text-ink/50 hover:text-primary">
-                    {s.phone}
-                  </a>
-                </td>
-                <td className="px-3 py-3.5">
-                  <PlanCell r={r} />
-                </td>
                 <td className="whitespace-nowrap px-3 py-3.5">
                   {r.dueDate && <span className="block text-[.8rem] font-semibold">{shortDate(r.dueDate)}</span>}
                   <Aging r={r} />
-                </td>
-                <td className="px-3 py-3.5">
-                  <BehaviorCell b={r.behavior} since={r.account.student.enrolled} />
                 </td>
                 <td className="px-3 py-3.5">
                   <FeeStatusBadge r={r} />
@@ -297,8 +232,6 @@ export default function FeesBoard() {
   const [tab, setTab] = useState<(typeof tabs)[number]["key"]>("all");
   const [section, setSection] = useState("all");
   const [periodKey, setPeriodKey] = useState(CURRENT_PERIOD);
-  const [plan, setPlan] = useState("all");
-  const [habit, setHabit] = useState("all");
   const [page, setPage] = useState(1);
   const [ledgerId, setLedgerId] = useState<string | null>(null);
   const [reminding, setReminding] = useState(false);
@@ -338,13 +271,11 @@ export default function FeesBoard() {
     return rows.filter((r) => {
       const s = r.account.student;
       if (section !== "all" && s.section !== section) return false;
-      if (plan !== "all" && r.account.plan !== plan) return false;
-      if (habit !== "all" && r.behavior.key !== habit) return false;
       if (!q) return true;
-      if (`${s.name} ${s.regId} ${s.guardian}`.toLowerCase().includes(q)) return true;
-      return digits !== "" && (String(s.rollNo) === digits || (digits.length >= 4 && s.phone.replace(/\D/g, "").includes(digits)));
+      if (`${s.name} ${s.regId}`.toLowerCase().includes(q)) return true;
+      return digits !== "" && String(s.rollNo) === digits;
     });
-  }, [rows, query, section, plan, habit]);
+  }, [rows, query, section]);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: scoped.length };
@@ -362,17 +293,15 @@ export default function FeesBoard() {
     setter(v);
     setPage(1);
   };
-  const filtersOn = query || section !== "all" || plan !== "all" || habit !== "all" || tab !== "all" || periodKey !== CURRENT_PERIOD;
+  const filtersOn = query || section !== "all" || tab !== "all" || periodKey !== CURRENT_PERIOD;
   const reset = () => {
     setQuery("");
     setSection("all");
-    setPlan("all");
-    setHabit("all");
     setTab("all");
     setPeriodKey(CURRENT_PERIOD);
     setPage(1);
   };
-  const scope = [section === "all" ? "All classes" : sectionLabel(section), plan !== "all" && planOf(plan as FeeAccount["plan"]).label, habit !== "all" && behaviors.find((b) => b.key === habit)!.label].filter(Boolean).join(" · ");
+  const scope = section === "all" ? "All classes" : sectionLabel(section);
 
   const popup = (ok: boolean) => !ok && setToast({ text: "Allow pop-ups for this site to open printable documents." });
 
@@ -395,7 +324,6 @@ export default function FeesBoard() {
   };
 
   const ledgerAccount = ledgerId ? list.find((a) => a.student.id === ledgerId) : undefined;
-  const overdueInScope = scoped.filter((r) => r.overdueDays > 0).length;
 
   return (
     <main className="mx-auto flex max-w-[1500px] flex-col gap-5 px-[clamp(16px,3vw,36px)] py-6 lg:gap-6 lg:py-8">
@@ -449,7 +377,7 @@ export default function FeesBoard() {
               type="search"
               value={query}
               onChange={(e) => filter(setQuery)(e.target.value)}
-              placeholder="Search by student name, roll no., registration ID or parent phone"
+              placeholder="Search by student name, roll no. or registration ID"
               className={`${fieldClass} w-full pl-10`}
             />
           </label>
@@ -476,7 +404,7 @@ export default function FeesBoard() {
             })}
           </div>
   
-          <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-[1fr_1.2fr_1fr_1fr_auto]">
+          <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-[1fr_1fr_auto]">
             <Select label="Class & section" value={section} onChange={filter(setSection)}>
               <option value="all">All classes</option>
               {sections.map((s) => (
@@ -492,38 +420,15 @@ export default function FeesBoard() {
                 </option>
               ))}
             </Select>
-            <Select label="Installment plan" value={plan} onChange={filter(setPlan)}>
-              <option value="all">All installment plans</option>
-              {plans.map((p) => (
-                <option key={p.key} value={p.key}>
-                  {p.label}
-                </option>
-              ))}
-            </Select>
-            <Select label="Payment behavior" value={habit} onChange={filter(setHabit)}>
-              <option value="all">All payment behaviors</option>
-              {behaviors.map((b) => (
-                <option key={b.key} value={b.key}>
-                  {b.label}
-                </option>
-              ))}
-            </Select>
             <button type="button" onClick={reset} disabled={!filtersOn} className={`${ghostBtn} max-lg:col-span-2 disabled:pointer-events-none disabled:opacity-45`}>
               <Icon d="M4 4v6h6 M4.5 15a8 8 0 1 0 1.9-8.3L4 10" className="size-[18px]" />
               Reset
             </button>
           </div>
   
-          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-            <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[.8rem] text-ink/55" aria-live="polite">
-              <span>
-                <strong className="text-ink">{filtered.length}</strong> {filtered.length === 1 ? "record" : "records"} · {period.label} · {scope}
-              </span>
-              {counts.pending ? <span>{counts.pending} not yet due (shown under All Records)</span> : null}
-              {overdueInScope > 0 && <span className="font-semibold text-danger">{overdueInScope} overdue in this view</span>}
-            </p>
-            <Legend />
-          </div>
+          <p className="text-[.8rem] text-ink/55" aria-live="polite">
+            <strong className="text-ink">{filtered.length}</strong> {filtered.length === 1 ? "record" : "records"} · {period.label} · {scope}
+          </p>
   
           {visible.length === 0 ? (
             <div className="grid justify-items-center gap-3 rounded-[18px] border border-dashed border-ink/15 px-6 py-14 text-center">
