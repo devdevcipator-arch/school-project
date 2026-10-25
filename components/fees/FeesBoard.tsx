@@ -24,7 +24,6 @@ import {
 import { sectionLabel, sections } from "@/lib/students";
 import { downloadFeeCsv, printFeeReport, printPaymentHistory } from "./documents";
 import FeeLedger from "./FeeLedger";
-import PaymentLog from "./PaymentLog";
 import { Aging, FeeStatusBadge } from "./parts";
 import ReminderPanel, { type Channel } from "./ReminderPanel";
 
@@ -235,7 +234,6 @@ export default function FeesBoard() {
   const [page, setPage] = useState(1);
   const [ledgerId, setLedgerId] = useState<string | null>(null);
   const [reminding, setReminding] = useState(false);
-  const [view, setView] = useState<"status" | "payments">("status");
   const [alerted, setAlerted] = useState<Set<string>>(() => new Set());
   const [toast, setToast] = useState<ToastData | null>(null);
   const hydrated = useSyncExternalStore(noop, () => true, () => false);
@@ -345,31 +343,7 @@ export default function FeesBoard() {
         <Kpi label="Critical Defaulters" value={String(kpi.critical)} icon="M12 4l9 16H3z M12 10v4 M12 17h.01" tone="from-[#8e2a1f] to-danger" note={`${DEFAULTER_MONTHS} or more months unpaid`} />
       </div>
 
-      <div role="tablist" aria-label="Fee views" className="flex w-full rounded-xl border border-ink/10 bg-white p-1 sm:w-fit">
-        {(
-          [
-            ["status", "Fee Status Directory", "M4 5h16v14H4z M4 10h16 M4 15h16 M10 5v14"],
-            ["payments", "All Payment Records", "M3 6h18v12H3z M3 10h18 M7 15h3"],
-          ] as const
-        ).map(([k, label, ic]) => (
-          <button
-            key={k}
-            type="button"
-            role="tab"
-            aria-selected={view === k}
-            onClick={() => setView(k)}
-            className={`inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-4 py-2 text-[.86rem] font-semibold transition-colors sm:flex-none ${view === k ? "bg-primary text-surface" : "text-ink/60 hover:text-primary"}`}
-          >
-            <Icon d={ic} className="size-4" />
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {view === "payments" ? (
-        <PaymentLog accounts={list} onView={(a) => setLedgerId(a.student.id)} />
-      ) : (
-        <section className="flex min-w-0 flex-col gap-4 rounded-[20px] border border-ink/8 bg-white p-4 shadow-[0_10px_30px_rgba(6,30,41,.05)] sm:p-6">
+      <section className="flex min-w-0 flex-col gap-4 rounded-[20px] border border-ink/8 bg-white p-4 shadow-[0_10px_30px_rgba(6,30,41,.05)] sm:p-6">
           <label className="relative">
             <span className="sr-only">Search fee records</span>
             <Icon d="M11 4a7 7 0 1 0 0 14a7 7 0 1 0 0-14z M20 20l-4-4" className="pointer-events-none absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-ink/45" />
@@ -455,8 +429,7 @@ export default function FeesBoard() {
           )}
   
           <Pagination page={current} pages={pages} total={filtered.length} size={PAGE_SIZE} noun="records" onPage={setPage} />
-        </section>
-      )}
+      </section>
 
       {hydrated && ledgerAccount && (
         <FeeLedger
