@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { Chip, Select, fieldClass } from "@/components/dashboard/controls";
 import { Badge, Card } from "@/components/dashboard/ui";
 import { Icon } from "@/components/ui/Icon";
-import { feeStanding, type FeeMark, type FeeMarks, type FeeMarkStatus } from "@/lib/classFees";
+import { feeStanding, type FeeMarks, type FeeMarkStatus } from "@/lib/classFees";
 import { shortDate } from "@/lib/fees";
 import type { Student } from "@/lib/students";
 
@@ -54,28 +54,6 @@ function StatusToggle({ name, value, locked, onChange }: { name: string; value: 
   );
 }
 
-function RemarkField({ name, mark, locked, onChange }: { name: string; mark: FeeMark; locked: boolean; onChange: (r: string) => void }) {
-  if (mark.status === "paid") return null;
-  if (locked) {
-    return mark.remark ? (
-      <p className="text-[.8rem] text-ink/60">
-        <span className="font-bold text-ink/70">Remarks: </span>
-        {mark.remark}
-      </p>
-    ) : null;
-  }
-  return (
-    <input
-      type="text"
-      value={mark.remark}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder="Remarks, e.g. Parent promised to pay this week"
-      aria-label={`Remarks for ${name}`}
-      className={`${fieldClass} w-full animate-fade-in !py-2`}
-    />
-  );
-}
-
 /** Search, filters and the roster. Arrow keys move between students; P and U set the status. */
 export default function Roster({
   roster,
@@ -88,7 +66,6 @@ export default function Roster({
   sort,
   onSort,
   onStatus,
-  onRemark,
 }: {
   roster: Student[];
   marks: FeeMarks;
@@ -100,7 +77,6 @@ export default function Roster({
   sort: SortKey;
   onSort: (s: SortKey) => void;
   onStatus: (id: string, s: FeeMarkStatus) => void;
-  onRemark: (id: string, r: string) => void;
 }) {
   const listRef = useRef<HTMLUListElement>(null);
   const counts = { all: roster.length, paid: 0, unpaid: 0 };
@@ -208,12 +184,6 @@ export default function Roster({
                 </div>
 
                 <StatusToggle name={s.name} value={m.status} locked={locked} onChange={(st) => onStatus(s.id, st)} />
-
-                {m.status === "unpaid" && (
-                  <div className="lg:col-span-3 lg:col-start-2 lg:pb-1">
-                    <RemarkField name={s.name} mark={m} locked={locked} onChange={(r) => onRemark(s.id, r)} />
-                  </div>
-                )}
               </li>
             );
           })}

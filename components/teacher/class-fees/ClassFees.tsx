@@ -176,7 +176,6 @@ function Board({ todayIso }: { todayIso: string }) {
             sort={sort}
             onSort={setSort}
             onStatus={(id, status) => setMark(id, { status })}
-            onRemark={(id, remark) => setMark(id, { remark })}
           />
           <SubmitBar
             sectionName={section}

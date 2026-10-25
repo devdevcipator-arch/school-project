@@ -19,7 +19,6 @@ import {
   levelOf,
   levelRank,
   levels,
-  mentorFor,
   skillsOf,
   tagsOf,
   talents as seed,
@@ -145,7 +144,7 @@ function TalentTable({ list, ...actions }: Actions & { list: Talent[] }) {
                 <LevelBadge level={t.level} short />
               </td>
               <td className="max-w-[260px] px-3 py-3.5">
-                <Achievement text={t.achievement} />
+                {t.achievement ? <Achievement text={t.achievement} /> : <span className="text-ink/35">None</span>}
               </td>
               <td className="px-3 py-3">
                 <div className="flex justify-end gap-0.5">
@@ -325,9 +324,9 @@ export default function TalentsBoard({ sections: scope = sections, endorser = { 
         primary: { ...tag, role: e.role },
         extra: [],
         level: e.level,
-        achievement: e.achievement || `Endorsed in ${e.skill} by the ${endorser.role.toLowerCase()}, ${AS_OF.slice(0, 4)}`,
+        achievement: e.achievement,
         history: event,
-        remarks: remark.length ? remark : [{ by: mentorFor(e.category).name, role: mentorFor(e.category).role, date: AS_OF, text: "Newly profiled talent. Progress will be reviewed at the end of term." }],
+        remarks: remark,
       };
       setList((l) => [fresh, ...l]);
       setToast({ text: `${e.student.name} added to the talent directory for ${e.skill}.`, action: { label: "View", run: () => (setProfileId(id), setToast(null)) } });
@@ -455,8 +454,6 @@ export default function TalentsBoard({ sections: scope = sections, endorser = { 
         <TalentProfile
           key={profile.id}
           t={profile}
-          shortlistedFor={shortlist[profile.id]}
-          onShortlist={() => actions.onShortlist(profile)}
           onCertificate={() => certificate(profile)}
           onClose={() => setProfileId(null)}
         />
