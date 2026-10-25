@@ -7,15 +7,8 @@ import { Icon } from "@/components/ui/Icon";
 import { shortDate, type FeeRecord } from "@/lib/fees";
 import { principal } from "@/lib/principal";
 
-export type Channel = "SMS" | "Email" | "App notification";
-const channels: Channel[] = ["SMS", "Email", "App notification"];
-
-type Group = "defaulter" | "delayed" | "partial";
-const groups: { key: Group; label: string; hint: string }[] = [
-  { key: "defaulter", label: "Critical defaulters", hint: "2+ months unpaid" },
-  { key: "delayed", label: "Delayed / overdue", hint: "Past the due date" },
-  { key: "partial", label: "Partially paid, overdue", hint: "Part paid, rest past due" },
-];
+export type Channel = "Email" | "App notification";
+const channels: Channel[] = ["Email", "App notification"];
 
 const template = `Dear {guardian}, the school fee of {student} ({class}) was due on {due} and is now overdue by {days} days. Please clear the pending installment at the earliest. - ${principal.school}`;
 
@@ -28,15 +21,13 @@ export const fillMessage = (msg: string, r: FeeRecord) =>
     .replace(/\{due\}/g, r.dueDate ? shortDate(r.dueDate) : "the due date");
 
 export default function ReminderPanel({ records, scope, onSend, onClose }: { records: FeeRecord[]; scope: string; onSend: (to: FeeRecord[], via: Channel[]) => void; onClose: () => void }) {
-  const [picked, setPicked] = useState<Group[]>(["defaulter", "delayed", "partial"]);
-  const [via, setVia] = useState<Channel[]>(["SMS", "App notification"]);
+  const [via, setVia] = useState<Channel[]>(["App notification"]);
   const [message, setMessage] = useState(template);
 
-  const overdue = useMemo(() => records.filter((r) => r.overdueDays > 0), [records]);
-  const count = (g: Group) => overdue.filter((r) => r.status === g).length;
-  const to = overdue.filter((r) => picked.includes(r.status as Group));
+  // Every student past the due date in the current view.
+  const to = useMemo(() => records.filter((r) => r.overdueDays > 0), [records]);
   const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
-  const sample = to[0] ?? overdue[0];
+  const sample = to[0];
 
   return (
     <Drawer
@@ -67,28 +58,6 @@ export default function ReminderPanel({ records, scope, onSend, onClose }: { rec
       {() => (
         <div className="grid gap-6 px-5 py-6 sm:px-7">
           <fieldset>
-            <legend className="mb-2 text-[.84rem] font-bold">Who should be reminded?</legend>
-            <div className="grid gap-2">
-              {groups.map((g) => (
-                <label
-                  key={g.key}
-                  className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 transition-colors ${picked.includes(g.key) ? "border-primary bg-primary/6" : "border-ink/10 hover:border-accent"}`}
-                >
-                  <input type="checkbox" checked={picked.includes(g.key)} onChange={() => setPicked((p) => toggle(p, g.key))} className="size-4 accent-[#1D546D]" />
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[.9rem] font-bold">{g.label}</span>
-                    <span className="text-[.76rem] text-ink/55">{g.hint}</span>
-                  </span>
-                  <span className="text-[1.1rem] font-extrabold">{count(g.key)}</span>
-                </label>
-              ))}
-            </div>
-            <p className="mt-2.5 text-[.8rem] text-ink/60">
-              {to.length} {to.length === 1 ? "student" : "students"} selected{to.length > 0 && ` · longest delay ${Math.max(...to.map((r) => r.overdueDays))} days`}
-            </p>
-          </fieldset>
-
-          <fieldset>
             <legend className="mb-2 text-[.84rem] font-bold">Send via</legend>
             <div className="flex flex-wrap gap-2">
               {channels.map((c) => (
@@ -117,7 +86,7 @@ export default function ReminderPanel({ records, scope, onSend, onClose }: { rec
             <section>
               <h3 className="mb-2 text-[.84rem] font-bold">Preview</h3>
               <div className="rounded-2xl bg-ink p-4 text-[.86rem] leading-relaxed text-surface">
-                <p className="mb-1.5 text-[.72rem] font-bold uppercase tracking-[.1em] text-surface/50">To {sample.account.student.phone}</p>
+                <p className="mb-1.5 text-[.72rem] font-bold uppercase tracking-[.1em] text-surface/50">To {sample.account.student.guardian}</p>
                 {fillMessage(message, sample)}
               </div>
             </section>
