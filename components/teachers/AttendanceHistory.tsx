@@ -52,13 +52,6 @@ export default function AttendanceHistory({ t }: { t: Teacher }) {
     setShown(PAGE);
   };
 
-  const tiles = [
-    { label: "Attendance rate", value: `${stats.rate}%`, cls: "text-ink", note: `${stats.total} working days` },
-    { label: "On time", value: stats.present, cls: stateMeta.present.value },
-    { label: "Late arrivals", value: stats.late, cls: stateMeta.late.value, note: stats.late ? `avg ${stats.avgLate} min late` : undefined },
-    { label: "Absences", value: stats.absent, cls: stateMeta.absent.value },
-  ];
-
   if (!all.length) {
     return <p className="rounded-2xl border border-dashed border-ink/15 p-8 text-center text-[.9rem] text-ink/55">No attendance has been recorded for {t.name} yet.</p>;
   }
@@ -91,16 +84,6 @@ export default function AttendanceHistory({ t }: { t: Teacher }) {
           </Select>
         </div>
       </div>
-
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-        {tiles.map((s, i) => (
-          <div key={s.label} className={`rounded-2xl border border-ink/8 bg-surface/50 p-3.5 ${i === 0 ? "col-span-2 sm:col-span-1" : ""}`}>
-            <dt className="text-[.7rem] font-bold uppercase tracking-[.08em] text-ink/45">{s.label}</dt>
-            <dd className={`mt-1 text-[1.35rem] font-extrabold tracking-tight ${s.cls}`}>{s.value}</dd>
-            {s.note && <dd className="text-[.72rem] text-ink/50">{s.note}</dd>}
-          </div>
-        ))}
-      </dl>
 
       <div role="radiogroup" aria-label="Filter records" className="flex flex-wrap gap-2">
         {filters.map((f) => (
