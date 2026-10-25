@@ -46,7 +46,7 @@ export const useTeacherStatus = () => useSyncExternalStore(subscribe, read, () =
 export default function StatusSwitch({ className = "" }: { className?: string }) {
   const status = useTeacherStatus();
   return (
-    <div role="radiogroup" aria-label="Today's status" className={`grid w-full grid-cols-3 gap-1 rounded-xl border border-surface/20 bg-surface/10 p-1 sm:w-[340px] ${className}`}>
+    <div role="radiogroup" aria-label="Today's status" className={`grid w-full grid-cols-3 gap-1 rounded-xl border border-surface/20 bg-surface/10 p-1 sm:w-[390px] ${className}`}>
       {statuses.map((x) => (
         <button
           key={x.key}
@@ -54,7 +54,7 @@ export default function StatusSwitch({ className = "" }: { className?: string })
           role="radio"
           aria-checked={status === x.key}
           onClick={() => setTeacherStatus(x.key)}
-          className={`cursor-pointer rounded-lg px-3 py-2 text-[.86rem] font-bold transition-colors ${status === x.key ? "bg-surface text-ink" : "text-surface/75 hover:bg-surface/10 hover:text-surface"}`}
+          className={`cursor-pointer whitespace-nowrap rounded-lg px-2 py-2 text-[.86rem] font-bold transition-colors sm:px-4 ${status === x.key ? "bg-surface text-ink" : "text-surface/75 hover:bg-surface/10 hover:text-surface"}`}
         >
           {x.label}
         </button>
