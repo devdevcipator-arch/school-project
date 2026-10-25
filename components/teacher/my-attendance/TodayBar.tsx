@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/dashboard/ui";
+import StatusSwitch from "@/components/teacher/StatusSwitch";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { SHIFT } from "@/lib/myAttendance";
@@ -91,9 +92,9 @@ export default function TodayBar({
           {line && <p className="mt-1 text-[.92rem] text-surface/70">{line}</p>}
         </div>
 
-        {inAt && (
-          <div className="grid w-full gap-1.5 sm:w-auto">
-            {checkOut ? (
+        <div className="grid w-full justify-items-stretch gap-2.5 sm:w-auto sm:justify-items-end">
+          <StatusSwitch />
+          {inAt && (checkOut ? (
               <span className="inline-flex items-center justify-center gap-2 rounded-[10px] border border-surface/20 bg-surface/10 px-5 py-[11px] text-[.92rem] font-semibold">
                 <Icon d="M5 12l4 4 10-10" className="size-[18px] text-accent" />
                 Checked out at {clock(checkOut)}
@@ -103,9 +104,8 @@ export default function TodayBar({
                 <Icon d="M15 4h4v16h-4 M10 8l-4 4 4 4 M6 12h10" className="size-[18px] rotate-180" />
                 Check Out
               </button>
-            )}
-          </div>
-        )}
+            ))}
+        </div>
       </div>
 
       <div className="relative mt-5 flex flex-wrap gap-2.5">
