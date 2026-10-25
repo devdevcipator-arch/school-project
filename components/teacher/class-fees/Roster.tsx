@@ -2,10 +2,9 @@
 
 import { useRef } from "react";
 import { Chip, Select, fieldClass } from "@/components/dashboard/controls";
-import { Badge, Card } from "@/components/dashboard/ui";
+import { Card } from "@/components/dashboard/ui";
 import { Icon } from "@/components/ui/Icon";
-import { feeStanding, type FeeMarks, type FeeMarkStatus } from "@/lib/classFees";
-import { shortDate } from "@/lib/fees";
+import type { FeeMarks, FeeMarkStatus } from "@/lib/classFees";
 import type { Student } from "@/lib/students";
 
 export type StatusFilter = "all" | FeeMarkStatus;
@@ -138,10 +137,9 @@ export default function Roster({
       </div>
 
       {/* Column header (desktop table layout) */}
-      <div className="hidden grid-cols-[72px_minmax(220px,1fr)_190px_minmax(240px,280px)] gap-4 bg-surface/70 px-5 py-2.5 text-[.7rem] font-bold uppercase tracking-[.08em] text-ink/50 lg:grid">
+      <div className="hidden grid-cols-[72px_minmax(220px,1fr)_minmax(240px,280px)] gap-4 bg-surface/70 px-5 py-2.5 text-[.7rem] font-bold uppercase tracking-[.08em] text-ink/50 lg:grid">
         <span>Roll no.</span>
         <span>Student</span>
-        <span>Fee record</span>
         <span>This month</span>
       </div>
 
@@ -151,14 +149,13 @@ export default function Roster({
         <ul ref={listRef} onKeyDown={onKeyDown} className="grid gap-2.5 p-3 sm:p-4 lg:gap-0 lg:p-0" aria-label="Class fee roster">
           {rows.map((s) => {
             const m = marks[s.id];
-            const standing = feeStanding(s);
             return (
               <li
                 key={s.id}
                 data-row={s.id}
                 tabIndex={0}
                 aria-label={`Roll ${s.rollNo}, ${s.name}, ${m.status === "paid" ? "Paid" : "Unpaid"}`}
-                className={`grid gap-3 rounded-2xl border p-3.5 outline-none transition-colors focus-visible:ring-3 focus-visible:ring-accent lg:grid-cols-[72px_minmax(220px,1fr)_190px_minmax(240px,280px)] lg:items-center lg:gap-x-4 lg:rounded-none lg:border-0 lg:border-t lg:px-5 lg:py-3 ${rowTint[m.status]}`}
+                className={`grid gap-3 rounded-2xl border p-3.5 outline-none transition-colors focus-visible:ring-3 focus-visible:ring-accent lg:grid-cols-[72px_minmax(220px,1fr)_minmax(240px,280px)] lg:items-center lg:gap-x-4 lg:rounded-none lg:border-0 lg:border-t lg:px-5 lg:py-3 ${rowTint[m.status]}`}
               >
                 <div className="flex items-center gap-3 lg:contents">
                   <span className="grid size-11 shrink-0 place-items-center rounded-full bg-ink text-[.8rem] font-extrabold tabular-nums text-surface">{pad(s.rollNo)}</span>
@@ -169,18 +166,6 @@ export default function Roster({
                       <span className="text-[.74rem] text-ink/55">{s.regId}</span>
                     </span>
                   </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {standing.months === 0 ? (
-                    <Badge tone="ok">All clear</Badge>
-                  ) : (
-                    <Badge tone={standing.defaulter ? "danger" : "warn"} className={standing.defaulter ? "ring-1 ring-danger/30" : ""}>
-                      {standing.defaulter ? "Defaulter · " : ""}
-                      {standing.months} {standing.months === 1 ? "month" : "months"} unpaid
-                    </Badge>
-                  )}
-                  {m.status === "paid" && m.paidOn && <span className="text-[.74rem] font-semibold text-ok">Paid {shortDate(m.paidOn)}</span>}
                 </div>
 
                 <StatusToggle name={s.name} value={m.status} locked={locked} onChange={(st) => onStatus(s.id, st)} />
