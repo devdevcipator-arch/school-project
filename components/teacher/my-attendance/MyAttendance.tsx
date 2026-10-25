@@ -49,14 +49,11 @@ function Board({ todayIso }: { todayIso: string }) {
     <main className="mx-auto flex max-w-[1500px] flex-col gap-5 px-[clamp(16px,3vw,36px)] py-6 lg:gap-6 lg:py-8">
       <TodayBar dateLabel={dateLabel} today={today} lastDay={lastDay} checkOut={checkOut} onCheckOut={doCheckOut} />
 
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6">
-        <Card>
-          <AttendanceHistory t={me} />
-        </Card>
-        <div className="lg:sticky lg:top-24">
-          <LeaveRequest onSent={() => setToast({ text: "Leave request sent to the principal." })} />
-        </div>
-      </div>
+      <LeaveRequest onSent={() => setToast({ text: "Leave request sent to the principal." })} />
+
+      <Card>
+        <AttendanceHistory t={me} />
+      </Card>
 
       {toast && <Toast {...toast} onDone={clearToast} />}
     </main>

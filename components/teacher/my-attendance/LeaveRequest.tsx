@@ -21,11 +21,13 @@ export default function LeaveRequest({ onSent }: { onSent: () => void }) {
       <label htmlFor="leave-reason" className="sr-only">
         Reason for leave
       </label>
-      <textarea id="leave-reason" rows={5} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Write your reason for leave" className={`${fieldClass} w-full resize-y`} />
-      <button type="button" onClick={send} disabled={!reason.trim()} className={buttonClass("primary", "md", "mt-3 w-full cursor-pointer disabled:pointer-events-none disabled:opacity-50")}>
-        <Icon d="M4 12l16-8-6 16-3-7z" className="size-[18px]" />
-        Send Request
-      </button>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+        <textarea id="leave-reason" rows={2} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Write your reason for leave" className={`${fieldClass} w-full flex-1 resize-y`} />
+        <button type="button" onClick={send} disabled={!reason.trim()} className={buttonClass("primary", "md", "shrink-0 cursor-pointer disabled:pointer-events-none disabled:opacity-50 max-sm:w-full")}>
+          <Icon d="M4 12l16-8-6 16-3-7z" className="size-[18px]" />
+          Send Request
+        </button>
+      </div>
     </Card>
   );
 }
