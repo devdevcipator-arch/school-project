@@ -6,22 +6,10 @@ import { Badge } from "@/components/dashboard/ui";
 import { Avatar } from "@/components/teachers/parts";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { academicYearOf, behaviorFor, monthLabel, paidIn, paymentRecords, shortDate, stamp, type FeeAccount, type FeeRecord } from "@/lib/fees";
+import { academicYearOf, behaviorFor, paidIn, paymentRecords, shortDate, stamp, type FeeAccount, type FeeRecord } from "@/lib/fees";
 import { sectionLabel } from "@/lib/students";
 import { BehaviorBadge, FeeStatusBadge } from "./parts";
 import PeriodSelects from "./PeriodSelects";
-
-const rateText = (rate: number) => (rate >= 90 ? "text-ok" : rate >= 75 ? "text-primary" : "text-[#a84f12]");
-
-function Tile({ label, value, note, cls = "" }: { label: string; value: string; note?: string; cls?: string }) {
-  return (
-    <div className="rounded-2xl bg-surface/60 p-3.5">
-      <dt className="text-[.7rem] font-bold uppercase tracking-[.08em] text-ink/45">{label}</dt>
-      <dd className={`mt-1 text-[1.2rem] font-extrabold tracking-tight ${cls}`}>{value}</dd>
-      {note && <dd className="text-[.72rem] text-ink/50">{note}</dd>}
-    </div>
-  );
-}
 
 /** Every payment since enrollment, newest first, filtered by the year and month it was paid. */
 function PaymentRecords({ a }: { a: FeeAccount }) {
@@ -30,10 +18,6 @@ function PaymentRecords({ a }: { a: FeeAccount }) {
   const [month, setMonth] = useState("all");
   const years = useMemo(() => [...new Set(all.map((r) => academicYearOf(r.p.at)))].sort().reverse(), [all]);
   const shown = all.filter((r) => paidIn(r.p.at, year, month));
-  const finals = shown.filter((r) => r.p.kind === "final");
-  const onTime = finals.filter((r) => r.late === 0).length;
-  const rate = finals.length ? Math.round((onTime / finals.length) * 100) : 100;
-  const scope = year === "all" && month === "all" ? "since enrollment" : month !== "all" && month.length > 2 ? `in ${monthLabel(month)}` : year !== "all" ? `in ${year}` : "in the selected month";
 
   if (!all.length)
     return (
@@ -59,13 +43,6 @@ function PaymentRecords({ a }: { a: FeeAccount }) {
           Show all
         </button>
       </div>
-
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Tile label="Payments" value={String(shown.length)} note={scope} />
-        <Tile label="Cleared on time" value={`${rate}%`} note={`${onTime} of ${finals.length} full payments`} cls={rateText(rate)} />
-        <Tile label="Paid late" value={String(finals.length - onTime)} note="after the due date" cls={finals.length - onTime ? "text-[#a84f12]" : ""} />
-        <Tile label="Part payments" value={String(shown.length - finals.length)} note="installments split" cls={shown.length - finals.length ? "text-[#9a6a0f]" : ""} />
-      </dl>
 
       {shown.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-ink/15 px-4 py-8 text-center text-[.86rem] text-ink/55">No payments were made in this period.</p>

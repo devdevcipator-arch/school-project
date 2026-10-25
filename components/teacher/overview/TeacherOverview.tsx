@@ -4,7 +4,7 @@ import { useState } from "react";
 import { classOverviews } from "@/lib/teacher";
 import GreetingBar from "./GreetingBar";
 import KpiRow from "./KpiRow";
-import { AssessmentsWidget, AttendanceWidget } from "./widgets";
+import { AttendanceWidget } from "./widgets";
 
 /** Teacher daily command center. Every widget follows the class picked in the greeting bar. */
 export default function TeacherOverview() {
@@ -28,7 +28,6 @@ export default function TeacherOverview() {
       {/* One full-width row per widget. */}
       <div key={`rows-${c.id}`} className={`grid gap-5 lg:gap-6 ${fade}`}>
         <AttendanceWidget c={c} />
-        <AssessmentsWidget c={c} />
       </div>
     </main>
   );

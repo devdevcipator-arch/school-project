@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { Badge, Bar, Card, CardLink } from "@/components/dashboard/ui";
+import { Badge, Card } from "@/components/dashboard/ui";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { assessmentStateTone, type AssessmentFormat, type ClassOverview } from "@/lib/teacher";
+import type { ClassOverview } from "@/lib/teacher";
 
 const sectionLabel = "mb-3 mt-6 text-[.74rem] font-bold uppercase tracking-[.12em] text-ink/50";
-const plus = "M12 5v14 M5 12h14";
 
 /* ---------- 3. Class attendance ---------- */
 
@@ -94,67 +93,6 @@ export function AttendanceWidget({ c }: { c: ClassOverview }) {
           )}
         </div>
       </div>
-    </Card>
-  );
-}
-
-/* ---------- 5. Assessments ---------- */
-
-const formatStyle: Record<AssessmentFormat, string> = {
-  "MCQ Test": "bg-primary/10 text-primary",
-  "Subjective / Task": "bg-accent/15 text-[#3d6e71]",
-  "AI-Generated Quiz": "bg-ink text-surface",
-};
-
-export function AssessmentsWidget({ c }: { c: ClassOverview }) {
-  return (
-    <Card
-      title="Assessments & Tasks"
-      subtitle="Ongoing and scheduled for this class"
-      action={
-        <Link href="/teacher/assessments?new=1" className={buttonClass("primary", "md", "!px-4 !py-2 text-[.84rem]")}>
-          <Icon d={plus} className="size-4" />
-          Create New Assessment
-        </Link>
-      }
-    >
-      <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {c.assessments.map((a) => {
-          const pct = Math.round((a.submitted / a.total) * 100);
-          return (
-            <li
-              key={a.title}
-              className={`rounded-2xl border p-3.5 transition-[border-color,background-color] duration-300 ${
-                a.state === "Due today" ? "border-warn/40 bg-warn/5" : "border-ink/8 hover:border-accent/60 hover:bg-surface/50"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <span className="grid min-w-0">
-                  <span className="text-[.92rem] font-bold">{a.title}</span>
-                  <span className="text-[.78rem] text-ink/55">{a.subject}</span>
-                </span>
-                <Badge tone={assessmentStateTone[a.state]}>{a.state}</Badge>
-              </div>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[.7rem] font-bold ${formatStyle[a.format]}`}>
-                  {a.format === "AI-Generated Quiz" && <Icon d="M12 3v4 M12 17v4 M3 12h4 M17 12h4" className="size-3" />}
-                  {a.format}
-                </span>
-                <span className="text-[.76rem] text-ink/55">{a.deadline}</span>
-              </div>
-              {a.state !== "Scheduled" && (
-                <div className="mt-2.5 grid grid-cols-[1fr_auto] items-center gap-3">
-                  <Bar value={a.submitted} max={a.total} fill={pct >= 75 ? "bg-ok" : "bg-warn"} label={`${a.title}: ${a.submitted} of ${a.total} submitted`} />
-                  <span className="text-[.76rem] font-semibold tabular-nums text-ink/65">
-                    {a.submitted}/{a.total} submitted
-                  </span>
-                </div>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-      <CardLink href="/teacher/assessments">Open Assessments & AI Test Maker</CardLink>
     </Card>
   );
 }
