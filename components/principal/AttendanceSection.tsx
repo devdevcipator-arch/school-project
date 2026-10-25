@@ -1,11 +1,10 @@
 import { Badge, Card, toneText, type Tone } from "@/components/dashboard/ui";
 import { LOW_ATTENDANCE, classAttendance, teacherCheckins } from "@/lib/principal";
 
-const statusTiles: { label: string; key: "present" | "late" | "absent" | "onLeave"; tone: Tone }[] = [
+const statusTiles: { label: string; key: "present" | "late" | "absent"; tone: Tone }[] = [
   { label: "On time", key: "present", tone: "ok" },
   { label: "Late", key: "late", tone: "warn" },
   { label: "Absent", key: "absent", tone: "danger" },
-  { label: "On leave", key: "onLeave", tone: "neutral" },
 ];
 
 function TeacherAttendance() {
@@ -17,7 +16,7 @@ function TeacherAttendance() {
       subtitle="Live check-ins for today"
       action={<Badge tone="ok">{present}/{t.total} Present</Badge>}
     >
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+      <div className="grid grid-cols-3 gap-2.5">
         {statusTiles.map((s) => (
           <div key={s.key} className="rounded-2xl border border-ink/8 bg-surface/60 p-3">
             <p className={`text-[1.5rem] font-extrabold leading-none ${toneText[s.tone]}`}>{t[s.key]}</p>

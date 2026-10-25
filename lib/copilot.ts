@@ -368,7 +368,7 @@ function teacherReply(q: string): Reply {
   const active = teachers.filter((x) => x.status !== "inactive");
   const by = (s: string) => active.filter((x) => x.checkIn.state === s);
   const subject = subjects.find((s) => q.includes(s.toLowerCase()));
-  if (subject && !/(late|absent|leave|attendance|present)/.test(q)) {
+  if (subject && !/(late|absent|attendance|present)/.test(q)) {
     const list = active.filter((x) => x.subjects.includes(subject));
     return {
       text: `${plural(list.length, "teacher")} teach ${subject}.`,
@@ -378,10 +378,9 @@ function teacherReply(q: string): Reply {
   }
   const late = by("late");
   const absent = by("absent");
-  const leave = active.filter((x) => x.status === "leave");
   return {
-    text: `${by("present").length + late.length} of ${active.length} teachers have checked in today. ${plural(late.length, "teacher")} arrived late and ${absent.length} ${absent.length === 1 ? "is" : "are"} absent without leave.`,
-    tools: ["teacher check-ins", "leave register"],
+    text: `${by("present").length + late.length} of ${active.length} teachers have checked in today. ${plural(late.length, "teacher")} arrived late and ${absent.length} ${absent.length === 1 ? "is" : "are"} absent.`,
+    tools: ["teacher check-ins"],
     blocks: [
       {
         kind: "stats",
@@ -389,7 +388,6 @@ function teacherReply(q: string): Reply {
           { label: "On time", value: String(by("present").length), tone: "ok" },
           { label: "Late", value: String(late.length), tone: "warn" },
           { label: "Absent", value: String(absent.length), tone: "danger" },
-          { label: "On leave", value: String(leave.length), tone: "neutral" },
         ],
       },
       ...(late.length + absent.length

@@ -245,7 +245,6 @@ export default function TeachersBoard({ startAdding = false }: { startAdding?: b
       faculty: staff.length,
       checkedIn: staff.filter((t) => t.checkIn.state === "present" || t.checkIn.state === "late").length,
       late: staff.filter((t) => t.checkIn.state === "late").length,
-      leave: profiles.filter((t) => t.status === "leave").length,
       classTeachers: staff.filter((t) => t.classTeacher).length,
       inactive: profiles.length - staff.length,
     };
@@ -330,10 +329,9 @@ export default function TeachersBoard({ startAdding = false }: { startAdding?: b
         </button>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard label="Total Faculty" value={stats.faculty} icon="M9 11a4 4 0 1 0 0-8a4 4 0 1 0 0 8z M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7 M16 3.5a4 4 0 0 1 0 7.5 M18 14c2.4.8 4 3.2 4 7" note={`${stats.inactive} inactive not counted`} />
         <StatCard label="Checked In Today" value={stats.checkedIn} icon="M8 3v3 M16 3v3 M4 7h16v13H4z M8 14l2.5 2.5L16 11" note={`${stats.late} arrived late`} />
-        <StatCard label="On Leave" value={stats.leave} icon="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z M12 7v5l3 2" note="Approved leave today" />
         <StatCard label="Class Teachers" value={stats.classTeachers} icon="M12 3l2.2 5.3L20 9l-4.4 3.8L17 19l-5-3-5 3 1.4-6.2L4 9l5.8-.7z" note="Sections with an assigned lead" />
       </div>
 
@@ -389,7 +387,6 @@ export default function TeachersBoard({ startAdding = false }: { startAdding?: b
                 <Select label="Status" value={status} onChange={filter(setStatus)} className="lg:w-[160px]">
                   <option value="all">All statuses</option>
                   <option value="active">Active</option>
-                  <option value="leave">On Leave</option>
                   <option value="inactive">Inactive</option>
                 </Select>
               </div>

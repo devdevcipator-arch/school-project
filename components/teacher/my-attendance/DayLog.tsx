@@ -18,14 +18,12 @@ const segments: { state: DayState; key: string; short: string; on: string }[] = 
   { state: "present", key: "P", short: "On time", on: "border-ok bg-ok text-white shadow-[0_6px_14px_rgba(46,139,87,.3)]" },
   { state: "late", key: "L", short: "Late", on: "border-warn bg-warn text-white shadow-[0_6px_14px_rgba(201,138,22,.3)]" },
   { state: "absent", key: "A", short: "Absent", on: "border-danger bg-danger text-white shadow-[0_6px_14px_rgba(192,57,43,.3)]" },
-  { state: "leave", key: "Lv", short: "Leave", on: "border-primary bg-primary text-white shadow-[0_6px_14px_rgba(29,84,109,.3)]" },
 ];
 
 const rowTint: Record<DayState, string> = {
   present: "border-ink/8 bg-white",
   late: "border-warn/40 bg-warn/5",
   absent: "border-danger/30 bg-danger/4",
-  leave: "border-primary/25 bg-primary/4",
 };
 
 const parts = (iso: string) => {
@@ -61,7 +59,7 @@ export default function DayLog({ records, todayIso }: { records: DayRecord[]; to
 
   const inMonth = useMemo(() => (month === "all" ? records : records.filter((r) => r.date.startsWith(month))), [records, month]);
   const stats = summarize(inMonth);
-  const counts: Record<Filter, number> = { all: stats.total, present: stats.present, late: stats.late, absent: stats.absent, leave: stats.leave };
+  const counts: Record<Filter, number> = { all: stats.total, present: stats.present, late: stats.late, absent: stats.absent };
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -89,7 +87,6 @@ export default function DayLog({ records, todayIso }: { records: DayRecord[]; to
     { key: "present", label: "On Time" },
     { key: "late", label: "Late" },
     { key: "absent", label: "Absent" },
-    { key: "leave", label: "Leave" },
   ];
 
   return (

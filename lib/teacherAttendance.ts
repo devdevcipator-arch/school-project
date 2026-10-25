@@ -3,7 +3,7 @@
 
 import type { Teacher } from "./teachers";
 
-export type DayState = "present" | "late" | "absent" | "leave";
+export type DayState = "present" | "late" | "absent";
 
 export type DayRecord = {
   /** ISO date, e.g. "2026-10-13". */
@@ -13,14 +13,13 @@ export type DayRecord = {
   checkOut?: string;
   /** Minutes after the school start time (late days only). */
   minutesLate?: number;
-  /** Leave type or absence note. */
+  /** Absence note. */
   note?: string;
 };
 
 /** Teachers are marked late after this check-in time. */
 export const SCHOOL_START = "08:00";
 
-const leaveTypes = ["Sick leave", "Casual leave", "Annual leave", "Family emergency"];
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const iso = (d: Date) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
@@ -58,8 +57,6 @@ export function attendanceHistory(t: Teacher, today = new Date()): DayRecord[] {
   if (t.status === "inactive") end.setUTCDate(end.getUTCDate() - 30);
 
   const out: DayRecord[] = [];
-  let leaveLeft = 0;
-  let leaveType = "";
   for (const d = new Date(`${t.joined}T00:00:00Z`); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
     const wd = d.getUTCDay();
     if (wd === 0 || wd === 6 || isVacation(d)) continue;
@@ -69,8 +66,7 @@ export function attendanceHistory(t: Teacher, today = new Date()): DayRecord[] {
     if (date === todayIso) {
       const c = t.checkIn;
       if (c.state === "none") continue;
-      if (c.state === "leave") out.push({ date, state: "leave", note: "Approved leave" });
-      else if (c.state === "absent") out.push({ date, state: "absent", note: "No check-in" });
+      if (c.state === "absent") out.push({ date, state: "absent", note: "No check-in" });
       else {
         const [h, m] = (c.time ?? "07:45").split(":").map(Number);
         out.push({ date, state: c.state, checkIn: c.time, minutesLate: c.state === "late" ? h * 60 + m - 8 * 60 : undefined });
@@ -78,17 +74,10 @@ export function attendanceHistory(t: Teacher, today = new Date()): DayRecord[] {
       continue;
     }
 
-    if (leaveLeft > 0) {
-      leaveLeft--;
-      out.push({ date, state: "leave", note: leaveType });
-    } else if (r < 0.014) {
-      leaveType = leaveTypes[Math.floor(rand() * leaveTypes.length)];
-      leaveLeft = Math.floor(rand() * 3); // 1-3 day leave
-      out.push({ date, state: "leave", note: leaveType });
-    } else if (r < 0.014 + absentRate) {
-      out.push({ date, state: "absent", note: "No check-in, no leave request" });
+    if (r < absentRate) {
+      out.push({ date, state: "absent", note: "No check-in" });
     } else {
-      const late = r < 0.014 + absentRate + lateRate;
+      const late = r < absentRate + lateRate;
       const minutesLate = late ? 3 + Math.floor(rand() * 40) : 0;
       const inMins = late ? 8 * 60 + minutesLate : 7 * 60 + 28 + Math.floor(rand() * 31);
       const outMins = 14 * 60 + Math.floor(rand() * 35);
@@ -101,7 +90,7 @@ export function attendanceHistory(t: Teacher, today = new Date()): DayRecord[] {
 export type AttendanceSummary = Record<DayState, number> & { total: number; rate: number; avgLate: number };
 
 export function summarize(records: DayRecord[]): AttendanceSummary {
-  const s = { present: 0, late: 0, absent: 0, leave: 0 };
+  const s = { present: 0, late: 0, absent: 0 };
   let lateMins = 0;
   for (const r of records) {
     s[r.state]++;

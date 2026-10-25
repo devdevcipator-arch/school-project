@@ -149,7 +149,7 @@ export default function TeacherForm({
         subjects: invite ? [] : subjects.filter((s) => f.subjects.includes(s)),
         status,
         // Invites wait in the pending tab; finishing a pending profile starts normal check-ins.
-        checkIn: invite ? { state: "none" } : initial && !initial.pending && status === initial.status ? initial.checkIn : { state: status === "active" ? "absent" : status === "leave" ? "leave" : "none" },
+        checkIn: invite ? { state: "none" } : initial && !initial.pending && status === initial.status ? initial.checkIn : { state: status === "active" ? "absent" : "none" },
         joined: initial?.joined ?? new Date().toISOString().slice(0, 10),
         ...(invite && { pending: true }),
       },
@@ -261,7 +261,6 @@ export default function TeacherForm({
                   {(
                     [
                       ["active", "Active"],
-                      ["leave", "On Leave"],
                       ["inactive", "Inactive"],
                     ] as const
                   ).map(([k, l]) => (

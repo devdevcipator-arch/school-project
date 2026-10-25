@@ -73,7 +73,7 @@ export default function TodayBar({
     heading = `Checked in at ${clock(inAt)}`;
     line = today.state === "late" ? `${today.minutesLate} min after the ${clock(SHIFT.start)} start` : `${early} min before the ${clock(SHIFT.start)} start`;
   } else {
-    heading = today.state === "leave" ? "You are on leave today" : "No check-in recorded today";
+    heading = "No check-in recorded today";
     line = today.note;
   }
 

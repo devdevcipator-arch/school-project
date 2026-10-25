@@ -16,7 +16,6 @@ export function Avatar({ name, size = "md", muted = false }: { name: string; siz
 
 const statusMeta: Record<TeacherStatus, { label: string; cls: string; icon: string }> = {
   active: { label: "Active", cls: "bg-ok/10 text-ok", icon: "M5 12l4 4 10-10" },
-  leave: { label: "On Leave", cls: "bg-warn/12 text-[#9a6a0f]", icon: "M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z M12 7v5l3 2" },
   inactive: { label: "Inactive", cls: "bg-ink/8 text-ink/55", icon: "M6 12h12" },
 };
 
@@ -34,7 +33,6 @@ const checkMeta: Record<CheckIn["state"], { label: string; short?: string; cls: 
   present: { label: "Present today", short: "Present", cls: "border-ok/25 bg-ok/8 text-ok", dot: "bg-ok" },
   late: { label: "Late today", short: "Late", cls: "border-warn/30 bg-warn/10 text-[#9a6a0f]", dot: "bg-warn" },
   absent: { label: "Absent", cls: "border-danger/25 bg-danger/8 text-danger", dot: "bg-danger" },
-  leave: { label: "On Leave", cls: "border-ink/10 bg-ink/5 text-ink/60", dot: "bg-ink/35" },
   none: { label: "Not on roster", cls: "border-ink/10 bg-white text-ink/45", dot: "bg-ink/20" },
 };
 

@@ -25,7 +25,7 @@ export const teacherTitles: Record<string, { eyebrow: string; title: string; des
   "/teacher/my-attendance": {
     eyebrow: "My Attendance",
     title: "My Attendance Record",
-    description: "Your check-ins, late arrivals and leave history.",
+    description: "Your check-ins and late arrivals.",
   },
   "/teacher/class-attendance": {
     eyebrow: "Class Attendance",

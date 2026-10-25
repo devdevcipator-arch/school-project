@@ -14,7 +14,6 @@ export default function KpiCards() {
         <SplitBar
           parts={[
             { label: "On duty", value: teachers.onDuty, fill: "bg-primary" },
-            { label: "On leave", value: teachers.onLeave, fill: "bg-accent" },
           ]}
         />
       </Kpi>

@@ -8,7 +8,6 @@ export const stateMeta: Record<DayState, { label: string; tone: Tone; cell: stri
   present: { label: "On time", tone: "ok", cell: "border-ok/25 bg-ok/8 text-ok", fill: "bg-ok" },
   late: { label: "Late", tone: "warn", cell: "border-warn/35 bg-warn/10 text-[#9a6a0f]", fill: "bg-warn" },
   absent: { label: "Absent", tone: "danger", cell: "border-danger/30 bg-danger/8 text-danger", fill: "bg-danger" },
-  leave: { label: "Leave", tone: "neutral", cell: "border-primary/25 bg-primary/8 text-primary", fill: "bg-primary" },
 };
 
 const pad = (n: number) => String(n).padStart(2, "0");

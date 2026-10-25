@@ -204,7 +204,6 @@ function myAttendanceReply(): Reply {
           { label: "On time", value: String(m.present), tone: "ok" },
           { label: "Late", value: String(m.late), tone: m.late ? "warn" : "ok" },
           { label: "Absent", value: String(m.absent), tone: m.absent ? "danger" : "ok" },
-          { label: "Leave", value: String(m.leave), tone: "neutral" },
         ],
       },
       { kind: "links", items: [{ label: "Open My Attendance", href: "/teacher/my-attendance" }] },
@@ -285,7 +284,7 @@ export function respondTeacher(raw: string, vault: VaultDoc[]): Reply {
   if (has(q, /(add|hire|enrol|enroll|admit)\b/) && has(q, /(teacher|student|staff)/)) return { text: "Adding teachers or enrolling students is an administrative action reserved for the principal. I can help with your classes, assessments, reports and the knowledge vault.", tools: ["access control"] };
   const s = findAnyStudent(q);
   if (s) return studentReply(s);
-  if (has(q, /(my attendance|my check|i late|my leave|was i)/)) return myAttendanceReply();
+  if (has(q, /(my attendance|my check|i late|was i)/)) return myAttendanceReply();
   // \bsports? so "support" does not count as a sports question.
   if (has(q, /(talent|athlete|cricket|football|debate|\bsports?\b|robot|music|chess|co-curricular)/)) return talentReply(q);
   if (has(q, /(top|best|weak|struggl|support|perform|marks|result|score|fail)/)) return performance(q);

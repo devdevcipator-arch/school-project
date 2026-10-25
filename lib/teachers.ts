@@ -1,8 +1,8 @@
 // Teachers Management: types + front-end mock roster.
 // Replace with real API data in the backend phase.
 
-export type TeacherStatus = "active" | "leave" | "inactive";
-export type CheckIn = { state: "present" | "late" | "absent" | "leave" | "none"; time?: string };
+export type TeacherStatus = "active" | "inactive";
+export type CheckIn = { state: "present" | "late" | "absent" | "none"; time?: string };
 
 export type Teacher = {
   id: string;
@@ -29,7 +29,7 @@ export const SCHOOL_DOMAIN = "greenfield.edu.pk";
 
 type Row = [name: string, subjects: string[], classTeacher: string | null, classes: number[], status: TeacherStatus, checkIn: string, phone: string, joined: string];
 
-// checkIn: "07:42" present, "L08:14" late, "A" absent, "-" on leave/inactive
+// checkIn: "07:42" present, "L08:14" late, "A" absent, "-" inactive
 const rows: Row[] = [
   ["Ali Raza", ["Mathematics"], "10-A", [9, 10], "active", "07:42", "0300 1234567", "2019-08-01"],
   ["Hina Javed", ["English"], "9-A", [8, 9, 10], "active", "07:48", "0301 2345678", "2020-03-15"],
@@ -41,7 +41,7 @@ const rows: Row[] = [
   ["Sana Malik", ["General Science"], "6-A", [5, 6], "active", "07:44", "0307 8901234", "2020-08-24"],
   ["Imran Shah", ["Pakistan Studies", "Social Studies"], "7-A", [6, 7, 8], "active", "07:50", "0308 9012345", "2016-09-01"],
   ["Zainab Akhtar", ["English"], "5-A", [4, 5], "active", "07:46", "0309 0123456", "2021-08-16"],
-  ["Kamran Ali", ["Mathematics"], "8-B", [7, 8], "leave", "-", "0310 1122334", "2019-01-07"],
+  ["Kamran Ali", ["Mathematics"], "8-B", [7, 8], "active", "07:53", "0310 1122334", "2019-01-07"],
   ["Mariam Yousaf", ["Islamiyat"], null, [5, 6, 7, 8], "active", "07:58", "0311 2233445", "2022-03-01"],
   ["Saad Ahmed", ["Physical Education"], null, [3, 4, 5, 6, 7, 8, 9, 10], "active", "07:30", "0312 3344556", "2018-02-19"],
   ["Rabia Aslam", ["Art"], null, [1, 2, 3, 4, 5], "active", "07:57", "0313 4455667", "2023-08-07"],
@@ -51,7 +51,7 @@ const rows: Row[] = [
   ["Tahir Mehmood", ["Mathematics"], "4-A", [3, 4], "active", "07:43", "0317 8899001", "2017-08-28"],
   ["Asma Jamil", ["Urdu", "Islamiyat"], "1-B", [1, 2], "active", "07:49", "0318 9900112", "2022-01-03"],
   ["Waqas Hassan", ["Physics", "Mathematics"], null, [8, 9], "active", "07:53", "0319 0011223", "2021-09-06"],
-  ["Mehwish Tariq", ["Chemistry", "General Science"], "7-B", [6, 7], "leave", "-", "0320 1212121", "2020-10-12"],
+  ["Mehwish Tariq", ["Chemistry", "General Science"], "7-B", [6, 7], "active", "07:46", "0320 1212121", "2020-10-12"],
   ["Junaid Akram", ["Computer Science"], null, [3, 4, 5], "active", "07:45", "0321 2323232", "2023-01-09"],
   ["Sadia Parveen", ["English"], "6-B", [6, 7], "active", "07:40", "0322 3434343", "2018-08-06"],
   ["Adeel Butt", ["Social Studies", "Pakistan Studies"], "5-B", [5, 9, 10], "active", "07:54", "0323 4545454", "2019-04-22"],
@@ -67,7 +67,7 @@ const rows: Row[] = [
 
 function toCheckIn(code: string, status: TeacherStatus): CheckIn {
   if (status === "inactive") return { state: "none" };
-  if (status === "leave" || code === "-") return { state: "leave" };
+  if (code === "-") return { state: "none" };
   if (code === "A") return { state: "absent" };
   if (code.startsWith("L")) return { state: "late", time: code.slice(1) };
   return { state: "present", time: code };

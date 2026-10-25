@@ -14,14 +14,12 @@ const stateMeta: Record<DayState, { label: string; tone: Tone; value: string }> 
   present: { label: "On time", tone: "ok", value: "text-ok" },
   late: { label: "Late", tone: "warn", value: "text-[#9a6a0f]" },
   absent: { label: "Absent", tone: "danger", value: "text-danger" },
-  leave: { label: "Leave", tone: "neutral", value: "text-primary" },
 };
 
 type Filter = "all" | Exclude<DayState, "present">;
 const filters: { key: Filter; label: string }[] = [
   { key: "all", label: "All days" },
   { key: "absent", label: "Absences" },
-  { key: "leave", label: "Leaves" },
   { key: "late", label: "Late arrivals" },
 ];
 
@@ -45,7 +43,7 @@ export default function AttendanceHistory({ t }: { t: Teacher }) {
   );
   const stats = useMemo(() => summarize(period), [period]);
   const rows = filter === "all" ? period : period.filter((r) => r.state === filter);
-  const counts: Record<Filter, number> = { all: stats.total, absent: stats.absent, leave: stats.leave, late: stats.late };
+  const counts: Record<Filter, number> = { all: stats.total, absent: stats.absent, late: stats.late };
   const periodLabel = year === "all" && month === "all" ? "since joining" : [month !== "all" && months[Number(month) - 1], year !== "all" && year].filter(Boolean).join(" ");
 
   // Any filter change starts the list from the top again.
@@ -59,7 +57,6 @@ export default function AttendanceHistory({ t }: { t: Teacher }) {
     { label: "On time", value: stats.present, cls: stateMeta.present.value },
     { label: "Late arrivals", value: stats.late, cls: stateMeta.late.value, note: stats.late ? `avg ${stats.avgLate} min late` : undefined },
     { label: "Absences", value: stats.absent, cls: stateMeta.absent.value },
-    { label: "Leaves", value: stats.leave, cls: stateMeta.leave.value },
   ];
 
   if (!all.length) {

@@ -59,17 +59,16 @@ export const principal = {
 };
 
 export const kpis = {
-  teachers: { total: 30, onDuty: 28, onLeave: 2, trend: 3.4 },
+  teachers: { total: 30, onDuty: 30, trend: 3.4 },
   students: { total: 642, boys: 338, girls: 304, grades: 10, trend: 2.1 },
   attendance: { percent: 94.2, present: 605, total: 642, trend: 1.3 },
   fees: { total: 642, paid: 518, pending: 83, overdue: 41, trend: -4.8 },
 };
 
 export const teacherCheckins = {
-  present: 26,
+  present: 28,
   late: 2,
   absent: 0,
-  onLeave: 2,
   total: 30,
   feed: [
     { name: "Ali Raza", subject: "Mathematics", time: "07:42 AM", status: "On time" as const },
