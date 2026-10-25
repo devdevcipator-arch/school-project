@@ -28,7 +28,7 @@ function Chip({ icon, children }: { icon: string; children: React.ReactNode }) {
 export default function GreetingBar() {
   const [greeting, date] = useSyncExternalStore(noop, clientNow, () => "Welcome back|").split("|");
   const status = useTeacherStatus();
-  const statusText = status === "in" ? `Checked in at ${teacherToday.checkIn}` : status === "break" ? "On break" : "On leave today";
+  const statusText = status === "in" ? `Checked in at ${teacherToday.checkIn}` : status === "break" ? "On break" : "Checked out";
 
   return (
     <section className="relative overflow-hidden rounded-[20px] bg-linear-135 from-ink via-[#0b2a38] to-primary p-5 text-surface shadow-[0_18px_40px_rgba(6,30,41,.18)] sm:p-6">

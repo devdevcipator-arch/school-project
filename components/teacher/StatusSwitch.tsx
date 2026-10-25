@@ -2,12 +2,12 @@
 
 import { useSyncExternalStore } from "react";
 
-export type TeacherStatus = "in" | "break" | "leave";
+export type TeacherStatus = "in" | "break" | "out";
 
 const statuses: { key: TeacherStatus; label: string }[] = [
   { key: "in", label: "Checked in" },
   { key: "break", label: "Break" },
-  { key: "leave", label: "Leave" },
+  { key: "out", label: "Checked out" },
 ];
 
 // One status for the whole teacher portal, so Overview and My Attendance always agree.
@@ -20,7 +20,7 @@ const read = (): TeacherStatus => {
   if (current) return current;
   try {
     const v = sessionStorage.getItem(KEY);
-    current = v === "break" || v === "leave" ? v : "in";
+    current = v === "break" || v === "out" ? v : "in";
   } catch {
     current = "in";
   }
@@ -42,7 +42,7 @@ const subscribe = (l: () => void) => {
 
 export const useTeacherStatus = () => useSyncExternalStore(subscribe, read, () => "in" as TeacherStatus);
 
-/** Checked in / Break / Leave segmented switch for the dark hero bars. */
+/** Checked in / Break / Checked out segmented switch for the dark hero bars. */
 export default function StatusSwitch({ className = "" }: { className?: string }) {
   const status = useTeacherStatus();
   return (
