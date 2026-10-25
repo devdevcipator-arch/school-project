@@ -86,35 +86,17 @@ function TalentCard({ t, ...actions }: Actions & { t: Talent }) {
   const s = t.student;
   return (
     <li className="flex flex-col rounded-[18px] border border-ink/8 bg-white p-5 transition-[box-shadow,translate] duration-300 ease-soft hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(6,30,41,.08)]">
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-3">
         <Avatar name={s.name} />
         <div className="min-w-0 flex-1">
           <button type="button" onClick={() => actions.onView(t)} className="block max-w-full cursor-pointer truncate text-left text-[1rem] font-extrabold tracking-tight hover:text-primary">
             {s.name}
           </button>
-          <span className="text-[.76rem] text-ink/50">
-            {s.regId} · Roll {s.rollNo}
-          </span>
         </div>
         <ClassBadge section={s.section} />
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-1.5">
-        <PrimaryTalent {...t.primary} />
-        <LevelBadge level={t.level} short />
-      </div>
-      {t.extra.length > 0 && (
-        <div className="mt-2.5">
-          <SkillChips list={t.extra} />
-        </div>
-      )}
-
-      <div className="mb-4 mt-4 rounded-xl bg-surface/70 px-3 py-2.5">
-        <Achievement text={t.achievement} />
-      </div>
-
-      <div className="mt-auto flex flex-wrap items-center justify-between gap-1 border-t border-ink/8 pt-3">
-        <ShortlistButton t={t} {...actions} />
+      <div className="mt-4 flex items-center justify-end border-t border-ink/8 pt-3">
         <ViewButton t={t} {...actions} />
       </div>
     </li>
