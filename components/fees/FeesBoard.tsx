@@ -1,22 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { Pagination, Select, Toast, fieldClass, ghostBtn, ghostSm, type ToastData } from "@/components/dashboard/controls";
-import { Bar } from "@/components/dashboard/ui";
 import { Avatar } from "@/components/teachers/parts";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import {
   CURRENT_PERIOD,
-  DEFAULTER_MONTHS,
   accounts as seed,
-  behaviorFor,
   periods,
   recordFor,
-  settle,
   shortDate,
-  unpaidMonths,
-  type Behavior,
   type FeeAccount,
   type FeeRecord,
   type FeeStatus,
@@ -30,7 +24,7 @@ import ReminderPanel, { type Channel } from "./ReminderPanel";
 const PAGE_SIZE = 15;
 const noop = () => () => {};
 
-type Row = FeeRecord & { behavior: Behavior };
+type Row = FeeRecord;
 
 const severity: Record<FeeStatus, number> = { defaulter: 0, delayed: 1, partial: 2, pending: 3, paid: 4 };
 const order = (r: Row) => severity[r.status] * 1e4 - r.overdueDays;
@@ -42,26 +36,6 @@ const tabs: { key: "all" | Exclude<FeeStatus, "pending">; label: string; dot?: s
   { key: "delayed", label: "Delayed / Overdue", dot: "bg-serious" },
   { key: "defaulter", label: "Defaulters", dot: "bg-danger" },
 ];
-
-/* ---------------- KPI tiles ---------------- */
-
-function Kpi({ label, value, icon, note, tone = "from-primary to-accent", children }: { label: string; value: string; icon: string; note: string; tone?: string; children?: ReactNode }) {
-  return (
-    <div className="flex flex-col gap-3 rounded-[20px] border border-ink/8 bg-white p-5 shadow-[0_10px_30px_rgba(6,30,41,.05)] transition-[translate,box-shadow] duration-300 ease-soft hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(6,30,41,.1)]">
-      <div className="flex items-center gap-4">
-        <span className={`grid size-12 shrink-0 place-items-center rounded-2xl bg-linear-135 text-surface ${tone}`}>
-          <Icon d={icon} className="size-6" />
-        </span>
-        <div className="min-w-0">
-          <p className="text-[.8rem] font-bold text-ink/55">{label}</p>
-          <p className="text-[1.6rem] font-extrabold leading-tight tracking-tight">{value}</p>
-        </div>
-      </div>
-      {children}
-      <p className="text-[.76rem] text-ink/55">{note}</p>
-    </div>
-  );
-}
 
 /* ---------------- Row actions ---------------- */
 
@@ -241,26 +215,7 @@ export default function FeesBoard() {
   const closeToast = useCallback(() => setToast(null), []);
   const period = periods.find((p) => p.key === periodKey)!;
 
-  const behaviorById = useMemo(() => new Map(list.map((a) => [a.student.id, behaviorFor(a)])), [list]);
-  const rows = useMemo<Row[]>(() => list.map((a) => ({ ...recordFor(a, period), behavior: behaviorById.get(a.student.id)! })), [list, period, behaviorById]);
-
-  const kpi = useMemo(() => {
-    const dueIn = list.flatMap((a) => a.installments.filter((i) => period.months.includes(i.due.slice(0, 7))));
-    const cleared = dueIn.filter((i) => settle(i).cleared).length;
-    const late = rows.filter((r) => r.overdueDays > 0);
-    const critical = list.filter((a) => unpaidMonths(a) >= DEFAULTER_MONTHS).length;
-    const onTime = rows.reduce((n, r) => n + r.behavior.onTime, 0);
-    const billed = rows.reduce((n, r) => n + r.behavior.due, 0);
-    return {
-      installments: dueIn.length,
-      cleared,
-      pct: dueIn.length ? Math.round((cleared / dueIn.length) * 1000) / 10 : 0,
-      late: late.length,
-      oldest: late.length ? Math.max(...late.map((r) => r.overdueDays)) : 0,
-      critical,
-      onTimeRate: billed ? Math.round((onTime / billed) * 100) : 100,
-    };
-  }, [list, period, rows]);
+  const rows = useMemo<Row[]>(() => list.map((a) => recordFor(a, period)), [list, period]);
 
   // Everything except the status tab, so tab counts reflect the other filters.
   const scoped = useMemo(() => {
@@ -334,15 +289,6 @@ export default function FeesBoard() {
         </button>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Kpi label="Installments Due" value={String(kpi.installments)} icon="M7 3h7l5 5v13H7z M14 3v5h5 M10 13h6 M10 17h6" note={`${period.label} · across all installment plans`} />
-        <Kpi label="Installments Cleared" value={`${kpi.cleared}`} icon="M5 12l4 4 10-10" note={`${kpi.pct}% cleared · ${kpi.onTimeRate}% of all installments paid on time since enrollment`}>
-          <Bar value={kpi.pct} fill="bg-ok" label={`${kpi.pct}% of installments cleared`} />
-        </Kpi>
-        <Kpi label="Delayed & Overdue" value={String(kpi.late)} icon="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z M12 7v5l3 2" tone="from-[#a84f12] to-serious" note={kpi.late ? `Students past the due date · oldest ${kpi.oldest} days` : "No one is past the due date"} />
-        <Kpi label="Critical Defaulters" value={String(kpi.critical)} icon="M12 4l9 16H3z M12 10v4 M12 17h.01" tone="from-[#8e2a1f] to-danger" note={`${DEFAULTER_MONTHS} or more months unpaid`} />
-      </div>
-
       <section className="flex min-w-0 flex-col gap-4 rounded-[20px] border border-ink/8 bg-white p-4 shadow-[0_10px_30px_rgba(6,30,41,.05)] sm:p-6">
           <label className="relative">
             <span className="sr-only">Search fee records</span>
@@ -410,7 +356,7 @@ export default function FeesBoard() {
                 <Icon d="M7 3h7l5 5v13H7z M14 3v5h5 M10 13h6 M10 17h6" className="size-7" />
               </span>
               <p className="font-bold">No fee records match these filters</p>
-              <p className="max-w-[380px] text-[.86rem] text-ink/55">Try another class, period, plan or behavior, or search by name or parent phone.</p>
+              <p className="max-w-[380px] text-[.86rem] text-ink/55">Try another class or period, or search by name, roll no. or ID.</p>
               <button type="button" onClick={reset} className={ghostBtn}>
                 Reset filters
               </button>
