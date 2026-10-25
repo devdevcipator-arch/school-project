@@ -49,7 +49,8 @@ export default function ClassAttendance() {
 /** Exception-based roll call: everyone starts Present, the teacher only marks Absent or Leave. */
 function Board({ todayIso }: { todayIso: string }) {
   const [view, setView] = useState<"take" | "history">("take");
-  const [section, setSection] = useState(mySections[0].section);
+  // Always the teacher's own class.
+  const section = mySections[0].section;
   // Opens on today, or on the latest school day during weekends and breaks.
   const [date, setDate] = useState(() => (isSchoolDay(todayIso) ? todayIso : nextSchoolDay(todayIso, -1)));
   const [registers, setRegisters] = useState<Record<string, Register>>({});
@@ -132,11 +133,6 @@ function Board({ todayIso }: { todayIso: string }) {
       </div>
 
       <ContextBar
-        section={section}
-        onSection={(s) => {
-          setSection(s);
-          setConfirming(false);
-        }}
         date={date}
         dateLabel={longLabel(date)}
         todayIso={todayIso}

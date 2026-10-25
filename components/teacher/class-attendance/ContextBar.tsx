@@ -1,8 +1,7 @@
 "use client";
 
-import { Select, ghostSm } from "@/components/dashboard/controls";
+import { ghostSm } from "@/components/dashboard/controls";
 import { Icon } from "@/components/ui/Icon";
-import { mySections } from "@/lib/classAttendance";
 import { teacher } from "@/lib/teacher";
 
 export type Tally = { total: number; present: number; absent: number; leave: number };
@@ -24,8 +23,6 @@ const arrowBtn =
 
 /** Class + date context, the live hazri counter and batch actions. */
 export default function ContextBar({
-  section,
-  onSection,
   date,
   dateLabel,
   todayIso,
@@ -39,8 +36,6 @@ export default function ContextBar({
   onResetPresent,
   onAllAbsent,
 }: {
-  section: string;
-  onSection: (s: string) => void;
   date: string;
   dateLabel: string;
   todayIso: string;
@@ -58,17 +53,7 @@ export default function ContextBar({
     <section className="relative overflow-hidden rounded-[20px] bg-linear-135 from-ink via-[#0b2a38] to-primary p-5 text-surface shadow-[0_18px_40px_rgba(6,30,41,.18)] sm:p-6">
       <span aria-hidden className="pointer-events-none absolute -right-16 -top-20 size-64 rounded-full bg-accent/20 blur-3xl" />
       <div className="relative grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-        <div className="grid gap-4 sm:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">
-          <div className="grid gap-1.5">
-            <span className="text-[.74rem] font-bold uppercase tracking-[.12em] text-surface/60">Class & section</span>
-            <Select label="Select class and section" value={section} onChange={onSection} className="text-ink">
-              {mySections.map((s) => (
-                <option key={s.section} value={s.section}>
-                  {s.label}
-                </option>
-              ))}
-            </Select>
-          </div>
+        <div className="grid gap-4">
           <div className="grid gap-1.5">
             <span className="text-[.74rem] font-bold uppercase tracking-[.12em] text-surface/60">
               {date === todayIso ? "Today" : "Reviewing"} · {teacher.session}

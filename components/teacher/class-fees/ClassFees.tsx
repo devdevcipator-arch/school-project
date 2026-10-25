@@ -42,7 +42,8 @@ function Board({ todayIso }: { todayIso: string }) {
   const months = useMemo(() => feeMonthsUpTo(todayIso), [todayIso]);
   const currentMonth = months.at(-1)!;
   const [view, setView] = useState<"mark" | "history">("mark");
-  const [section, setSection] = useState(mySections[0].section);
+  // Always the teacher's own class.
+  const section = mySections[0].section;
   const [month, setMonth] = useState(currentMonth);
   const [registers, setRegisters] = useState<Record<string, Register>>({});
   const [query, setQuery] = useState("");
@@ -125,11 +126,6 @@ function Board({ todayIso }: { todayIso: string }) {
       </div>
 
       <ContextBar
-        section={section}
-        onSection={(s) => {
-          setSection(s);
-          setConfirming(false);
-        }}
         month={month}
         months={months}
         currentMonth={currentMonth}

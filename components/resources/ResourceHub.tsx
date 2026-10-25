@@ -2,11 +2,9 @@
 
 import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
 import { Select, Toast, fieldClass, ghostBtn, ghostSm, type ToastData } from "@/components/dashboard/controls";
-import { StatCard } from "@/components/dashboard/ui";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import {
-  STORAGE_LIMIT,
   ago,
   categoryMeta,
   formatSize,
@@ -74,16 +72,6 @@ function Library({ now, role: realRole, user, allowStudentPreview }: { now: numb
   const path = pathOf(folders, folderId);
   const scopeIds = useMemo(() => (folderId ? subtree(folders, folderId) : null), [folders, folderId]);
   const inScope = useCallback((f: Resource) => !scopeIds || scopeIds.has(f.folderId), [scopeIds]);
-
-  const stats = useMemo(() => {
-    const used = files.reduce((t, f) => t + f.size, 0);
-    return {
-      total: files.length,
-      classes: folders.filter((f) => f.parentId === null && f.grade !== null && files.some((x) => x.grade === f.grade)).length,
-      used,
-      week: files.filter((f) => now - new Date(f.uploadedAt).getTime() < 7 * 86_400_000).length,
-    };
-  }, [files, folders, now]);
 
   const filtering = query.trim() !== "" || grade !== "all" || subject !== "all" || type !== "all";
   const q = query.trim().toLowerCase();
@@ -246,18 +234,6 @@ function Library({ now, role: realRole, user, allowStudentPreview }: { now: numb
             Read-only library: browse, preview and download
           </span>
         )}
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
-        <StatCard label="Total Indexed Resources" value={`${stats.total} Documents`} icon="M7 3h7l5 5v13H7z M14 3v5h5 M10 13h6 M10 17h6" note="Textbooks, guides, papers and slides" />
-        <StatCard label="Class Folders" value={`${stats.classes} Classes Active`} icon={icons.folderPlus} note={`${folders.length} folders in total`} />
-        <StatCard
-          label="Storage Utilization"
-          value={`${formatSize(stats.used)} / 20 GB`}
-          icon="M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3z M4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7 M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"
-          note={`${Math.round((stats.used / STORAGE_LIMIT) * 100)}% used`}
-        />
-        <StatCard label="Recently Added" value={`${stats.week} Added`} icon="M12 5v14 M5 12h14" note="this week" />
       </div>
 
       <section className="flex min-w-0 flex-col gap-4 rounded-[20px] border border-ink/8 bg-white p-4 shadow-[0_10px_30px_rgba(6,30,41,.05)] sm:p-6">
