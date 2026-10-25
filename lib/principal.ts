@@ -7,6 +7,7 @@ export const principalNav = [
   { href: "/principal", label: "Overview", icon: "M4 4h7v7H4z M13 4h7v4h-7z M13 10h7v10h-7z M4 13h7v7H4z" },
   { href: "/principal/announcements", label: "Announcements", icon: "M3 11l15-6v14L3 13z M7 13v5h3v-4" },
   { href: "/principal/teachers", label: "Teachers", icon: "M9 11a4 4 0 1 0 0-8a4 4 0 1 0 0 8z M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7 M19 8v6 M16 11h6" },
+  { href: "/principal/leave", label: "Leave Requests", icon: "M8 3v3 M16 3v3 M4 7h16v13H4z M9 14l2 2 4-4" },
   { href: "/principal/students", label: "Students", icon: "M2 9l9-5 9 5-9 5z M6 11.5V16c0 1.5 2.2 3 5 3 M19 14v6 M16 17h6" },
   { href: "/principal/talents", label: "Talents", icon: "M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" },
   { href: "/principal/fees", label: "Student Fees", icon: "M3 6h18v12H3z M3 10h18 M7 15h3" },
@@ -29,6 +30,11 @@ export const principalTitles: Record<string, { eyebrow: string; title: string; d
     eyebrow: "Faculty",
     title: "Faculty & Teachers Management",
     description: "Onboard new teachers, assign academic classes, and manage faculty records.",
+  },
+  "/principal/leave": {
+    eyebrow: "Leave Requests",
+    title: "Teacher Leave Requests",
+    description: "Read the reasons teachers send for leave and approve or decline each one.",
   },
   "/principal/students": {
     eyebrow: "Students",

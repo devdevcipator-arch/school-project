@@ -5,13 +5,16 @@ import { fieldClass } from "@/components/dashboard/controls";
 import { Card } from "@/components/dashboard/ui";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
+import { sendLeaveRequest } from "@/lib/leaveRequests";
+import { me } from "@/lib/myAttendance";
 
-/** One reason box and a send button. Front-end only: the request is not stored yet. */
+/** One reason box and a send button; the request appears on the principal's Leave Requests page. */
 export default function LeaveRequest({ onSent }: { onSent: () => void }) {
   const [reason, setReason] = useState("");
 
   const send = () => {
     if (!reason.trim()) return;
+    sendLeaveRequest(me.name, reason.trim());
     setReason("");
     onSent();
   };
