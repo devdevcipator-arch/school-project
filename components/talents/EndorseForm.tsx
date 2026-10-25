@@ -131,10 +131,6 @@ export default function EndorseForm({
   const catalog = useMemo(() => catalogFrom(talents), [talents]);
   const categoryList = useMemo(() => uniq([...categories.map((c) => c.label), ...catalog.categories.map((c) => c.label)]), [catalog]);
   const allSkills = useMemo(() => [...skills.map((k) => ({ skill: k.name, category: categories.find((c) => c.key === k.category)!.label })), ...catalog.skills], [catalog]);
-  const skillList = useMemo(() => {
-    const inCat = category.trim() ? allSkills.filter((k) => same(k.category, category)) : [];
-    return uniq((inCat.length ? inCat : allSkills).map((k) => k.skill)).sort((a, b) => a.localeCompare(b));
-  }, [allSkills, category]);
   const lead = skillTags[0] ?? "";
   const roleList = useMemo(
     () => uniq([...rolesFor(lead), ...talents.filter((t) => same(t.primary.skill, lead)).map((t) => t.primary.role)].filter(Boolean)),
@@ -280,12 +276,7 @@ export default function EndorseForm({
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field id="endorse-skill" label="Specific skill" hint="(press Enter to add each)" error={errors.skill}>
-                <TagField id="endorse-skill" list="endorse-skill-list" tags={skillTags} onChange={changeSkills} placeholder="e.g. Cricket, Naat, Swimming" error={errors.skill} />
-                <datalist id="endorse-skill-list">
-                  {skillList.map((k) => (
-                    <option key={k} value={k} />
-                  ))}
-                </datalist>
+                <TagField id="endorse-skill" tags={skillTags} onChange={changeSkills} placeholder="e.g. Cricket, Naat, Swimming" error={errors.skill} />
                 {newSkills.map((k) => (
                   <NewTag key={k} label={k} tone="border-ink/12 bg-white text-ink/70" kind="skill" />
                 ))}
