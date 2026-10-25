@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
-import { MultiSelect, Pagination, Select, Toast, ViewToggle, fieldClass, ghostBtn, ghostSm, type DirectoryView, type ToastData } from "@/components/dashboard/controls";
+import { MultiSelect, Pagination, Select, Toast, fieldClass, ghostBtn, ghostSm, type ToastData } from "@/components/dashboard/controls";
 import { StatCard } from "@/components/dashboard/ui";
 import { Avatar } from "@/components/teachers/parts";
 import { buttonClass } from "@/components/ui/Button";
@@ -14,8 +14,6 @@ import {
   catalogFrom,
   categoriesOf,
   categoryIcon,
-  competitions,
-  initialShortlist,
   levelOf,
   levelRank,
   levels,
@@ -26,8 +24,7 @@ import {
 } from "@/lib/talents";
 import { printCertificate } from "./documents";
 import EndorseForm, { type Endorsement } from "./EndorseForm";
-import { LevelBadge, PrimaryTalent, SkillChips, categoryTone, trophyIcon } from "./parts";
-import { ShortlistDialog } from "./Shortlist";
+import { categoryTone } from "./parts";
 import TalentProfile from "./TalentProfile";
 
 const PAGE_SIZE = 12;
@@ -37,25 +34,7 @@ const order = (t: Talent) => -levelRank(t.level) * 1000 - gradeNum(t.student.sec
 
 /* ---------------- Actions ---------------- */
 
-type Actions = { shortlist: Record<string, string>; onView: (t: Talent) => void; onShortlist: (t: Talent) => void };
-
-function ShortlistButton({ t, shortlist, onShortlist, compact = false }: Pick<Actions, "shortlist" | "onShortlist"> & { t: Talent; compact?: boolean }) {
-  const on = !!shortlist[t.id];
-  const label = on ? "Shortlisted" : "Shortlist for Event";
-  return (
-    <button
-      type="button"
-      aria-pressed={on}
-      onClick={() => onShortlist(t)}
-      title={on ? "Remove from competition shortlist" : "Add to a competition shortlist"}
-      aria-label={`${on ? "Remove from shortlist" : "Shortlist for event"}: ${t.student.name}`}
-      className={on ? "inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-primary px-2.5 py-1.5 text-[.8rem] font-semibold text-surface transition-colors hover:bg-ink" : ghostSm}
-    >
-      <Icon d={on ? "M5 12l4 4 10-10" : "M12 5v14 M5 12h14"} className="size-4" />
-      {!compact && <span>{label}</span>}
-    </button>
-  );
-}
+type Actions = { onView: (t: Talent) => void };
 
 function ViewButton({ t, onView, compact = false }: Pick<Actions, "onView"> & { t: Talent; compact?: boolean }) {
   return (
@@ -70,15 +49,6 @@ function ViewButton({ t, onView, compact = false }: Pick<Actions, "onView"> & { 
 
 function ClassBadge({ section }: { section: string }) {
   return <span className="whitespace-nowrap rounded-full bg-primary/10 px-2.5 py-1 text-[.72rem] font-bold text-primary">{sectionLabel(section)}</span>;
-}
-
-function Achievement({ text }: { text: string }) {
-  return (
-    <p className="flex min-w-0 items-start gap-2 text-[.82rem] text-ink/70" title={text}>
-      <Icon d={trophyIcon} className="mt-px size-4 shrink-0 text-[#b8860b]" />
-      <span className="line-clamp-2">{text}</span>
-    </p>
-  );
 }
 
 function TalentCard({ t, ...actions }: Actions & { t: Talent }) {
@@ -102,64 +72,6 @@ function TalentCard({ t, ...actions }: Actions & { t: Talent }) {
   );
 }
 
-function TalentTable({ list, ...actions }: Actions & { list: Talent[] }) {
-  return (
-    <div className="overflow-x-auto rounded-[18px] border border-ink/8 bg-white">
-      <table className="w-full min-w-[1080px] text-left text-[.86rem]">
-        <thead className="bg-surface/70 text-[.72rem] font-bold uppercase tracking-[.1em] text-ink/50">
-          <tr>
-            <th scope="col" className="px-5 py-3.5">Student</th>
-            <th scope="col" className="px-3 py-3.5">Class</th>
-            <th scope="col" className="px-3 py-3.5">Primary talent</th>
-            <th scope="col" className="px-3 py-3.5">Additional skills</th>
-            <th scope="col" className="px-3 py-3.5">Level</th>
-            <th scope="col" className="px-3 py-3.5">Key achievement</th>
-            <th scope="col" className="px-3 py-3.5 text-right">
-              <span className="sr-only">Actions</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-ink/8">
-          {list.map((t) => (
-            <tr key={t.id} className="align-middle transition-colors hover:bg-surface/50">
-              <td className="px-5 py-3.5">
-                <div className="flex items-center gap-3">
-                  <Avatar name={t.student.name} />
-                  <div className="min-w-0">
-                    <button type="button" onClick={() => actions.onView(t)} className="cursor-pointer whitespace-nowrap text-left font-bold hover:text-primary">
-                      {t.student.name}
-                    </button>
-                    <div className="mt-0.5 whitespace-nowrap text-[.76rem] text-ink/50">
-                      {t.student.regId} · Roll {t.student.rollNo}
-                    </div>
-                  </div>
-                </div>
-              </td>
-              <td className="whitespace-nowrap px-3 py-3.5 font-semibold">{t.student.section}</td>
-              <td className="px-3 py-3.5">
-                <PrimaryTalent {...t.primary} />
-              </td>
-              <td className="px-3 py-3.5">{t.extra.length ? <SkillChips list={t.extra} /> : <span className="text-ink/35">None</span>}</td>
-              <td className="px-3 py-3.5">
-                <LevelBadge level={t.level} short />
-              </td>
-              <td className="max-w-[260px] px-3 py-3.5">
-                {t.achievement ? <Achievement text={t.achievement} /> : <span className="text-ink/35">None</span>}
-              </td>
-              <td className="px-3 py-3">
-                <div className="flex justify-end gap-0.5">
-                  <ShortlistButton t={t} {...actions} compact />
-                  <ViewButton t={t} {...actions} compact />
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 /* ---------------- Board ---------------- */
 
 const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
@@ -178,23 +90,19 @@ export default function TalentsBoard({ sections: scope = sections, endorser = { 
   const grades = useMemo(() => [...new Set(scope.map(gradeNum))].sort((a, b) => a - b), [scope]);
   const letters = useMemo(() => [...new Set(scope.map((s) => s.split("-")[1]))].sort(), [scope]);
   const [list, setList] = useState<Talent[]>(() => seed.filter((t) => scope.includes(t.student.section)));
-  const [shortlist, setShortlist] = useState<Record<string, string>>(initialShortlist);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [skillSel, setSkillSel] = useState<string[]>([]);
   const [gradeSel, setGradeSel] = useState<string[]>([]);
   const [letter, setLetter] = useState("all");
   const [level, setLevel] = useState("all");
-  const [view, setView] = useState<DirectoryView>("cards");
   const [page, setPage] = useState(1);
   const [profileId, setProfileId] = useState<string | null>(null);
-  const [picking, setPicking] = useState<Talent | null>(null);
   const [endorsing, setEndorsing] = useState(false);
   const [toast, setToast] = useState<ToastData | null>(null);
   const hydrated = useSyncExternalStore(noop, () => true, () => false);
 
   const closeToast = useCallback(() => setToast(null), []);
-  const closePick = useCallback(() => setPicking(null), []);
 
   const stats = useMemo(() => {
     const sports = list.filter((t) => categoriesOf(t).includes(SPORTS));
@@ -270,24 +178,7 @@ export default function TalentsBoard({ sections: scope = sections, endorser = { 
     setPage(1);
   };
 
-  const unshortlist = (t: Talent) => {
-    const event = shortlist[t.id];
-    setShortlist((s) => Object.fromEntries(Object.entries(s).filter(([id]) => id !== t.id)));
-    setToast({ text: `${t.student.name} removed from the shortlist.`, action: { label: "Undo", run: () => (setShortlist((s) => ({ ...s, [t.id]: event })), setToast(null)) } });
-  };
-
-  const actions: Actions = {
-    shortlist,
-    onView: (t) => setProfileId(t.id),
-    onShortlist: (t) => (shortlist[t.id] ? unshortlist(t) : setPicking(t)),
-  };
-
-  const shortlistFor = (t: Talent, event: string) => {
-    setShortlist((s) => ({ ...s, [t.id]: event }));
-    setPicking(null);
-    setToast({ text: `${t.student.name} shortlisted for ${competitions.find((c) => c.id === event)!.title}.` });
-  };
-
+  const actions: Actions = { onView: (t) => setProfileId(t.id) };
 
   const certificate = (t: Talent) => {
     if (!printCertificate(t)) setToast({ text: "Allow pop-ups for this site to print the certificate." });
@@ -364,7 +255,6 @@ export default function TalentsBoard({ sections: scope = sections, endorser = { 
               className={`${fieldClass} w-full pl-10`}
             />
           </label>
-          <ViewToggle view={view} onChange={setView} />
         </div>
 
         <div role="group" aria-label="Talent categories" className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
@@ -434,16 +324,11 @@ export default function TalentsBoard({ sections: scope = sections, endorser = { 
           </div>
         ) : (
           <>
-            <ul className={`grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 ${view === "table" ? "lg:hidden" : ""}`}>
+            <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
               {visible.map((t) => (
                 <TalentCard key={t.id} t={t} {...actions} />
               ))}
             </ul>
-            {view === "table" && (
-              <div className="max-lg:hidden">
-                <TalentTable list={visible} {...actions} />
-              </div>
-            )}
           </>
         )}
 
@@ -459,7 +344,6 @@ export default function TalentsBoard({ sections: scope = sections, endorser = { 
         />
       )}
       {hydrated && endorsing && <EndorseForm talents={list} pool={pool} onSave={endorse} onClose={() => setEndorsing(false)} />}
-      {picking && <ShortlistDialog t={picking} onPick={(event) => shortlistFor(picking, event)} onClose={closePick} />}
       {toast && <Toast {...toast} onDone={closeToast} />}
     </main>
   );
