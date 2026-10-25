@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 import { Toast, ghostBtn, type ToastData } from "@/components/dashboard/controls";
 import { Icon } from "@/components/ui/Icon";
 import { generateQuestions } from "@/lib/assessments";
@@ -29,22 +29,6 @@ const now = () => {
 let seq = 0;
 const uid = (p: string) => `${p}${Date.now().toString(36)}${(seq++).toString(36)}`;
 
-function Badge({ icon, children, live = false }: { icon: string; children: ReactNode; live?: boolean }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-ink/10 bg-white px-3 py-1.5 text-[.78rem] font-bold text-ink/75 shadow-[0_6px_16px_rgba(6,30,41,.05)]">
-      {live ? (
-        <span aria-hidden className="relative flex size-2.5">
-          <span className="absolute inline-flex size-full animate-ping rounded-full bg-ok/60" />
-          <span className="relative inline-flex size-2.5 rounded-full bg-ok" />
-        </span>
-      ) : (
-        <Icon d={icon} className="size-4 text-primary" />
-      )}
-      {children}
-    </span>
-  );
-}
-
 /** Shared AI workspace. `persona` picks the scope: the principal sees the whole school, a teacher only their classes, a student only their studies. */
 export default function CopilotWorkspace({ persona: key = "principal" }: { persona?: PersonaKey }) {
   const persona = personas[key];
@@ -64,7 +48,6 @@ export default function CopilotWorkspace({ persona: key = "principal" }: { perso
 
   // Students see textbooks, syllabi and student policies, not staff handbooks.
   const shelf = persona.studyOnly ? vault.filter((d) => d.category !== "Handbook") : vault;
-  const indexed = shelf.filter((d) => d.status === "indexed");
   const processing = vault.some((d) => d.status !== "indexed" && d.status !== "failed");
 
   const log = useCallback((kind: AuditKind, action: string, detail: string, status: AuditEntry["status"] = "executed") => {
@@ -223,16 +206,7 @@ export default function CopilotWorkspace({ persona: key = "principal" }: { perso
 
   return (
     <main className="mx-auto flex max-w-[1500px] flex-col gap-5 px-[clamp(16px,3vw,36px)] py-6 lg:gap-6 lg:py-8">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
-          <Badge icon="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z M8.5 12l2.5 2.5 4.5-5">{persona.access}</Badge>
-          <Badge icon="" live>
-            {persona.live}
-          </Badge>
-          <Badge icon="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z M8 7h6">
-            Knowledge Vault: {indexed.length} {indexed.length === 1 ? "Document" : "Books / Documents"} Indexed
-          </Badge>
-        </div>
+      <header className="flex flex-wrap items-center justify-end gap-3">
         <div className="flex flex-wrap gap-2 max-sm:w-full">
           <button type="button" onClick={newSession} className={`${ghostBtn} max-sm:flex-1`}>
             <Icon d="M4 4v6h6 M4.5 15a8 8 0 1 0 1.9-8.3L4 10" className="size-[18px]" />

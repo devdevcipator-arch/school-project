@@ -14,15 +14,12 @@ export type Persona = {
   owner: string;
   name: string;
   tagline: string;
-  access: string;
   greeting: string;
   placeholder: string;
   suggestions: { group: string; prompts: string[] }[];
   respond: (raw: string, vault: VaultDoc[]) => Reply;
   audit: AuditEntry[];
   auditKinds: AuditKind[];
-  /** Second header badge, e.g. the live data connection. */
-  live: string;
   /** Composer footnote under the input. */
   footnote: string;
   /** Student view: browse the vault only, no uploads, no audit trail. */
@@ -34,42 +31,36 @@ export const personas: Record<PersonaKey, Persona> = {
     owner: principal.name,
     name: "Executive Copilot",
     tagline: "Queries school data · executes admin actions with your confirmation · cites your vault",
-    access: "Full Administrative Access · RBAC Level 0",
     greeting: `Good day, ${principal.name.split(" ").slice(0, 2).join(" ")}. I have live access to every school record and your knowledge vault. Ask a question, tell me to take an action, or ask about a book or policy.`,
     placeholder: "Ask about any record, say 'Add a teacher...', or ask about a syllabus or policy",
     suggestions,
     respond,
     audit: seedAudit,
     auditKinds: ["teacher", "student", "announcement", "vault", "session"],
-    live: "Live SMS Database Connected",
     footnote: "Enter to send · Shift + Enter for a new line · Actions never run without your confirmation",
   },
   teacher: {
     owner: teacher.name,
     name: "Teaching Copilot",
     tagline: "Queries your classes · drafts quizzes, notices and remarks with your confirmation · cites the vault",
-    access: `Class Teacher Access · RBAC Level 2 · ${mySections.map((s) => s.section).join(", ")}`,
     greeting: `Good day, ${teacher.firstName}. I have live access to your classes (${mySections.map((s) => sectionLabel(s.section)).join(", ")}), your own attendance and the knowledge vault. Ask a question, tell me to draft a quiz, notice or report remark, or ask about a book or policy.`,
     placeholder: "Ask about your classes, say 'Generate a quiz on...', or ask about a syllabus or policy",
     suggestions: teacherSuggestions,
     respond: respondTeacher,
     audit: teacherAudit,
     auditKinds: ["assessment", "announcement", "report", "vault", "session"],
-    live: "Live SMS Database Connected",
     footnote: "Enter to send · Shift + Enter for a new line · Actions never run without your confirmation",
   },
   student: {
     owner: student.name,
     name: "Study Copilot",
     tagline: "Explains topics · writes practice questions · plans your revision · cites your textbooks",
-    access: `Student Access · Study Mode · ${student.classLabel}`,
     greeting: `Hi ${student.firstName}! I am your study assistant for ${student.classLabel}. Ask me to explain a topic, quiz you, plan your revision around upcoming work, or find something in your textbooks. I only help with your courses and studies, not personal information.`,
     placeholder: "Ask about a topic, say 'Quiz me on...', or ask what is due this week",
     suggestions: studentSuggestions,
     respond: respondStudent,
     audit: [],
     auditKinds: [],
-    live: "Course Data Connected",
     footnote: "Enter to send · Shift + Enter for a new line · Study questions only: no personal data",
     studyOnly: true,
   },
