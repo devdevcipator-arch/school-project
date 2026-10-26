@@ -5,7 +5,6 @@ import { Toast, type ToastData } from "@/components/dashboard/controls";
 import { Card } from "@/components/dashboard/ui";
 import AttendanceHistory from "@/components/teachers/AttendanceHistory";
 import { me, myHistory } from "@/lib/myAttendance";
-import LeaveRequest from "./LeaveRequest";
 import TodayBar from "./TodayBar";
 import { isoOf, monthNames, weekdayNames } from "./shared";
 
@@ -13,7 +12,7 @@ import { isoOf, monthNames, weekdayNames } from "./shared";
 const noop = () => () => {};
 const clientToday = () => isoOf(new Date());
 
-/** Teacher's own attendance: today, full history and a leave request box. */
+/** Teacher's own attendance: today and full history. */
 export default function MyAttendance() {
   const todayIso = useSyncExternalStore(noop, clientToday, () => "");
   if (!todayIso) {
@@ -48,8 +47,6 @@ function Board({ todayIso }: { todayIso: string }) {
   return (
     <main className="mx-auto flex max-w-[1500px] flex-col gap-5 px-[clamp(16px,3vw,36px)] py-6 lg:gap-6 lg:py-8">
       <TodayBar dateLabel={dateLabel} today={today} lastDay={lastDay} checkOut={checkOut} onCheckOut={doCheckOut} />
-
-      <LeaveRequest onSent={() => setToast({ text: "Leave request sent to the principal." })} />
 
       <Card>
         <AttendanceHistory t={me} />

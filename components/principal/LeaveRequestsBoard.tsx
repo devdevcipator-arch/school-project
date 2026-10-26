@@ -9,7 +9,7 @@ import { setLeaveStatus, useLeaveRequests, type LeaveStatus } from "@/lib/leaveR
 
 const tone: Record<LeaveStatus, "warn" | "ok" | "danger"> = { Pending: "warn", Approved: "ok", Declined: "danger" };
 
-/** Every leave request teachers send from My Attendance, newest first. */
+/** Every leave request teachers send from their Leave page, newest first. */
 export default function LeaveRequestsBoard() {
   const list = useLeaveRequests();
   const pending = list.filter((r) => r.status === "Pending").length;

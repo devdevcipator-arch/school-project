@@ -6,6 +6,7 @@ import type { Tone } from "@/components/dashboard/ui";
 export const teacherNav = [
   { href: "/teacher", label: "Overview", icon: "M4 4h7v7H4z M13 4h7v4h-7z M13 10h7v10h-7z M4 13h7v7H4z" },
   { href: "/teacher/my-attendance", label: "My Attendance", icon: "M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z M12 7v5l3 2" },
+  { href: "/teacher/leave", label: "Leave", icon: "M8 3v3 M16 3v3 M4 7h16v13H4z M9 14l2 2 4-4" },
   { href: "/teacher/class-attendance", label: "Class Attendance", icon: "M8 3v3 M16 3v3 M4 7h16v13H4z M8 14l2.5 2.5L16 11" },
   { href: "/teacher/class-fees", label: "Class Fees", icon: "M3 7h18v12H3z M3 11h18 M7 15h3 M16 4H6" },
   { href: "/teacher/talents", label: "Talents", icon: "M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" },
@@ -26,6 +27,11 @@ export const teacherTitles: Record<string, { eyebrow: string; title: string; des
     eyebrow: "My Attendance",
     title: "My Attendance Record",
     description: "Your check-ins and late arrivals.",
+  },
+  "/teacher/leave": {
+    eyebrow: "Leave",
+    title: "Leave Requests",
+    description: "Apply for leave and see whether the principal approved or declined each request.",
   },
   "/teacher/class-attendance": {
     eyebrow: "Class Attendance",

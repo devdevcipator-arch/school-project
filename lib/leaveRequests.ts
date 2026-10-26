@@ -1,4 +1,4 @@
-// Teacher leave requests: sent from My Attendance, reviewed on the principal's Leave Requests page.
+// Teacher leave requests: sent from the teacher Leave page, reviewed on the principal's Leave Requests page.
 // Front-end only: kept in this browser's storage so both portals see the same list. Replace with the API in the backend phase.
 
 import { useSyncExternalStore } from "react";
