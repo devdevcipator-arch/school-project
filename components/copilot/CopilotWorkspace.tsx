@@ -4,11 +4,10 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type Ke
 import { Toast, ghostBtn, type ToastData } from "@/components/dashboard/controls";
 import { Icon } from "@/components/ui/Icon";
 import { generateQuestions } from "@/lib/assessments";
-import { seedVault, type AuditEntry, type AuditKind, type DraftAction, type Reply, type VaultDoc } from "@/lib/copilot";
+import { seedVault, type DraftAction, type Reply, type VaultDoc } from "@/lib/copilot";
 import { AS_OF, sectionLabel } from "@/lib/students";
 import { teachers } from "@/lib/teachers";
 import ActionCard, { type ActionState } from "./ActionCard";
-import AuditDrawer from "./AuditDrawer";
 import ReplyView from "./ReplyView";
 import { personas, type PersonaKey } from "./personas";
 import VaultDrawer, { type UploadMeta } from "./VaultDrawer";
@@ -20,12 +19,6 @@ const noop = () => () => {};
 
 const greeting = (text: string): Message => ({ id: "m0", from: "ai", text });
 
-/** Snapshot date with the real clock time, e.g. "2026-10-13T14:05". */
-const now = () => {
-  const d = new Date();
-  return `${AS_OF}T${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-};
-
 let seq = 0;
 const uid = (p: string) => `${p}${Date.now().toString(36)}${(seq++).toString(36)}`;
 
@@ -36,9 +29,7 @@ export default function CopilotWorkspace({ persona: key = "principal" }: { perso
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState<{ steps: string[]; at: number } | null>(null);
   const [vault, setVault] = useState<VaultDoc[]>(seedVault);
-  const [audit, setAudit] = useState<AuditEntry[]>(persona.audit);
   const [vaultOpen, setVaultOpen] = useState(false);
-  const [auditOpen, setAuditOpen] = useState(false);
   const [toast, setToast] = useState<ToastData | null>(null);
   const [added, setAdded] = useState(0);
   const hydrated = useSyncExternalStore(noop, () => true, () => false);
@@ -49,10 +40,6 @@ export default function CopilotWorkspace({ persona: key = "principal" }: { perso
   // Students see textbooks, syllabi and student policies, not staff handbooks.
   const shelf = persona.studyOnly ? vault.filter((d) => d.category !== "Handbook") : vault;
   const processing = vault.some((d) => d.status !== "indexed" && d.status !== "failed");
-
-  const log = useCallback((kind: AuditKind, action: string, detail: string, status: AuditEntry["status"] = "executed") => {
-    setAudit((a) => [{ id: uid("a"), at: now(), kind, action, detail, status }, ...a]);
-  }, []);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
@@ -66,20 +53,17 @@ export default function CopilotWorkspace({ persona: key = "principal" }: { perso
   useEffect(() => {
     if (!processing) return;
     const t = setInterval(() => {
-      const done: VaultDoc[] = [];
       const next = vaultRef.current.map((d) => {
         if (d.status === "indexed" || d.status === "failed") return d;
         const progress = Math.min(100, d.progress + 6 + Math.round(Math.random() * 6));
         const status: VaultDoc["status"] = progress >= 100 ? "indexed" : progress >= 60 ? "embedding" : progress >= 25 ? "parsing" : "uploading";
-        if (status === "indexed") done.push(d);
         return { ...d, progress, status };
       });
       vaultRef.current = next;
       setVault(next);
-      done.forEach((d) => log("vault", "Indexed document", `${d.title} (${d.pages} pages)`));
     }, 450);
     return () => clearInterval(t);
-  }, [processing, log]);
+  }, [processing]);
 
   const ask = (q: string) => {
     const text = q.trim();
@@ -115,15 +99,12 @@ export default function CopilotWorkspace({ persona: key = "principal" }: { perso
       setAdded((n) => n + 1);
       const result = `Teacher account created for ${d.name} (${emp}, ${d.subject})${d.classTeacher ? `, class teacher of ${sectionLabel(d.classTeacher)}` : ""}. Login invite sent to ${d.email}.`;
       settle(id, "executed", result);
-      log("teacher", "Added teacher", `${d.name} (${d.subject}), invite sent to ${d.email}`);
     } else if (d.type === "student") {
       const result = `${d.name} enrolled in ${sectionLabel(d.section)}. Guardian ${d.guardian} (${d.phone}) will receive portal login details.`;
       settle(id, "executed", result);
-      log("student", "Enrolled student", `${d.name} in ${sectionLabel(d.section)}, guardian ${d.guardian}`);
     } else if (d.type === "quiz") {
       const questions = generateQuestions({ subject: d.subject, topic: d.topic, types: ["mcq", "tf", "fill", "short"], count: d.count, marks: 2 });
       settle(id, "executed", `Quiz written: ${d.count} ${d.difficulty.toLowerCase()} questions on ${d.topic} for ${sectionLabel(d.section)} (${d.count * 2} marks).`);
-      log("assessment", "Generated quiz", `${d.topic}, ${d.count} questions for ${sectionLabel(d.section)}`);
       const paper: Reply = {
         text: `Here is the ${d.topic} paper with its answer key. Open the AI Test builder in Assessments to fine-tune it and publish it to ${sectionLabel(d.section)}.`,
         tools: ["AI test maker"],
@@ -136,31 +117,16 @@ export default function CopilotWorkspace({ persona: key = "principal" }: { perso
     } else if (d.type === "class-notice") {
       const to = `${d.audience === "parents" ? "parents of" : "students of"} ${sectionLabel(d.section)}`;
       settle(id, "executed", `Notice "${d.title}" sent to ${to}${d.priority !== "normal" ? ` as ${d.priority}` : ""}.`);
-      log("announcement", "Sent class notice", `"${d.title}" to ${to}`);
     } else if (d.type === "remark") {
       navigator.clipboard?.writeText(d.text).catch(() => {});
       settle(id, "executed", `Remark for ${d.student} copied to your clipboard. Paste it into their report card in Reports.`);
-      log("report", "Report remark", `Remark drafted for ${d.student} (${sectionLabel(d.section)})`);
     } else {
       const to = d.audience === "staff" ? "Teachers & staff" : d.audience === "students" ? "Students & parents" : "the whole school";
       settle(id, "executed", `Announcement "${d.title}" posted to ${to}${d.priority !== "normal" ? ` as ${d.priority}` : ""}.`);
-      log("announcement", "Posted announcement", `"${d.title}" to ${to}`);
     }
   };
 
-  const cancel = (id: string, d: DraftAction) => {
-    settle(id, "cancelled");
-    const labels: Record<DraftAction["type"], [AuditKind, string]> = {
-      teacher: ["teacher", "Add teacher"],
-      student: ["student", "Enroll student"],
-      announcement: ["announcement", "Post announcement"],
-      quiz: ["assessment", "Generate quiz"],
-      "class-notice": ["announcement", "Send class notice"],
-      remark: ["report", "Report remark"],
-    };
-    const who = d.type === "announcement" || d.type === "class-notice" ? `"${d.title || "Untitled"}"` : d.type === "quiz" ? d.topic || "untitled quiz" : d.type === "remark" ? d.student : d.name || "unnamed";
-    log(labels[d.type][0], labels[d.type][1], `Draft for ${who} discarded`, "cancelled");
-  };
+  const cancel = (id: string) => settle(id, "cancelled");
 
   const upload = (files: File[], meta: UploadMeta) => {
     const docs: VaultDoc[] = files.map((f) => {
@@ -190,7 +156,6 @@ export default function CopilotWorkspace({ persona: key = "principal" }: { perso
   const removeDoc = (d: VaultDoc) => {
     vaultRef.current = vaultRef.current.filter((x) => x.id !== d.id);
     setVault(vaultRef.current);
-    log("vault", "Removed document", d.title);
     setToast({ text: `${d.title} removed from the vault.` });
   };
 
@@ -198,7 +163,6 @@ export default function CopilotWorkspace({ persona: key = "principal" }: { perso
     setMessages([greeting(persona.greeting)]);
     setThinking(null);
     setInput("");
-    log("session", "Started new session", "Chat cleared; the audit trail and vault are kept");
     inputRef.current?.focus();
   };
 
@@ -216,12 +180,6 @@ export default function CopilotWorkspace({ persona: key = "principal" }: { perso
             <Icon d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z M8 7h6" className="size-[18px]" />
             {persona.studyOnly ? "Browse Textbooks" : "Manage Document Vault"}
           </button>
-          {!persona.studyOnly && (
-            <button type="button" onClick={() => setAuditOpen(true)} className={`${ghostBtn} max-sm:w-full`}>
-              <Icon d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z M12 7v5l3 2" className="size-[18px]" />
-              Audit Trail
-            </button>
-          )}
         </div>
       </header>
 
@@ -254,7 +212,7 @@ export default function CopilotWorkspace({ persona: key = "principal" }: { perso
                 <div className="grid min-w-0 flex-1 gap-3">
                   <div className="rounded-2xl rounded-tl-md bg-surface/10 px-4 py-3 text-[.92rem] leading-relaxed text-surface/90">{m.reply ? <ReplyView reply={m.reply} /> : m.text}</div>
                   {m.reply?.action && m.state && (
-                    <ActionCard id={m.id} draft={m.reply.action} state={m.state} result={m.result} onExecute={(d) => execute(m.id, d)} onCancel={() => cancel(m.id, m.reply!.action!)} />
+                    <ActionCard id={m.id} draft={m.reply.action} state={m.state} result={m.result} onExecute={(d) => execute(m.id, d)} onCancel={() => cancel(m.id)} />
                   )}
                 </div>
               </div>
@@ -356,7 +314,6 @@ export default function CopilotWorkspace({ persona: key = "principal" }: { perso
           onClose={() => setVaultOpen(false)}
         />
       )}
-      {hydrated && auditOpen && <AuditDrawer entries={audit} owner={persona.owner} kinds={persona.auditKinds} onClose={() => setAuditOpen(false)} />}
       {toast && <Toast {...toast} onDone={closeToast} />}
     </main>
   );

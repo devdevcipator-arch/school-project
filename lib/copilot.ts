@@ -1,4 +1,4 @@
-// Principal AI Copilot: knowledge vault, audit trail and a front-end intent engine that answers
+// Principal AI Copilot: knowledge vault and a front-end intent engine that answers
 // from the platform's own records. Replace `respond` with the LLM + tool-calling API in the backend
 // phase; the reply shape (text, blocks, sources, draft action) is what the UI renders.
 // Platform rule: no money amounts or currency anywhere, fees are status and behavior only.
@@ -164,18 +164,6 @@ export const seedVault: VaultDoc[] = [
 ];
 
 export const formatBytes = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1e3))} KB`);
-
-/* ---------------- Audit trail ---------------- */
-
-export type AuditKind = "teacher" | "student" | "announcement" | "assessment" | "report" | "vault" | "session";
-export type AuditEntry = { id: string; at: string; kind: AuditKind; action: string; detail: string; status: "executed" | "cancelled" };
-
-export const seedAudit: AuditEntry[] = [
-  { id: "a1", at: "2026-10-12T15:42", kind: "announcement", action: "Posted announcement", detail: "\"Mid-term exam schedule released\" to Students Only", status: "executed" },
-  { id: "a2", at: "2026-10-11T10:05", kind: "teacher", action: "Added teacher", detail: "Hina Aslam (Chemistry), invite sent to hina.aslam@greenfield.edu.pk", status: "executed" },
-  { id: "a3", at: "2026-10-09T09:18", kind: "vault", action: "Indexed document", detail: "Annual Syllabus & Pacing Plan 2026-27 (64 pages)", status: "executed" },
-  { id: "a4", at: "2026-10-08T13:27", kind: "student", action: "Enroll student", detail: "Draft for Rayan Malik (Grade 4-B) discarded", status: "cancelled" },
-];
 
 /* ---------------- Replies ---------------- */
 

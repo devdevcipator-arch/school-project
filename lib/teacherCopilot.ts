@@ -4,7 +4,7 @@
 
 import { sectionSubjects, seedAssessments, seedSubmissions } from "./assessments";
 import { mySections, rosterOf } from "./classAttendance";
-import { has, findClass, plural, pct, title, vaultReply, type AuditEntry, type Reply, type VaultDoc } from "./copilot";
+import { has, findClass, plural, pct, title, vaultReply, type Reply, type VaultDoc } from "./copilot";
 import { myHistory } from "./myAttendance";
 import { seedReports, suggestFeedback, totals } from "./reports";
 import { DEFAULTER_BELOW, sectionLabel, students, type Student } from "./students";
@@ -266,12 +266,6 @@ export const teacherSuggestions: { group: string; prompts: string[] }[] = [
     prompts: ["Generate a 10 question quiz on Quadratic Equations for Grade 10-A", "Draft a notice to Grade 9-B parents about the science fair", `Write a report remark for ${firstOf(mine[0]).name}`],
   },
   { group: "Curriculum & policy", prompts: ["What should Grade 9 Maths cover by October?", "Audit a lesson plan against our handbook", "What is the attendance requirement for exams?"] },
-];
-
-export const teacherAudit: AuditEntry[] = [
-  { id: "ta1", at: "2026-10-12T14:10", kind: "assessment", action: "Generated quiz", detail: "Chemical Bonding Practice, 10 questions for Grade 10-A", status: "executed" },
-  { id: "ta2", at: "2026-10-10T11:32", kind: "announcement", action: "Sent class notice", detail: "\"Science fair projects due Friday\" to parents of Grade 9-B", status: "executed" },
-  { id: "ta3", at: "2026-10-09T16:05", kind: "report", action: "Report remark", detail: "Draft for Hamza Ali discarded", status: "cancelled" },
 ];
 
 /** Answers a teacher's request from their own classes' records and the knowledge vault. */
