@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
-import { MultiSelect, Pagination, Select, Toast, fieldClass, ghostBtn, ghostSm, type ToastData } from "@/components/dashboard/controls";
+import { MultiSelect, Pagination, Select, Toast, fieldClass, ghostBtn, type ToastData } from "@/components/dashboard/controls";
 import { StatCard } from "@/components/dashboard/ui";
 import { Avatar } from "@/components/teachers/parts";
 import { buttonClass } from "@/components/ui/Button";
@@ -36,11 +36,11 @@ const order = (t: Talent) => -levelRank(t.level) * 1000 - gradeNum(t.student.sec
 
 type Actions = { onView: (t: Talent) => void };
 
-function ViewButton({ t, onView, compact = false }: Pick<Actions, "onView"> & { t: Talent; compact?: boolean }) {
+function ViewButton({ t, onView }: Pick<Actions, "onView"> & { t: Talent }) {
   return (
-    <button type="button" onClick={() => onView(t)} title="View Student Profile" aria-label={`View student profile: ${t.student.name}`} className={ghostSm}>
+    <button type="button" onClick={() => onView(t)} title="View Student Profile" aria-label={`View student profile: ${t.student.name}`} className={buttonClass("primary", "md", "w-full cursor-pointer py-2.5 text-[.88rem]")}>
       <Icon d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z M12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6z" className="size-4" />
-      {!compact && <span>View Profile</span>}
+      <span>View Profile</span>
     </button>
   );
 }
@@ -65,7 +65,7 @@ function TalentCard({ t, ...actions }: Actions & { t: Talent }) {
         <ClassBadge section={s.section} />
       </div>
 
-      <div className="mt-4 flex items-center justify-end border-t border-ink/8 pt-3">
+      <div className="mt-4 border-t border-ink/8 pt-4">
         <ViewButton t={t} {...actions} />
       </div>
     </li>
