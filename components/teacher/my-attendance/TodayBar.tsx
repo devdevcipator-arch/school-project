@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/dashboard/ui";
 import StatusSwitch from "@/components/teacher/StatusSwitch";
-import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { SHIFT } from "@/lib/myAttendance";
 import { teacher } from "@/lib/teacher";
@@ -26,20 +25,16 @@ function Chip({ icon, children }: { icon: string; children: React.ReactNode }) {
   );
 }
 
-/** Today's own status: check-in, live time on campus and the check-out action. */
+/** Today's own status: check-in, live time on campus. */
 export default function TodayBar({
   dateLabel,
   today,
   lastDay,
-  checkOut,
-  onCheckOut,
 }: {
   dateLabel: string;
   /** Today's record, or undefined on weekends and breaks. */
   today?: DayRecord;
   lastDay?: DayRecord;
-  checkOut: string | null;
-  onCheckOut: () => void;
 }) {
   const [nowMins, setNowMins] = useState(() => {
     const d = new Date();
@@ -54,7 +49,7 @@ export default function TodayBar({
   }, []);
 
   const inAt = today?.checkIn;
-  const endMins = checkOut ? toMins(checkOut) : Math.min(nowMins, toMins(SHIFT.end));
+  const endMins = Math.min(nowMins, toMins(SHIFT.end));
   const onCampus = inAt ? Math.max(0, endMins - toMins(inAt)) : 0;
   const shiftOver = nowMins >= toMins(SHIFT.end);
   const early = inAt ? toMins(SHIFT.start) - toMins(inAt) : 0;
@@ -94,12 +89,6 @@ export default function TodayBar({
 
         <div className="grid w-full justify-items-stretch gap-2.5 sm:w-auto sm:justify-items-end">
           <StatusSwitch />
-          {inAt && !checkOut && (
-            <button type="button" onClick={onCheckOut} className={buttonClass("primary", "md", "cursor-pointer")}>
-              <Icon d="M15 4h4v16h-4 M10 8l-4 4 4 4 M6 12h10" className="size-[18px] rotate-180" />
-              Check Out
-            </button>
-          )}
         </div>
       </div>
 
@@ -109,7 +98,7 @@ export default function TodayBar({
         </Chip>
         {inAt && (
           <Chip icon="M3 21h18 M5 21V8l7-5 7 5v13 M10 21v-6h4v6">
-            {hm(onCampus)} on campus{!checkOut && shiftOver && ", check-out pending"}
+            {hm(onCampus)} on campus{shiftOver && ", check-out pending"}
           </Chip>
         )}
         <Chip icon="M12 7v6 M12 17h.01 M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z">Check-in after {clock(SHIFT.start)} counts as late</Chip>
