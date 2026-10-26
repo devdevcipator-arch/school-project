@@ -7,7 +7,7 @@ import { Avatar } from "@/components/teachers/parts";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { shortDate } from "@/lib/fees";
-import { sendLeaveRequest, useLeaveRequests, type LeaveStatus } from "@/lib/leaveRequests";
+import { periodLabel, sendLeaveRequest, useLeaveRequests, type LeaveStatus } from "@/lib/leaveRequests";
 import { me } from "@/lib/myAttendance";
 
 const tone: Record<LeaveStatus, "warn" | "ok" | "danger"> = { Pending: "warn", Approved: "ok", Declined: "danger" };
@@ -17,28 +17,56 @@ export default function LeaveBoard() {
   const list = useLeaveRequests().filter((r) => r.teacher === me.name);
   const pending = list.filter((r) => r.status === "Pending").length;
   const [reason, setReason] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const [toast, setToast] = useState<ToastData | null>(null);
   const clearToast = useCallback(() => setToast(null), []);
 
+  // Same-format local date-times compare correctly as strings.
+  const badRange = !!from && !!to && to <= from;
+  const ready = !!reason.trim() && !!from && !!to && !badRange;
+
   const send = () => {
-    if (!reason.trim()) return;
-    sendLeaveRequest(me.name, reason.trim());
+    if (!ready) return;
+    sendLeaveRequest(me.name, reason.trim(), from, to);
     setReason("");
+    setFrom("");
+    setTo("");
     setToast({ text: "Leave request sent to the principal." });
   };
 
   return (
     <main className="mx-auto flex max-w-[1500px] flex-col gap-5 px-[clamp(16px,3vw,36px)] py-6 lg:gap-6 lg:py-8">
       <Card title="Apply for Leave" subtitle="Your request goes to the principal.">
-        <label htmlFor="leave-reason" className="sr-only">
-          Reason for leave
-        </label>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-          <textarea id="leave-reason" rows={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Write your reason for leave" className={`${fieldClass} w-full flex-1 resize-y`} />
-          <button type="button" onClick={send} disabled={!reason.trim()} className={buttonClass("primary", "md", "shrink-0 cursor-pointer disabled:pointer-events-none disabled:opacity-50 max-sm:w-full")}>
-            <Icon d="M4 12l16-8-6 16-3-7z" className="size-[18px]" />
-            Send Request
-          </button>
+        <div className="grid gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="grid gap-1.5 text-[.8rem] font-bold text-ink/70">
+              From
+              <input type="datetime-local" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} className={`${fieldClass} cursor-pointer font-normal text-ink`} />
+            </label>
+            <label className="grid gap-1.5 text-[.8rem] font-bold text-ink/70">
+              To
+              <input
+                type="datetime-local"
+                value={to}
+                min={from || undefined}
+                onChange={(e) => setTo(e.target.value)}
+                aria-invalid={badRange}
+                className={`${fieldClass} cursor-pointer font-normal text-ink ${badRange ? "border-danger" : ""}`}
+              />
+            </label>
+          </div>
+          {badRange && <p className="-mt-2 text-[.8rem] font-semibold text-danger">The end time must be after the start time.</p>}
+          <label className="grid gap-1.5 text-[.8rem] font-bold text-ink/70">
+            Reason
+            <textarea rows={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Write your reason for leave" className={`${fieldClass} w-full resize-y font-normal text-ink`} />
+          </label>
+          <div className="flex justify-end">
+            <button type="button" onClick={send} disabled={!ready} className={buttonClass("primary", "md", "cursor-pointer disabled:pointer-events-none disabled:opacity-50 max-sm:w-full")}>
+              <Icon d="M4 12l16-8-6 16-3-7z" className="size-[18px]" />
+              Send Request
+            </button>
+          </div>
         </div>
       </Card>
 
@@ -55,7 +83,11 @@ export default function LeaveBoard() {
                     <strong className="text-[.95rem]">{r.teacher}</strong>
                     <span className="text-[.78rem] text-ink/50">Sent {shortDate(r.sent)}</span>
                   </p>
-                  <p className="mt-1 text-[.9rem] leading-relaxed text-ink/75">{r.reason}</p>
+                  <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg bg-primary/8 px-2.5 py-1 text-[.8rem] font-semibold text-primary">
+                    <Icon d="M8 3v3 M16 3v3 M4 7h16v13H4z M4 11h16" className="size-4 shrink-0" />
+                    {periodLabel(r)}
+                  </p>
+                  <p className="mt-1.5 text-[.9rem] leading-relaxed text-ink/75">{r.reason}</p>
                 </div>
                 <Badge tone={tone[r.status]} className="self-start">
                   {r.status}

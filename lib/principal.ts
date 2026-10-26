@@ -34,7 +34,7 @@ export const principalTitles: Record<string, { eyebrow: string; title: string; d
   "/principal/leave": {
     eyebrow: "Leave Requests",
     title: "Teacher Leave Requests",
-    description: "Read the reasons teachers send for leave and approve or decline each one.",
+    description: "Read when and why teachers need leave and approve or decline each request.",
   },
   "/principal/students": {
     eyebrow: "Students",

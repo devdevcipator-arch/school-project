@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: `Leave Requests | Principal Portal | ${site.name}`,
 };
 
-// Leave Requests: what teachers send from their Leave page, with approve and decline.
+// Leave Requests: what teachers send from their Leave page (period + reason), with approve and decline.
 export default function LeavePage() {
   return <LeaveRequestsBoard />;
 }

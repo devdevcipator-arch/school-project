@@ -3,9 +3,10 @@
 import { Card, Badge } from "@/components/dashboard/ui";
 import { Avatar } from "@/components/teachers/parts";
 import { buttonClass } from "@/components/ui/Button";
+import { Icon } from "@/components/ui/Icon";
 import { ghostSm } from "@/components/dashboard/controls";
 import { shortDate } from "@/lib/fees";
-import { setLeaveStatus, useLeaveRequests, type LeaveStatus } from "@/lib/leaveRequests";
+import { periodLabel, setLeaveStatus, useLeaveRequests, type LeaveStatus } from "@/lib/leaveRequests";
 
 const tone: Record<LeaveStatus, "warn" | "ok" | "danger"> = { Pending: "warn", Approved: "ok", Declined: "danger" };
 
@@ -29,7 +30,11 @@ export default function LeaveRequestsBoard() {
                     <strong className="text-[.95rem]">{r.teacher}</strong>
                     <span className="text-[.78rem] text-ink/50">Sent {shortDate(r.sent)}</span>
                   </p>
-                  <p className="mt-1 text-[.9rem] leading-relaxed text-ink/75">{r.reason}</p>
+                  <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg bg-primary/8 px-2.5 py-1 text-[.8rem] font-semibold text-primary">
+                    <Icon d="M8 3v3 M16 3v3 M4 7h16v13H4z M4 11h16" className="size-4 shrink-0" />
+                    {periodLabel(r)}
+                  </p>
+                  <p className="mt-1.5 text-[.9rem] leading-relaxed text-ink/75">{r.reason}</p>
                 </div>
                 {r.status === "Pending" ? (
                   <div className="flex shrink-0 gap-2">
