@@ -2,7 +2,6 @@
 // Page content is filled in page by page; replace mock objects with API data in the backend phase.
 
 import { rosterOf } from "./classAttendance";
-import { seedReports, terms, totals, type TermId } from "./reports";
 
 export const studentNav = [
   { href: "/student", label: "Overview", icon: "M4 4h7v7H4z M13 4h7v4h-7z M13 10h7v10h-7z M4 13h7v7H4z" },
@@ -54,8 +53,8 @@ export const studentTitles: Record<string, { eyebrow: string; title: string; des
 };
 
 /** The roster record behind this portal: the same student the class teacher sees in Grade 10-A. */
-const STUDENT_SECTION = "10-A";
-const classRoster = rosterOf(STUDENT_SECTION);
+export const STUDENT_SECTION = "10-A";
+export const classRoster = rosterOf(STUDENT_SECTION);
 export const studentRecord = classRoster.find((s) => s.name === "Ayesha Iqbal") ?? classRoster[0];
 
 export const student = {
@@ -69,24 +68,6 @@ export const student = {
   roll: `Roll ${String(studentRecord.rollNo).padStart(2, "0")}`,
   session: "Session 2026-27",
 };
-
-/**
- * This student's report for a term, built exactly as the teacher's Reports page builds it
- * (same seeded marks, remarks, dispatch state and class rank).
- */
-export function studentReport(term: TermId) {
-  const reports = seedReports(classRoster, STUDENT_SECTION, term);
-  const pcts = reports.map((r) => totals(r).pct);
-  // Same ranking as the teacher hub: stable sort by percentage, ties keep roll order.
-  const order = classRoster.map((_, i) => i).sort((a, b) => pcts[b] - pcts[a]);
-  const index = classRoster.indexOf(studentRecord);
-  return {
-    term: terms.find((t) => t.id === term)!,
-    report: reports[index],
-    rank: order.indexOf(index) + 1,
-    size: classRoster.length,
-  };
-}
 
 export const studentNotifications = [
   { text: "Algebra Mid-Term Quiz closes in 2 hours", tone: "warn" as const, when: "10m ago" },

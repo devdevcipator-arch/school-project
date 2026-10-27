@@ -1,15 +1,17 @@
 import type { ReactNode } from "react";
+import { fieldClass } from "@/components/dashboard/controls";
 import { Badge } from "@/components/dashboard/ui";
 import { Icon } from "@/components/ui/Icon";
 import { principal } from "@/lib/principal";
-import { SUBJECT_MAX, letterGrade, totals, type Report } from "@/lib/reports";
+import { SUBJECT_MAX, letterGrade, totals, type Report, type SubjectMark } from "@/lib/reports";
 import { classTeacherOf, sectionLabel, type Student } from "@/lib/students";
 import { teacher } from "@/lib/teacher";
 
 /**
  * The on-screen Progress Report Card, shared by the teacher preview and the student Reports page
  * so both always show the same marks, totals and layout.
- * `remarks` and `controls` let the teacher add editing tools; the student passes read-only content.
+ * The student page is the output; the teacher page passes `onMark` and editable `remarks` to turn the
+ * same card into its input form.
  */
 export default function ReportSheet({
   s,
@@ -19,6 +21,7 @@ export default function ReportSheet({
   remarks,
   controls,
   note,
+  onMark,
 }: {
   s: Student;
   report: Report;
@@ -27,6 +30,8 @@ export default function ReportSheet({
   remarks: ReactNode;
   controls?: ReactNode;
   note: string;
+  /** When set, obtained marks and subject remarks become inputs. */
+  onMark?: (index: number, patch: Partial<SubjectMark>) => void;
 }) {
   const t = totals(report);
   const days = s.term.present + s.term.absent + s.term.leave;
@@ -85,13 +90,35 @@ export default function ReportSheet({
               </tr>
             </thead>
             <tbody className="divide-y divide-ink/8">
-              {report.marks.map((m) => (
+              {report.marks.map((m, i) => (
                 <tr key={m.subject}>
                   <th scope="row" className="px-3 py-2.5 font-semibold">{m.subject}</th>
                   <td className="px-3 py-2.5 text-right tabular-nums text-ink/60">{m.max}</td>
-                  <td className="px-3 py-2.5 text-right font-bold tabular-nums">{m.obtained ?? <Badge tone="warn">Missing</Badge>}</td>
+                  <td className="px-3 py-2.5 text-right font-bold tabular-nums">
+                    {onMark ? (
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        max={m.max}
+                        value={m.obtained ?? ""}
+                        onChange={(e) => onMark(i, { obtained: e.target.value === "" ? null : Math.max(0, Math.min(m.max, Math.round(Number(e.target.value)))) })}
+                        placeholder="-"
+                        aria-label={`${m.subject} marks obtained`}
+                        className={`${fieldClass} w-20 !px-2 !py-1.5 text-right tabular-nums ${m.obtained === null ? "border-warn" : ""}`}
+                      />
+                    ) : (
+                      (m.obtained ?? <Badge tone="warn">Missing</Badge>)
+                    )}
+                  </td>
                   <td className="px-3 py-2.5 font-bold">{m.obtained === null ? "-" : letterGrade((m.obtained / SUBJECT_MAX) * 100)}</td>
-                  <td className="px-3 py-2.5 text-ink/65">{m.remark || "Pending"}</td>
+                  <td className="px-3 py-2.5 text-ink/65">
+                    {onMark ? (
+                      <input value={m.remark} onChange={(e) => onMark(i, { remark: e.target.value })} placeholder="Subject remark" aria-label={`${m.subject} remark`} className={`${fieldClass} w-full min-w-[180px] !px-2.5 !py-1.5`} />
+                    ) : (
+                      m.remark || "Pending"
+                    )}
+                  </td>
                 </tr>
               ))}
               <tr className="bg-surface/50 font-extrabold">

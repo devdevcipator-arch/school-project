@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: `Result Card | Teacher Portal | ${site.name}`,
 };
 
-// Student Academic Reports & Dispatches: compile, review and send term report cards
+// Result Card (input): enter marks and remarks on the same card the student Result Card page shows, then send it
 export default function ReportsPage() {
   return <ReportsHub />;
 }
