@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import RevealObserver from "@/components/motion/RevealObserver";
+import PickerOnClick from "@/components/ui/PickerOnClick";
 import { site } from "@/lib/site";
 import "./globals.css";
 
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Suspense fallback={null}>
           <RevealObserver />
         </Suspense>
+        <PickerOnClick />
       </body>
     </html>
   );
