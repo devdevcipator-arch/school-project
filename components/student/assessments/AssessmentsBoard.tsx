@@ -2,7 +2,6 @@
 
 import { Fragment, useMemo, useState, type ReactNode } from "react";
 import { Pagination, Select, fieldClass, ghostSm } from "@/components/dashboard/controls";
-import { StatCard } from "@/components/dashboard/ui";
 import { Icon } from "@/components/ui/Icon";
 import { pillClass, useSlidingPill } from "@/components/motion/useSlidingPill";
 import { schoolToday, shortDate, studentAssessments, utcMs, type Assessment, type AssessmentKind } from "@/lib/student";
@@ -182,8 +181,6 @@ export default function AssessmentsBoard<T extends Assessment = Assessment>({
     const live = items.filter((a) => a.due >= schoolToday);
     return {
       today: live.filter((a) => a.due === schoolToday).length,
-      week: live.filter((a) => daysUntil(a.due) > 0 && daysUntil(a.due) <= 7).length,
-      extended: live.filter((a) => a.extendedFrom).length,
       closed: items.length - live.length,
     };
   }, [items]);
@@ -223,12 +220,6 @@ export default function AssessmentsBoard<T extends Assessment = Assessment>({
   return (
     <main className="mx-auto grid max-w-[1500px] gap-5 px-[clamp(16px,3vw,36px)] py-6 lg:gap-6 lg:py-8">
       {toolbar && <header className="flex justify-end">{toolbar}</header>}
-      <div className="grid gap-5 sm:grid-cols-2 lg:gap-6 xl:grid-cols-4">
-        <StatCard label="Due Today" value={stats.today} icon="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z M12 7v5l3 2" note="Finish by end of day" />
-        <StatCard label="Due This Week" value={stats.week} icon="M8 3v3 M16 3v3 M4 7h16v13H4z M4 11h16" note="Over the next 7 days" />
-        <StatCard label="Extended by Teacher" value={stats.extended} icon="M4 12a8 8 0 1 0 2.3-5.7 M4 4v4h4 M12 8v4l3 2" note="Deadlines moved later" />
-        <StatCard label="Closed" value={stats.closed} icon="M5 12l4 4 10-10" note="Past due this term" />
-      </div>
 
       <section className="flex min-w-0 flex-col gap-4 rounded-[20px] border border-ink/8 bg-white p-4 shadow-[0_10px_30px_rgba(6,30,41,.05)] sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">

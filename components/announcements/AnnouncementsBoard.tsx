@@ -15,7 +15,7 @@ import {
   type Notice,
   type Priority,
 } from "@/lib/announcements";
-import { Select, Toast, fieldClass, ghostSm, type ToastData } from "@/components/dashboard/controls";
+import { Pagination, Select, Toast, usePaged, fieldClass, ghostSm, type ToastData } from "@/components/dashboard/controls";
 import Composer, { type ComposerResult } from "./Composer";
 import { savePresets, setEmergency, useEmergency, usePresets } from "./emergency";
 import { readNotices, saveNotices, useNoticeList } from "./store";
@@ -465,6 +465,8 @@ export default function AnnouncementsBoard({ startComposing = false }: { startCo
       .sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.date.localeCompare(a.date));
   }, [list, tab, query, cat, prio, day]);
 
+  const { visible, pager } = usePaged(filtered, 10, [tab, query, cat, prio, day].join("|"));
+
   const filtersOn = query || cat !== "all" || prio !== "all" || day;
   const clearFilters = () => {
     setQuery("");
@@ -592,10 +594,6 @@ export default function AnnouncementsBoard({ startComposing = false }: { startCo
           </div>
         </div>
 
-        <p className="text-[.8rem] text-ink/50" aria-live="polite">
-          Showing {filtered.length} {filtered.length === 1 ? "notice" : "notices"}
-        </p>
-
         {filtered.length === 0 ? (
           <div className="grid justify-items-center gap-3 rounded-[18px] border border-dashed border-ink/15 px-6 py-14 text-center">
             <span className="grid size-14 place-items-center rounded-2xl bg-primary/8 text-primary">
@@ -612,15 +610,16 @@ export default function AnnouncementsBoard({ startComposing = false }: { startCo
         ) : (
           <>
             <ul className={`grid gap-3 ${view === "table" ? "lg:hidden" : ""}`}>
-              {filtered.map((n) => (
+              {visible.map((n) => (
                 <NoticeCard key={n.id} n={n} onOpenFile={setFile} {...actions} />
               ))}
             </ul>
             {view === "table" && (
               <div className="max-lg:hidden">
-                <NoticeTable list={filtered} onOpenFile={setFile} {...actions} />
+                <NoticeTable list={visible} onOpenFile={setFile} {...actions} />
               </div>
             )}
+            <Pagination {...pager} noun="notices" />
           </>
         )}
       </section>

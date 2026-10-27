@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { Toast, fieldClass, type ToastData } from "@/components/dashboard/controls";
+import { Pagination, Toast, fieldClass, usePaged, type ToastData } from "@/components/dashboard/controls";
 import { Badge, Card } from "@/components/dashboard/ui";
 import { Avatar } from "@/components/teachers/parts";
 import { buttonClass } from "@/components/ui/Button";
@@ -16,6 +16,7 @@ const tone: Record<LeaveStatus, "warn" | "ok" | "danger"> = { Pending: "warn", A
 export default function LeaveBoard() {
   const list = useLeaveRequests().filter((r) => r.teacher === me.name);
   const pending = list.filter((r) => r.status === "Pending").length;
+  const { visible, pager } = usePaged(list, 10);
   const [reason, setReason] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -74,27 +75,30 @@ export default function LeaveBoard() {
         {list.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-ink/15 p-8 text-center text-[.9rem] text-ink/55">No leave requests yet.</p>
         ) : (
-          <ul className="divide-y divide-ink/8">
-            {list.map((r) => (
-              <li key={r.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-start">
-                <Avatar name={r.teacher} />
-                <div className="min-w-0 flex-1">
-                  <p className="flex flex-wrap items-center gap-2">
-                    <strong className="text-[.95rem]">{r.teacher}</strong>
-                    <span className="text-[.78rem] text-ink/50">Sent {shortDate(r.sent)}</span>
-                  </p>
-                  <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg bg-primary/8 px-2.5 py-1 text-[.8rem] font-semibold text-primary">
-                    <Icon d="M8 3v3 M16 3v3 M4 7h16v13H4z M4 11h16" className="size-4 shrink-0" />
-                    {periodLabel(r)}
-                  </p>
-                  <p className="mt-1.5 text-[.9rem] leading-relaxed text-ink/75">{r.reason}</p>
-                </div>
-                <Badge tone={tone[r.status]} className="self-start">
-                  {r.status}
-                </Badge>
-              </li>
-            ))}
-          </ul>
+          <>
+            <ul className="divide-y divide-ink/8">
+              {visible.map((r) => (
+                <li key={r.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-start">
+                  <Avatar name={r.teacher} />
+                  <div className="min-w-0 flex-1">
+                    <p className="flex flex-wrap items-center gap-2">
+                      <strong className="text-[.95rem]">{r.teacher}</strong>
+                      <span className="text-[.78rem] text-ink/50">Sent {shortDate(r.sent)}</span>
+                    </p>
+                    <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg bg-primary/8 px-2.5 py-1 text-[.8rem] font-semibold text-primary">
+                      <Icon d="M8 3v3 M16 3v3 M4 7h16v13H4z M4 11h16" className="size-4 shrink-0" />
+                      {periodLabel(r)}
+                    </p>
+                    <p className="mt-1.5 text-[.9rem] leading-relaxed text-ink/75">{r.reason}</p>
+                  </div>
+                  <Badge tone={tone[r.status]} className="self-start">
+                    {r.status}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+            <Pagination {...pager} noun="requests" />
+          </>
         )}
       </Card>
 

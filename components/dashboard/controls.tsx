@@ -156,6 +156,20 @@ function pageWindow(page: number, pages: number): (number | null)[] {
   return keep.flatMap((p, i) => (i > 0 && p - keep[i - 1] > 1 ? [null, p] : [p]));
 }
 
+/**
+ * Slice a list into pages for <Pagination>. The page snaps back to 1 whenever
+ * `resetKey` changes (pass the active filters), and never runs past the last page.
+ */
+export function usePaged<T>(items: T[], size: number, resetKey = "") {
+  const [state, setState] = useState({ key: resetKey, page: 1 });
+  const pages = Math.max(1, Math.ceil(items.length / size));
+  const page = Math.min(state.key === resetKey ? state.page : 1, pages);
+  return {
+    visible: items.slice((page - 1) * size, page * size),
+    pager: { page, pages, total: items.length, size, onPage: (p: number) => setState({ key: resetKey, page: p }) },
+  };
+}
+
 /** "Showing 1 to 12 of 30 teachers" plus page buttons. */
 export function Pagination({ page, pages, total, size, noun, onPage }: { page: number; pages: number; total: number; size: number; noun: string; onPage: (p: number) => void }) {
   const from = total ? (page - 1) * size + 1 : 0;

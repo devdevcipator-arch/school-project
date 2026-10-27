@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useSyncExternalStore } from "react";
-import { Select, fieldClass, ghostSm } from "@/components/dashboard/controls";
+import { Pagination, Select, fieldClass, ghostSm, usePaged } from "@/components/dashboard/controls";
 import { StatCard } from "@/components/dashboard/ui";
 import { useNoticeList } from "@/components/announcements/store";
 import { AudienceTag, PriorityBadge } from "@/components/announcements/tags";
@@ -117,6 +117,7 @@ export default function NoticesFeed() {
 
   const { listRef, target, setHover } = useSlidingPill(tabs.findIndex((t) => t.key === tab));
   const filtersOn = query || cat !== "all" || prio !== "all";
+  const { visible, pager } = usePaged(filtered, 10, [tab, query, cat, prio].join("|"));
 
   return (
     <main className="mx-auto flex max-w-[1500px] flex-col gap-5 px-[clamp(16px,3vw,36px)] py-6 lg:gap-6 lg:py-8">
@@ -205,11 +206,14 @@ export default function NoticesFeed() {
         )}
 
         {filtered.length > 0 ? (
-          <ul className="grid gap-3">
-            {filtered.map((n) => (
-              <NoticeCard key={n.id} n={n} />
-            ))}
-          </ul>
+          <>
+            <ul className="grid gap-3">
+              {visible.map((n) => (
+                <NoticeCard key={n.id} n={n} />
+              ))}
+            </ul>
+            <Pagination {...pager} noun="notices" />
+          </>
         ) : (
           <p className="rounded-[18px] border border-dashed border-ink/12 px-5 py-10 text-center text-[.88rem] text-ink/55">
             {filtersOn ? "No notices match these filters." : "No notices here yet."}
