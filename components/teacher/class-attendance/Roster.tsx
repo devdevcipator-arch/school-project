@@ -239,13 +239,6 @@ export default function Roster({
           })}
         </ul>
       )}
-
-      <p className="hidden items-center gap-2 border-t border-ink/8 px-5 py-3 text-[.76rem] text-ink/50 lg:flex">
-        <Icon d="M4 6h16v12H4z M8 10h.01 M12 10h.01 M16 10h.01 M8 14h8" className="size-4" />
-        Keyboard: click a student, then <kbd className="rounded bg-ink/8 px-1.5 font-bold">↑</kbd>
-        <kbd className="rounded bg-ink/8 px-1.5 font-bold">↓</kbd> to move, <kbd className="rounded bg-ink/8 px-1.5 font-bold">P</kbd> Present,{" "}
-        <kbd className="rounded bg-ink/8 px-1.5 font-bold">A</kbd> Absent, <kbd className="rounded bg-ink/8 px-1.5 font-bold">L</kbd> Leave
-      </p>
     </Card>
   );
 }
