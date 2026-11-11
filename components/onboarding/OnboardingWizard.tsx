@@ -80,7 +80,7 @@ export default function OnboardingWizard() {
   const go = (i: number) => {
     setErrors({});
     setStep(i);
-    topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   /** First step (up to `upTo`) with problems, so Continue and Finish never skip an invalid step. */

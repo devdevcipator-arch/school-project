@@ -14,7 +14,7 @@ import {
   type Onboarding,
   type StepKey,
 } from "@/lib/onboarding";
-import { AddButton, Block, ErrorText, Label, Note, RemoveButton, SelectField, Stepper, TextField, ToggleChip, inputClass } from "./kit";
+import { AddButton, Block, ErrorText, Note, RemoveButton, SelectField, Stepper, TextField, ToggleChip, inputClass } from "./kit";
 
 export type StepProps = { d: Onboarding; set: (fn: (d: Onboarding) => Onboarding) => void; errors: Errors };
 
@@ -398,9 +398,9 @@ export function PoliciesStep({ d, set, errors }: StepProps) {
               <li key={b.letter}>
                 <div className="flex items-center gap-3">
                   <span className="grid h-10 w-14 shrink-0 place-items-center rounded-xl bg-primary text-[.95rem] font-extrabold text-surface">{b.letter}</span>
-                  <Label htmlFor={id}>
+                  <label htmlFor={id} className="text-[.88rem] font-semibold text-ink/60">
                     <span className="sr-only">{b.letter} </span>from
-                  </Label>
+                  </label>
                   <input id={id} type="number" min={1} max={100} value={b.min} onChange={(e) => put({ scale: p.scale.map((x, k) => (k === i ? { ...x, min: pct(e.target.value) } : x)) })} className={`${inputClass(errors[id])} max-w-[110px]`} />
                   <span className="text-[.9rem] font-semibold text-ink/60">%</span>
                 </div>
