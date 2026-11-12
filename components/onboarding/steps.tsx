@@ -34,20 +34,6 @@ export function SchoolStep({ d, set, errors }: StepProps) {
     <div className="grid gap-5">
       <TextField id="ob-name" label="School name" placeholder="e.g. Greenfield Public School" value={s.name} error={errors["ob-name"]} onChange={(e) => put("name", e.target.value)} note="Printed on report cards, fee reports, certificates and reminders." />
       <TextField id="ob-principal" label="Principal's full name" placeholder="e.g. Dr. Sara Ahmed" value={s.principal} error={errors["ob-principal"]} onChange={(e) => put("principal", e.target.value)} note="Signs report cards and talent certificates." />
-      <TextField
-        id="ob-prefix"
-        label="Student ID prefix"
-        placeholder="e.g. GPS"
-        maxLength={5}
-        value={s.idPrefix}
-        error={errors["ob-prefix"]}
-        onChange={(e) => put("idPrefix", e.target.value.toUpperCase().replace(/[^A-Z]/g, ""))}
-        note={
-          <>
-            Student registration IDs will look like <strong className="text-primary">{s.idPrefix || "GPS"}-2026-0001</strong>.
-          </>
-        }
-      />
     </div>
   );
 }
@@ -450,9 +436,7 @@ export function ReviewStep({ d, onEdit }: { d: Onboarding; onEdit: (k: StepKey) 
         "school",
         <>
           <Row label="School name">{d.school.name}</Row>
-          <Row label="Principal">{d.school.principal}</Row>
-          <Row label="Student ID prefix">{d.school.idPrefix}-2026-0001</Row>
-        </>,
+          <Row label="Principal">{d.school.principal}</Row>        </>,
       )}
       {card(
         "Calendar",

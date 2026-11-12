@@ -14,7 +14,7 @@ export type FeePlan = "monthly" | "biannual" | "annual";
 export type GradeBand = { letter: string; min: number };
 
 export type Onboarding = {
-  school: { name: string; principal: string; idPrefix: string };
+  school: { name: string; principal: string };
   calendar: { yearStartMonth: number; termName: string; termStart: string; examTerms: string[]; schoolDays: number[]; holidays: Holiday[] };
   timings: { start: string; end: string; periods: BellPeriod[] };
   grades: GradeSetup[];
@@ -62,7 +62,7 @@ const sectionCount = (g: number) => teachers.filter((t) => t.classTeacher && par
 const subject = (name: string, department: string, from: number, to: number): SubjectSetup => ({ id: `sub-${name}`, name, department, from, to });
 
 export const defaults: Onboarding = {
-  school: { name: "", principal: "", idPrefix: "" },
+  school: { name: "", principal: "" },
   calendar: {
     yearStartMonth: 4,
     termName: "Autumn term 2026",
@@ -130,9 +130,7 @@ export function validateStep(key: StepKey, d: Onboarding): Errors {
   const e: Errors = {};
   if (key === "school") {
     if (d.school.name.trim().length < 3) e["ob-name"] = "Enter the school's full name.";
-    if (d.school.principal.trim().length < 3) e["ob-principal"] = "Enter the principal's full name.";
-    if (!/^[A-Z]{2,5}$/.test(d.school.idPrefix)) e["ob-prefix"] = "Use 2 to 5 capital letters, e.g. GPS.";
-  }
+    if (d.school.principal.trim().length < 3) e["ob-principal"] = "Enter the principal's full name.";  }
   if (key === "calendar") {
     if (!d.calendar.termName.trim()) e["ob-term"] = "Name the current term.";
     if (!d.calendar.termStart) e["ob-term-start"] = "Pick the date the term started.";
