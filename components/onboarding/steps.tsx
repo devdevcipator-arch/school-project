@@ -322,11 +322,10 @@ export function FeesStep({ d, set, errors }: StepProps) {
 
 /* ---------------- 7. Policies ---------------- */
 
-export function PoliciesStep({ d, set, errors }: StepProps) {
+export function PoliciesStep({ d, set }: StepProps) {
   const p = d.policies;
   const put = (patch: Partial<Onboarding["policies"]>) => set((x) => ({ ...x, policies: { ...x.policies, ...patch } }));
   const pct = (v: string) => Math.max(0, Math.min(100, Math.round(Number(v) || 0)));
-  const lowest = p.scale.at(-1);
   return (
     <div className="grid gap-7">
       <Block title="Attendance thresholds">
@@ -334,31 +333,6 @@ export function PoliciesStep({ d, set, errors }: StepProps) {
           <TextField id="ob-att-student" label="Student attendance defaulter below (%)" type="number" min={0} max={100} value={p.studentAttendanceBelow} onChange={(e) => put({ studentAttendanceBelow: pct(e.target.value) })} note="Students under this term rate are flagged." />
           <TextField id="ob-att-class" label="Flag a class below (%)" type="number" min={0} max={100} value={p.classAttendanceBelow} onChange={(e) => put({ classAttendanceBelow: pct(e.target.value) })} note="Shown in red on the principal overview." />
         </div>
-      </Block>
-
-      <Block title="Grading scale" hint="Letter grades on report cards, from the minimum percentage for each.">
-        <ul className="grid max-w-[420px] gap-2.5">
-          {p.scale.map((b, i) => {
-            const id = `ob-band-${i}`;
-            return (
-              <li key={b.letter}>
-                <div className="flex items-center gap-3">
-                  <span className="grid h-10 w-14 shrink-0 place-items-center rounded-xl bg-primary text-[.95rem] font-extrabold text-surface">{b.letter}</span>
-                  <label htmlFor={id} className="text-[.88rem] font-semibold text-ink/60">
-                    <span className="sr-only">{b.letter} </span>from
-                  </label>
-                  <input id={id} type="number" min={1} max={100} value={b.min} onChange={(e) => put({ scale: p.scale.map((x, k) => (k === i ? { ...x, min: pct(e.target.value) } : x)) })} className={`${inputClass(errors[id])} max-w-[110px]`} />
-                  <span className="text-[.9rem] font-semibold text-ink/60">%</span>
-                </div>
-                <ErrorText id={id} error={errors[id]} />
-              </li>
-            );
-          })}
-          <li className="flex items-center gap-3">
-            <span className="grid h-10 w-14 shrink-0 place-items-center rounded-xl bg-ink/10 text-[.95rem] font-extrabold text-ink/70">F</span>
-            <span className="text-[.9rem] text-ink/60">Below {lowest?.min ?? 0}%</span>
-          </li>
-        </ul>
       </Block>
     </div>
   );
@@ -456,7 +430,6 @@ export function ReviewStep({ d, onEdit }: { d: Onboarding; onEdit: (k: StepKey) 
         <>
           <Row label="Student attendance">Defaulter below {d.policies.studentAttendanceBelow}%</Row>
           <Row label="Class attendance">Flagged below {d.policies.classAttendanceBelow}%</Row>
-          <Row label="Grading scale">{d.policies.scale.map((b) => `${b.letter} ${b.min}%+`).join(", ")}, F below</Row>
         </>,
       )}
     </div>

@@ -11,7 +11,6 @@ export type BellPeriod = { id: string; label: string; start: string; end: string
 export type GradeSetup = { grade: number; on: boolean; sections: number };
 export type SubjectSetup = { id: string; name: string; skip: number[] };
 export type FeePlan = "monthly" | "biannual" | "annual";
-export type GradeBand = { letter: string; min: number };
 
 export type Onboarding = {
   school: { name: string; principal: string };
@@ -19,7 +18,7 @@ export type Onboarding = {
   timings: { start: string; end: string; periods: BellPeriod[] };
   grades: GradeSetup[];  subjects: SubjectSetup[];
   fees: { plans: FeePlan[]; dueDay: number; defaulterMonths: number };
-  policies: { studentAttendanceBelow: number; classAttendanceBelow: number; scale: GradeBand[] };
+  policies: { studentAttendanceBelow: number; classAttendanceBelow: number };
 };
 
 export const steps = [
@@ -29,7 +28,7 @@ export const steps = [
   { key: "classes", label: "Classes", hint: "Grades and sections" },
   { key: "subjects", label: "Subjects", hint: "Subjects and grades" },
   { key: "fees", label: "Fees", hint: "Plans and due dates" },
-  { key: "policies", label: "Policies", hint: "Attendance and grading" },
+  { key: "policies", label: "Policies", hint: "Attendance thresholds" },
   { key: "review", label: "Review", hint: "Check and finish" },
 ] as const;
 export type StepKey = (typeof steps)[number]["key"];
@@ -112,13 +111,6 @@ export const defaults: Onboarding = {
   policies: {
     studentAttendanceBelow: 75,
     classAttendanceBelow: 80,
-    scale: [
-      { letter: "A+", min: 90 },
-      { letter: "A", min: 80 },
-      { letter: "B", min: 70 },
-      { letter: "C", min: 60 },
-      { letter: "D", min: 50 },
-    ],
   },
 };
 
@@ -131,7 +123,8 @@ export function validateStep(key: StepKey, d: Onboarding): Errors {
   const e: Errors = {};
   if (key === "school") {
     if (d.school.name.trim().length < 3) e["ob-name"] = "Enter the school's full name.";
-    if (d.school.principal.trim().length < 3) e["ob-principal"] = "Enter the principal's full name.";  }
+    if (d.school.principal.trim().length < 3) e["ob-principal"] = "Enter the principal's full name.";
+  }
   if (key === "calendar") {
     if (!d.calendar.termName.trim()) e["ob-term"] = "Name the current term.";
     if (!d.calendar.termStart) e["ob-term-start"] = "Pick the date the term started.";
@@ -154,7 +147,8 @@ export function validateStep(key: StepKey, d: Onboarding): Errors {
     });
   }
   if (key === "classes" && !d.grades.some((g) => g.on)) e["ob-grade-1"] = "Turn on at least one grade.";
-  if (key === "subjects") {    if (!d.subjects.length) e["ob-subjects"] = "Add at least one subject.";
+  if (key === "subjects") {
+    if (!d.subjects.length) e["ob-subjects"] = "Add at least one subject.";
     const seen = new Set<string>();
     d.subjects.forEach((s) => {
       const k = s.name.trim().toLowerCase();
@@ -165,12 +159,6 @@ export function validateStep(key: StepKey, d: Onboarding): Errors {
     });
   }
   if (key === "fees" && !d.fees.plans.length) e["ob-plan-monthly"] = "Offer at least one fee plan.";
-  if (key === "policies") {
-    d.policies.scale.forEach((b, i) => {
-      const prev = d.policies.scale[i - 1];
-      if (prev && b.min >= prev.min) e[`ob-band-${i}`] = `Must be lower than ${prev.letter} (${prev.min}%).`;
-    });
-  }
   return e;
 }
 

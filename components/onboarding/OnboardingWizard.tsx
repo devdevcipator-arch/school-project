@@ -21,7 +21,7 @@ const intro: Record<StepKey, { title: string; text: string }> = {
   classes: { title: "Grades and sections", text: "Pick the grades you teach and how many sections each one has." },
   subjects: { title: "Subjects", text: "What is taught and in which grades." },
   fees: { title: "Fee rules", text: "How installments are planned and when a student counts as late or a defaulter." },
-  policies: { title: "Attendance and grading", text: "The thresholds that flag students and classes, and your report card scale." },
+  policies: { title: "Attendance", text: "The thresholds that flag students and classes." },
   review: { title: "Review and finish", text: "Check everything once. You can change these settings later." },
 };
 
