@@ -11,7 +11,7 @@ import { CalendarStep, ClassesStep, FeesStep, PoliciesStep, ReviewStep, SchoolSt
 
 // Front-end phase: the draft is kept in this browser so a refresh does not lose progress.
 // Replace with the onboarding API in the backend phase.
-const KEY = "school-onboarding-v1";
+const KEY = "school-onboarding-v2";
 type Saved = { data: Onboarding; step: number; furthest: number };
 
 const intro: Record<StepKey, { title: string; text: string }> = {

@@ -17,7 +17,6 @@ import { AddButton, Block, ErrorText, Note, RemoveButton, SelectField, Stepper, 
 
 export type StepProps = { d: Onboarding; set: (fn: (d: Onboarding) => Onboarding) => void; errors: Errors };
 
-const grades = Array.from({ length: 10 }, (_, i) => i + 1);
 const addMinutes = (hm: string, mins: number) => {
   const [h, m] = hm.split(":").map(Number);
   const t = Math.min(h * 60 + m + mins, 23 * 60 + 59);
@@ -217,41 +216,48 @@ export function ClassesStep({ d, set, errors }: StepProps) {
 
 export function SubjectsStep({ d, set, errors }: StepProps) {
   const editSub = (id: string, patch: Partial<Onboarding["subjects"][number]>) => set((x) => ({ ...x, subjects: x.subjects.map((s) => (s.id === id ? { ...s, ...patch } : s)) }));
+  const activeGrades = d.grades.filter((g) => g.on).map((g) => g.grade);
   return (
     <div className="grid gap-7">
       <Block
         title="Subjects"
-        hint="Which grades study each subject. Report cards and teacher assignments use this list."
-        action={<AddButton onClick={() => set((x) => ({ ...x, subjects: [...x.subjects, { id: uid("sub"), name: "", from: 1, to: 10 }] }))}>Add subject</AddButton>}
+        hint="Every subject is taught in every grade. Tap a grade to take the subject out of it."
+        action={<AddButton onClick={() => set((x) => ({ ...x, subjects: [...x.subjects, { id: uid("sub"), name: "", skip: [] }] }))}>Add subject</AddButton>}
       >
-        <div className="mb-2 hidden gap-2 px-1 text-[.76rem] font-bold uppercase tracking-wider text-ink/50 sm:grid sm:grid-cols-[1.8fr_1fr_1fr_40px]">
-          <span>Subject</span>
-          <span>From grade</span>
-          <span>To grade</span>
-        </div>
         <ul id="ob-subjects" tabIndex={-1} className="grid gap-3 outline-none">
           {d.subjects.map((s) => {
             const id = `ob-sub-${s.id}`;
+            const skipped = activeGrades.filter((g) => s.skip.includes(g));
+            const toggle = (g: number) => editSub(s.id, { skip: s.skip.includes(g) ? s.skip.filter((x) => x !== g) : [...s.skip, g] });
             return (
-              <li key={s.id}>
-                <div className="grid grid-cols-[1fr_40px] gap-2 rounded-2xl bg-surface p-2 sm:grid-cols-[1.8fr_1fr_1fr_40px] sm:bg-transparent sm:p-0">
+              <li key={s.id} className="rounded-2xl border border-ink/10 p-3 sm:p-4">
+                <div className="flex items-center gap-2">
                   <input id={id} aria-label="Subject name" placeholder="Subject name" value={s.name} onChange={(e) => editSub(s.id, { name: e.target.value })} className={inputClass(errors[id])} />
-                  <div className="col-span-2 row-start-2 grid grid-cols-2 gap-2 sm:contents">
-                    <SelectField id={`${id}-from`} ariaLabel={`${s.name || "Subject"} from grade`} value={s.from} onChange={(v) => editSub(s.id, { from: Number(v) })}>
-                      {grades.map((g) => (
-                        <option key={g} value={g}>Grade {g}</option>
-                      ))}
-                    </SelectField>
-                    <SelectField id={`${id}-to`} ariaLabel={`${s.name || "Subject"} to grade`} value={s.to} onChange={(v) => editSub(s.id, { to: Number(v) })}>
-                      {grades.map((g) => (
-                        <option key={g} value={g}>Grade {g}</option>
-                      ))}
-                    </SelectField>
-                  </div>
-                  <div className="col-start-2 row-start-1 sm:col-start-auto sm:row-start-auto">
-                    <RemoveButton label={`Remove ${s.name || "subject"}`} onClick={() => set((x) => ({ ...x, subjects: x.subjects.filter((y) => y.id !== s.id) }))} />
-                  </div>
+                  <RemoveButton label={`Remove ${s.name || "subject"}`} onClick={() => set((x) => ({ ...x, subjects: x.subjects.filter((y) => y.id !== s.id) }))} />
                 </div>
+                <div role="group" aria-label={`Grades that study ${s.name || "this subject"}`} className="mt-3 flex flex-wrap gap-1.5">
+                  {activeGrades.map((g) => {
+                    const on = !s.skip.includes(g);
+                    return (
+                      <button
+                        key={g}
+                        type="button"
+                        aria-pressed={on}
+                        aria-label={`Grade ${g}`}
+                        title={on ? `Remove from Grade ${g}` : `Add back to Grade ${g}`}
+                        onClick={() => toggle(g)}
+                        className={`grid h-9 min-w-9 cursor-pointer place-items-center rounded-lg border px-2 text-[.85rem] font-bold transition-[background-color,border-color,color] duration-200 ${
+                          on ? "border-primary bg-primary text-surface hover:bg-primary/85" : "border-dashed border-ink/20 bg-white text-ink/35 line-through hover:border-accent hover:text-primary"
+                        }`}
+                      >
+                        {g}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 text-[.8rem] text-ink/55">
+                  {skipped.length ? `All grades except ${skipped.sort((a, b) => a - b).join(", ")}` : "All grades"}
+                </p>
                 <ErrorText id={id} error={errors[id]} />
               </li>
             );
@@ -424,7 +430,15 @@ export function ReviewStep({ d, onEdit }: { d: Onboarding; onEdit: (k: StepKey) 
       {card(
         "Subjects",
         "subjects",
-        <>          <Row label="Subjects">{d.subjects.map((s) => s.name).join(", ")}</Row>
+        <>
+          <Row label="Subjects">
+            {d.subjects
+              .map((s) => {
+                const out = d.grades.filter((g) => g.on && s.skip.includes(g.grade)).map((g) => g.grade);
+                return out.length ? `${s.name} (not in ${out.join(", ")})` : s.name;
+              })
+              .join(", ")}
+          </Row>
         </>,
       )}
       {card(
