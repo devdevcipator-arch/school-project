@@ -9,7 +9,7 @@ import { teachers } from "./teachers";
 export type Holiday = { id: string; name: string; from: string; to: string };
 export type BellPeriod = { id: string; label: string; start: string; end: string; isBreak: boolean };
 export type GradeSetup = { grade: number; on: boolean; sections: number };
-export type SubjectSetup = { id: string; name: string; department: string; from: number; to: number };
+export type SubjectSetup = { id: string; name: string; from: number; to: number };
 export type FeePlan = "monthly" | "biannual" | "annual";
 export type GradeBand = { letter: string; min: number };
 
@@ -17,9 +17,7 @@ export type Onboarding = {
   school: { name: string; principal: string };
   calendar: { yearStartMonth: number; termName: string; termStart: string; examTerms: string[]; schoolDays: number[]; holidays: Holiday[] };
   timings: { start: string; end: string; periods: BellPeriod[] };
-  grades: GradeSetup[];
-  departments: string[];
-  subjects: SubjectSetup[];
+  grades: GradeSetup[];  subjects: SubjectSetup[];
   fees: { plans: FeePlan[]; dueDay: number; defaulterMonths: number };
   policies: { studentAttendanceBelow: number; classAttendanceBelow: number; scale: GradeBand[] };
 };
@@ -29,7 +27,7 @@ export const steps = [
   { key: "calendar", label: "Calendar", hint: "Year, terms, holidays" },
   { key: "timings", label: "Timings", hint: "School hours and periods" },
   { key: "classes", label: "Classes", hint: "Grades and sections" },
-  { key: "subjects", label: "Subjects", hint: "Subjects and departments" },
+  { key: "subjects", label: "Subjects", hint: "Subjects and grades" },
   { key: "fees", label: "Fees", hint: "Plans and due dates" },
   { key: "policies", label: "Policies", hint: "Attendance and grading" },
   { key: "review", label: "Review", hint: "Check and finish" },
@@ -59,7 +57,7 @@ export const uid = (p: string) => `${p}${Date.now().toString(36)}${(n++).toStrin
 /** Sections per grade as the current class-teacher roster has them, e.g. Grade 10 has A, B, C. */
 const sectionCount = (g: number) => teachers.filter((t) => t.classTeacher && parseInt(t.classTeacher) === g).length;
 
-const subject = (name: string, department: string, from: number, to: number): SubjectSetup => ({ id: `sub-${name}`, name, department, from, to });
+const subject = (name: string, from: number, to: number): SubjectSetup => ({ id: `sub-${name}`, name, from, to });
 
 export const defaults: Onboarding = {
   school: { name: "", principal: "" },
@@ -90,22 +88,20 @@ export const defaults: Onboarding = {
       { id: "p8", label: "Period 7", start: "12:50", end: "13:30", isBreak: false },
     ],
   },
-  grades: Array.from({ length: 10 }, (_, i) => ({ grade: i + 1, on: true, sections: Math.max(1, sectionCount(i + 1)) })),
-  departments: ["Science", "Mathematics", "Humanities", "Languages", "Computer Science", "Sports", "Administrative Staff"],
-  subjects: [
-    subject("English", "Languages", 1, 10),
-    subject("Urdu", "Languages", 1, 10),
-    subject("Mathematics", "Mathematics", 1, 10),
-    subject("Islamiyat", "Humanities", 1, 10),
-    subject("General Science", "Science", 1, 8),
-    subject("Art", "Humanities", 1, 3),
-    subject("Social Studies", "Humanities", 4, 8),
-    subject("Computer Science", "Computer Science", 4, 10),
-    subject("Physics", "Science", 9, 10),
-    subject("Chemistry", "Science", 9, 10),
-    subject("Biology", "Science", 9, 10),
-    subject("Pakistan Studies", "Humanities", 9, 10),
-    subject("Physical Education", "Sports", 1, 10),
+  grades: Array.from({ length: 10 }, (_, i) => ({ grade: i + 1, on: true, sections: Math.max(1, sectionCount(i + 1)) })),  subjects: [
+    subject("English", 1, 10),
+    subject("Urdu", 1, 10),
+    subject("Mathematics", 1, 10),
+    subject("Islamiyat", 1, 10),
+    subject("General Science", 1, 8),
+    subject("Art", 1, 3),
+    subject("Social Studies", 4, 8),
+    subject("Computer Science", 4, 10),
+    subject("Physics", 9, 10),
+    subject("Chemistry", 9, 10),
+    subject("Biology", 9, 10),
+    subject("Pakistan Studies", 9, 10),
+    subject("Physical Education", 1, 10),
   ],
   fees: { plans: ["monthly", "biannual", "annual"], dueDay: 15, defaulterMonths: 2 },
   policies: {
@@ -153,9 +149,7 @@ export function validateStep(key: StepKey, d: Onboarding): Errors {
     });
   }
   if (key === "classes" && !d.grades.some((g) => g.on)) e["ob-grade-1"] = "Turn on at least one grade.";
-  if (key === "subjects") {
-    if (!d.departments.length) e["ob-dept"] = "Add at least one department.";
-    if (!d.subjects.length) e["ob-subjects"] = "Add at least one subject.";
+  if (key === "subjects") {    if (!d.subjects.length) e["ob-subjects"] = "Add at least one subject.";
     const seen = new Set<string>();
     d.subjects.forEach((s) => {
       const k = s.name.trim().toLowerCase();

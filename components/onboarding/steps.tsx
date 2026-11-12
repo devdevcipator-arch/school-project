@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   ampm,
   feePlans,
@@ -217,56 +216,16 @@ export function ClassesStep({ d, set, errors }: StepProps) {
 /* ---------------- 5. Subjects ---------------- */
 
 export function SubjectsStep({ d, set, errors }: StepProps) {
-  const [dept, setDept] = useState("");
-  const used = (name: string) => d.subjects.some((s) => s.department === name);
-  const addDept = () => {
-    const name = dept.trim().replace(/\s+/g, " ");
-    if (!name || d.departments.some((x) => x.toLowerCase() === name.toLowerCase())) return setDept("");
-    set((x) => ({ ...x, departments: [...x.departments, name] }));
-    setDept("");
-  };
   const editSub = (id: string, patch: Partial<Onboarding["subjects"][number]>) => set((x) => ({ ...x, subjects: x.subjects.map((s) => (s.id === id ? { ...s, ...patch } : s)) }));
   return (
     <div className="grid gap-7">
-      <Block title="Departments" hint="Teachers belong to a department, and announcements can target one.">
-        <ul className="mb-3 flex flex-wrap gap-2">
-          {d.departments.map((name) => (
-            <li key={name} className="inline-flex items-center gap-1 rounded-full border border-ink/12 bg-white py-1 pl-3.5 pr-1 text-[.86rem] font-semibold">
-              {name}
-              <button
-                type="button"
-                disabled={used(name)}
-                title={used(name) ? "Used by a subject below" : `Remove ${name}`}
-                aria-label={`Remove ${name}`}
-                onClick={() => set((x) => ({ ...x, departments: x.departments.filter((n) => n !== name) }))}
-                className="grid size-6 cursor-pointer place-items-center rounded-full text-ink/45 hover:bg-danger/10 hover:text-danger disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden className="size-3.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>
-              </button>
-            </li>
-          ))}
-        </ul>
-        <form
-          className="flex max-w-[420px] gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            addDept();
-          }}
-        >
-          <input id="ob-dept" aria-label="New department" placeholder="Add a department" value={dept} onChange={(e) => setDept(e.target.value)} className={inputClass(errors["ob-dept"])} />
-          <button type="submit" className="shrink-0 cursor-pointer rounded-xl bg-primary/10 px-4 text-[.88rem] font-semibold text-primary transition-colors hover:bg-primary/20">Add</button>
-        </form>
-        <ErrorText id="ob-dept" error={errors["ob-dept"]} />
-      </Block>
-
       <Block
         title="Subjects"
         hint="Which grades study each subject. Report cards and teacher assignments use this list."
-        action={<AddButton onClick={() => set((x) => ({ ...x, subjects: [...x.subjects, { id: uid("sub"), name: "", department: x.departments[0] ?? "", from: 1, to: 10 }] }))}>Add subject</AddButton>}
+        action={<AddButton onClick={() => set((x) => ({ ...x, subjects: [...x.subjects, { id: uid("sub"), name: "", from: 1, to: 10 }] }))}>Add subject</AddButton>}
       >
-        <div className="mb-2 hidden gap-2 px-1 text-[.76rem] font-bold uppercase tracking-wider text-ink/50 sm:grid sm:grid-cols-[1.5fr_1.3fr_.8fr_.8fr_40px]">
+        <div className="mb-2 hidden gap-2 px-1 text-[.76rem] font-bold uppercase tracking-wider text-ink/50 sm:grid sm:grid-cols-[1.8fr_1fr_1fr_40px]">
           <span>Subject</span>
-          <span>Department</span>
           <span>From grade</span>
           <span>To grade</span>
         </div>
@@ -275,14 +234,9 @@ export function SubjectsStep({ d, set, errors }: StepProps) {
             const id = `ob-sub-${s.id}`;
             return (
               <li key={s.id}>
-                <div className="grid grid-cols-[1fr_40px] gap-2 rounded-2xl bg-surface p-2 sm:grid-cols-[1.5fr_1.3fr_.8fr_.8fr_40px] sm:bg-transparent sm:p-0">
+                <div className="grid grid-cols-[1fr_40px] gap-2 rounded-2xl bg-surface p-2 sm:grid-cols-[1.8fr_1fr_1fr_40px] sm:bg-transparent sm:p-0">
                   <input id={id} aria-label="Subject name" placeholder="Subject name" value={s.name} onChange={(e) => editSub(s.id, { name: e.target.value })} className={inputClass(errors[id])} />
-                  <div className="col-span-2 row-start-2 grid grid-cols-3 gap-2 sm:contents">
-                    <SelectField id={`${id}-dept`} ariaLabel={`${s.name || "Subject"} department`} value={s.department} onChange={(v) => editSub(s.id, { department: v })}>
-                      {d.departments.map((n) => (
-                        <option key={n} value={n}>{n}</option>
-                      ))}
-                    </SelectField>
+                  <div className="col-span-2 row-start-2 grid grid-cols-2 gap-2 sm:contents">
                     <SelectField id={`${id}-from`} ariaLabel={`${s.name || "Subject"} from grade`} value={s.from} onChange={(v) => editSub(s.id, { from: Number(v) })}>
                       {grades.map((g) => (
                         <option key={g} value={g}>Grade {g}</option>
@@ -470,9 +424,7 @@ export function ReviewStep({ d, onEdit }: { d: Onboarding; onEdit: (k: StepKey) 
       {card(
         "Subjects",
         "subjects",
-        <>
-          <Row label="Departments">{d.departments.join(", ")}</Row>
-          <Row label="Subjects">{d.subjects.map((s) => s.name).join(", ")}</Row>
+        <>          <Row label="Subjects">{d.subjects.map((s) => s.name).join(", ")}</Row>
         </>,
       )}
       {card(

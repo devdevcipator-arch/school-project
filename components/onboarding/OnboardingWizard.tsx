@@ -19,7 +19,7 @@ const intro: Record<StepKey, { title: string; text: string }> = {
   calendar: { title: "Set your academic calendar", text: "The year, terms and days off that attendance, fees and report cards follow." },
   timings: { title: "School hours and periods", text: "Used for teacher check-ins and the student timetable." },
   classes: { title: "Grades and sections", text: "Pick the grades you teach and how many sections each one has." },
-  subjects: { title: "Subjects and departments", text: "What is taught, by which department and in which grades." },
+  subjects: { title: "Subjects", text: "What is taught and in which grades." },
   fees: { title: "Fee rules", text: "How installments are planned and when a student counts as late or a defaulter." },
   policies: { title: "Attendance and grading", text: "The thresholds that flag students and classes, and your report card scale." },
   review: { title: "Review and finish", text: "Check everything once. You can change these settings later." },
