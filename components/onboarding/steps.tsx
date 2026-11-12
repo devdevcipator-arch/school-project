@@ -7,7 +7,10 @@ import {
   sectionLetters,
   sectionTotal,
   shortDay,
+  steps,
+  subjectGrades,
   uid,
+  validateStep,
   weekdays,
   type Errors,
   type Onboarding,
@@ -340,6 +343,10 @@ export function PoliciesStep({ d, set }: StepProps) {
 
 /* ---------------- 8. Review ---------------- */
 
+const missing = <span className="font-semibold text-danger">Not filled in</span>;
+/** Shows the value, or a red "Not filled in" when it is blank (steps can now be skipped). */
+const orMissing = (v: string) => (v.trim() ? v : missing);
+
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="grid gap-0.5 py-2.5 sm:grid-cols-[200px_1fr] sm:gap-4">
@@ -352,39 +359,51 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 export function ReviewStep({ d, onEdit }: { d: Onboarding; onEdit: (k: StepKey) => void }) {
   const c = d.calendar;
   const days = weekdays.filter((w) => c.schoolDays.includes(w.n)).map((w) => w.short);
-  const card = (title: string, key: StepKey, rows: React.ReactNode) => (
-    <section className="rounded-2xl border border-ink/10 bg-white p-5">
-      <div className="mb-1 flex items-center justify-between gap-3">
-        <h3 className="font-bold">{title}</h3>
-        <button type="button" onClick={() => onEdit(key)} className="cursor-pointer rounded-lg px-2.5 py-1 text-[.84rem] font-semibold text-primary transition-colors hover:bg-primary/8">
-          Edit
-        </button>
-      </div>
-      <dl className="divide-y divide-ink/8">{rows}</dl>
-    </section>
-  );
+  const examTerms = c.examTerms.filter((t) => t.trim());
+  const card = (key: StepKey, rows: React.ReactNode) => {
+    const issues = Object.keys(validateStep(key, d)).length;
+    return (
+      <section className={`rounded-2xl border bg-white p-5 ${issues ? "border-danger/40" : "border-ink/10"}`}>
+        <div className="mb-1 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <h3 className="font-bold">{steps.find((s) => s.key === key)?.label}</h3>
+            {issues > 0 && (
+              <span className="rounded-full bg-danger/10 px-2.5 py-0.5 text-[.76rem] font-bold text-danger">
+                {issues} {issues === 1 ? "thing" : "things"} to fix
+              </span>
+            )}
+          </div>
+          <button type="button" onClick={() => onEdit(key)} className="cursor-pointer rounded-lg px-2.5 py-1 text-[.84rem] font-semibold text-primary transition-colors hover:bg-primary/8">
+            {issues ? "Fix" : "Edit"}
+          </button>
+        </div>
+        <dl className="divide-y divide-ink/8">{rows}</dl>
+      </section>
+    );
+  };
   return (
     <div className="grid gap-4">
       {card(
-        "School",
         "school",
         <>
-          <Row label="School name">{d.school.name}</Row>
-          <Row label="Principal">{d.school.principal}</Row>        </>,
+          <Row label="School name">{orMissing(d.school.name)}</Row>
+          <Row label="Principal">{orMissing(d.school.principal)}</Row>
+        </>,
       )}
       {card(
-        "Calendar",
         "calendar",
         <>
           <Row label="Academic year">{monthNames[c.yearStartMonth - 1]} to {monthNames[(c.yearStartMonth + 10) % 12]}</Row>
-          <Row label="Current term">{c.termName}, from {shortDay(c.termStart)}</Row>
-          <Row label="Exam terms">{c.examTerms.filter((t) => t.trim()).join(", ")}</Row>
-          <Row label="School days">{days.join(", ")}</Row>
+          <Row label="Current term">
+            {orMissing(c.termName)}
+            {c.termStart ? `, from ${shortDay(c.termStart)}` : <>, start date {missing}</>}
+          </Row>
+          <Row label="Exam terms">{examTerms.length ? examTerms.join(", ") : missing}</Row>
+          <Row label="School days">{days.length ? days.join(", ") : missing}</Row>
           <Row label="Holidays and breaks">{c.holidays.length ? c.holidays.map((h) => `${h.name} (${h.from === h.to ? shortDay(h.from) : `${shortDay(h.from)} to ${shortDay(h.to)}`})`).join(", ") : "None"}</Row>
         </>,
       )}
       {card(
-        "Timings",
         "timings",
         <>
           <Row label="School hours">{ampm(d.timings.start)} to {ampm(d.timings.end)}</Row>
@@ -394,38 +413,37 @@ export function ReviewStep({ d, onEdit }: { d: Onboarding; onEdit: (k: StepKey) 
         </>,
       )}
       {card(
-        "Classes",
         "classes",
         <>
-          <Row label="Grades offered">{d.grades.filter((g) => g.on).map((g) => g.grade).join(", ")}</Row>
+          <Row label="Grades offered">{d.grades.some((g) => g.on) ? d.grades.filter((g) => g.on).map((g) => g.grade).join(", ") : missing}</Row>
           <Row label="Sections">{sectionTotal(d)} in total</Row>
         </>,
       )}
       {card(
-        "Subjects",
         "subjects",
-        <>
-          <Row label="Subjects">
-            {d.subjects
-              .map((s) => {
-                const out = d.grades.filter((g) => g.on && s.skip.includes(g.grade)).map((g) => g.grade);
-                return out.length ? `${s.name} (not in ${out.join(", ")})` : s.name;
-              })
-              .join(", ")}
-          </Row>
-        </>,
+        d.subjects.length ? (
+          d.subjects.map((s) => {
+            const out = d.grades.filter((g) => g.on && s.skip.includes(g.grade)).map((g) => g.grade);
+            const taught = subjectGrades(d, s).length;
+            return (
+              <Row key={s.id} label={s.name.trim() || "Unnamed subject"}>
+                {!taught ? <span className="font-semibold text-danger">Not taught in any grade</span> : out.length ? `All grades except ${out.join(", ")}` : "All grades"}
+              </Row>
+            );
+          })
+        ) : (
+          <Row label="Subjects">{missing}</Row>
+        ),
       )}
       {card(
-        "Fees",
         "fees",
         <>
-          <Row label="Plans offered">{feePlans.filter((p) => d.fees.plans.includes(p.key)).map((p) => p.label).join(", ")}</Row>
+          <Row label="Plans offered">{d.fees.plans.length ? feePlans.filter((p) => d.fees.plans.includes(p.key)).map((p) => p.label).join(", ") : missing}</Row>
           <Row label="Due date">Day {d.fees.dueDay} of each month</Row>
           <Row label="Defaulter after">{d.fees.defaulterMonths} unpaid {d.fees.defaulterMonths === 1 ? "month" : "months"}</Row>
         </>,
       )}
       {card(
-        "Policies",
         "policies",
         <>
           <Row label="Student attendance">Defaulter below {d.policies.studentAttendanceBelow}%</Row>
