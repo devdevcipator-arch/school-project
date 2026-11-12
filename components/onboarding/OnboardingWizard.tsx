@@ -98,9 +98,9 @@ export default function OnboardingWizard() {
     requestAnimationFrame(() => document.getElementById(Object.keys(found)[0])?.focus());
   };
 
+  // Navigation lock removed for now: Continue moves on even if this step is incomplete.
+  // Finish setup still checks every step.
   const next = () => {
-    const bad = firstInvalid(step);
-    if (bad) return showErrors(bad.i, bad.found);
     setFurthest((f) => Math.max(f, step + 1));
     go(step + 1);
   };
@@ -137,7 +137,7 @@ export default function OnboardingWizard() {
             <ol>
               {steps.map((s, i) => {
                 const done = i < furthest && i !== step;
-                const reachable = i <= furthest;
+                const reachable = true;
                 return (
                   <li key={s.key} style={{ height: RAIL_ITEM }}>
                     <button
