@@ -11,6 +11,7 @@ export const principalNav = [
   { href: "/principal/students", label: "Students", icon: "M2 9l9-5 9 5-9 5z M6 11.5V16c0 1.5 2.2 3 5 3 M19 14v6 M16 17h6" },
   { href: "/principal/talents", label: "Talents", icon: "M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" },
   { href: "/principal/fees", label: "Student Fees", icon: "M3 6h18v12H3z M3 10h18 M7 15h3" },
+  { href: "/principal/profile", label: "School Profile", icon: "M4 21V8l8-5 8 5v13z M9 21v-6h6v6 M12 8.5a1.5 1.5 0 1 0 0 .01" },
   { href: "/principal/ai", label: "AI Assistant", icon: "M12 3v4 M12 17v4 M3 12h4 M17 12h4 M6 6l2.5 2.5 M15.5 15.5 18 18 M6 18l2.5-2.5 M15.5 8.5 18 6" },
 ];
 
@@ -50,6 +51,11 @@ export const principalTitles: Record<string, { eyebrow: string; title: string; d
     eyebrow: "AI Assistant",
     title: "Principal AI Executive Copilot",
     description: "Your institutional intelligence partner for live school queries, curriculum analysis, and automated admin workflows.",
+  },
+  "/principal/profile": {
+    eyebrow: "School Profile",
+    title: "School Profile & Settings",
+    description: "Edit the details you set during onboarding: school, calendar, timings, classes, subjects, fees and policies.",
   },
   "/principal/talents": {
     eyebrow: "Talents",

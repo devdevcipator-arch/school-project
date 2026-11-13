@@ -20,7 +20,7 @@ export default function PrincipalLayout({ children }: LayoutProps<"/principal">)
       profile={
         <div className="flex shrink-0 items-center gap-3">
           <NotificationBell />
-          <div className="flex shrink-0 items-center gap-3 rounded-2xl border border-ink/8 bg-white p-2 shadow-[0_10px_30px_rgba(6,30,41,.05)]">
+          <Link href="/principal/profile" aria-label="Open school profile" className="flex shrink-0 items-center gap-3 rounded-2xl border border-ink/8 bg-white p-2 shadow-[0_10px_30px_rgba(6,30,41,.05)] transition-[border-color,translate] duration-300 hover:-translate-y-0.5 hover:border-accent">
             <span className="grid size-10 shrink-0 place-items-center rounded-full bg-linear-135 from-primary to-accent text-[.85rem] font-bold text-surface">
               {principal.initials}
             </span>
@@ -28,7 +28,7 @@ export default function PrincipalLayout({ children }: LayoutProps<"/principal">)
               <strong className="truncate text-[.9rem]">{principal.name}</strong>
               <span className="truncate text-[.78rem] text-ink/55">Principal</span>
             </span>
-          </div>
+          </Link>
         </div>
       }
       footer={

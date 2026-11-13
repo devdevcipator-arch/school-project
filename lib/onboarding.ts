@@ -168,3 +168,24 @@ export const ampm = (hm: string) => {
   const [h, m] = hm.split(":").map(Number);
   return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
 };
+
+// The finished setup the principal can edit later from Principal > School Profile.
+// Front-end phase: kept in this browser; replace with the school settings API in the backend phase.
+export const SETTINGS_KEY = "school-settings-v1";
+
+export function loadSettings(fallback: Onboarding): Onboarding {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) return { ...fallback, ...(JSON.parse(raw) as Onboarding) };
+  } catch {}
+  return fallback;
+}
+
+export function saveSettings(d: Onboarding) {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(d));
+  } catch {}
+}
+
+/** Every editable step (all but Review) with its problems, in step order. */
+export const formSteps = steps.filter((s) => s.key !== "review");
