@@ -57,6 +57,11 @@ export const principalTitles: Record<string, { eyebrow: string; title: string; d
     title: "School Profile & Settings",
     description: "Edit the details you set during onboarding: school, calendar, timings, classes, subjects, fees and policies.",
   },
+  "/principal/account": {
+    eyebrow: "My Profile",
+    title: "My Profile",
+    description: "Your name, sign-in email and password.",
+  },
   "/principal/talents": {
     eyebrow: "Talents",
     title: "Talent & Co-Curricular Directory",
@@ -67,6 +72,7 @@ export const principalTitles: Record<string, { eyebrow: string; title: string; d
 export const principal = {
   name: "Dr. Sara Ahmed",
   initials: "SA",
+  email: "sara.ahmed@greenfield.edu.pk",
   school: "Greenfield Public School",
 };
 
