@@ -3,7 +3,8 @@ import Link from "next/link";
 import { EmergencyBanner } from "@/components/announcements/emergency";
 import DashboardShell from "@/components/dashboard/DashboardShell";
 import NotificationBell from "@/components/principal/NotificationBell";
-import { student, studentNav, studentNotifications, studentTitles } from "@/lib/student";
+import StudentProfileCard from "@/components/student/StudentProfileCard";
+import { studentNav, studentNotifications, studentTitles } from "@/lib/student";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -21,15 +22,7 @@ export default function StudentLayout({ children }: LayoutProps<"/student">) {
       profile={
         <div className="flex shrink-0 items-center gap-3">
           <NotificationBell notifications={studentNotifications} />
-          <div className="flex shrink-0 items-center gap-3 rounded-2xl border border-ink/8 bg-white p-2 shadow-[0_10px_30px_rgba(6,30,41,.05)]">
-            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-linear-135 from-primary to-accent text-[.85rem] font-bold text-surface">
-              {student.initials}
-            </span>
-            <span className="grid min-w-0 pr-3 max-sm:hidden">
-              <strong className="truncate text-[.9rem]">{student.name}</strong>
-              <span className="truncate text-[.78rem] text-ink/55">{student.classLabel}</span>
-            </span>
-          </div>
+          <StudentProfileCard />
         </div>
       }
       footer={

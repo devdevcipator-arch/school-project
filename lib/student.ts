@@ -50,6 +50,11 @@ export const studentTitles: Record<string, { eyebrow: string; title: string; des
     title: "Student AI Study Copilot",
     description: "Ask about any concept, get questions explained and study along your curriculum.",
   },
+  "/student/account": {
+    eyebrow: "My Profile",
+    title: "My Profile",
+    description: "Your name, sign-in email and password.",
+  },
 };
 
 /** The roster record behind this portal: the same student the class teacher sees in Grade 10-A. */

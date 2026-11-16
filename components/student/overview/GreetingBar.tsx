@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { student, studentAttendance, todaySchedule } from "@/lib/student";
+import { useStudentName } from "@/lib/studentAccount";
 import { toMinutes, useMinuteOfDay } from "./clock";
 
 const noop = () => () => {};
@@ -20,6 +21,7 @@ function Chip({ icon, children }: { icon: string; children: React.ReactNode }) {
 /** Greeting, date, class and today's quick status chips. */
 export default function GreetingBar() {
   const minute = useMinuteOfDay();
+  const firstName = useStudentName().split(" ")[0] || student.firstName;
   const date = useSyncExternalStore(noop, clientDate, () => "");
   const greeting = minute < 0 ? "Welcome back" : minute < 720 ? "Good morning" : minute < 1020 ? "Good afternoon" : "Good evening";
 
@@ -34,7 +36,7 @@ export default function GreetingBar() {
           {student.classLabel} · {student.roll}
         </p>
         <h2 className="mt-1.5 text-[clamp(1.25rem,2.4vw,1.75rem)] font-extrabold leading-tight tracking-tight">
-          {greeting}, {student.firstName}
+          {greeting}, {firstName}
         </h2>
         <p className="mt-1 min-h-[1.4em] text-[.92rem] text-surface/70">{date}</p>
       </div>
