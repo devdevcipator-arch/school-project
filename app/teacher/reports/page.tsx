@@ -3,10 +3,10 @@ import ReportsHub from "@/components/teacher/reports/ReportsHub";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: `Result Card | Teacher Portal | ${site.name}`,
+  title: `Reports | Teacher Portal | ${site.name}`,
 };
 
-// Result Card (input): enter marks and remarks on the same card the student Result Card page shows, then send it
+// Reports: write a progress report for a student (time frame + description) and list every report written
 export default function ReportsPage() {
   return <ReportsHub />;
 }
