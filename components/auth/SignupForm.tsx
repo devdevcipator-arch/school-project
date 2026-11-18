@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon, iconPaths } from "@/components/ui/Icon";
@@ -26,6 +27,7 @@ export default function SignupForm() {
   const [errors, setErrors] = useState<Errors>({});
   const [touched, setTouched] = useState(false);
   const [status, setStatus] = useState<"idle" | "sending" | "done">("idle");
+  const router = useRouter();
   const [formError, setFormError] = useState("");
   const [needsConfirm, setNeedsConfirm] = useState(false);
 
@@ -52,7 +54,8 @@ export default function SignupForm() {
       password: fields.password,
       options: {
         data: { full_name: fields.name.trim() },
-        emailRedirectTo: `${window.location.origin}/login`,
+        // The confirmation link signs them in and opens school setup.
+        emailRedirectTo: `${window.location.origin}/onboarding`,
       },
     });
     if (error) {
@@ -67,7 +70,12 @@ export default function SignupForm() {
       document.getElementById("email")?.focus();
       return;
     }
-    setNeedsConfirm(!data.session);
+    // Signed in straight away: go set up the school.
+    if (data.session) {
+      router.replace("/onboarding");
+      return;
+    }
+    setNeedsConfirm(true);
     setStatus("done");
   };
 
