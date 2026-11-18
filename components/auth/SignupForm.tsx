@@ -5,6 +5,7 @@ import { useState, type FormEvent } from "react";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon, iconPaths } from "@/components/ui/Icon";
 import { Field, PasswordInput, Spinner, emailPattern, fieldAria, fieldClass } from "@/components/auth/fields";
+import { supabase } from "@/lib/supabase";
 
 type Fields = { name: string; email: string; password: string; confirm: string };
 type Errors = Partial<Record<keyof Fields, string>>;
@@ -25,6 +26,8 @@ export default function SignupForm() {
   const [errors, setErrors] = useState<Errors>({});
   const [touched, setTouched] = useState(false);
   const [status, setStatus] = useState<"idle" | "sending" | "done">("idle");
+  const [formError, setFormError] = useState("");
+  const [needsConfirm, setNeedsConfirm] = useState(false);
 
   const set = <K extends keyof Fields>(key: K, value: Fields[K]) => {
     const next = { ...fields, [key]: value };
@@ -42,8 +45,29 @@ export default function SignupForm() {
       return;
     }
     setStatus("sending");
-    // Front-end phase: simulate account creation. Replace with real auth in the backend phase.
-    await new Promise((r) => setTimeout(r, 1400));
+    setFormError("");
+    // Creates the user in Supabase Auth; a database trigger then creates their school with them as principal.
+    const { data, error } = await supabase.auth.signUp({
+      email: fields.email.trim(),
+      password: fields.password,
+      options: {
+        data: { full_name: fields.name.trim() },
+        emailRedirectTo: `${window.location.origin}/login`,
+      },
+    });
+    if (error) {
+      setFormError(error.message);
+      setStatus("idle");
+      return;
+    }
+    // Supabase hides "already registered" behind an empty identities list.
+    if (data.user && data.user.identities?.length === 0) {
+      setErrors({ email: "An account with this email already exists." });
+      setStatus("idle");
+      document.getElementById("email")?.focus();
+      return;
+    }
+    setNeedsConfirm(!data.session);
     setStatus("done");
   };
 
@@ -55,7 +79,12 @@ export default function SignupForm() {
         </span>
         <h2 className="text-[1.4rem] font-extrabold">Account created!</h2>
         <p className="max-w-[340px] text-ink/70">
-          Welcome, {fields.name.split(" ")[0]}. Your account for <strong className="text-primary">{fields.email}</strong> is ready.
+          Welcome, {fields.name.split(" ")[0]}.{" "}
+          {needsConfirm ? (
+            <>We sent a confirmation link to <strong className="text-primary">{fields.email}</strong>. Open it to activate your account.</>
+          ) : (
+            <>Your account for <strong className="text-primary">{fields.email}</strong> is ready.</>
+          )}
         </p>
         <Link href="/login" className={buttonClass("primary", "md", "mt-2")}>Go to login</Link>
       </div>
@@ -85,6 +114,10 @@ export default function SignupForm() {
           <PasswordInput id="confirm" name="confirm" autoComplete="new-password" placeholder="Re-enter password" value={fields.confirm} error={errors.confirm} onChange={(e) => set("confirm", e.target.value)} />
         </Field>
       </div>
+
+      {formError && (
+        <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-[.9rem] text-red-700">{formError}</p>
+      )}
 
       <button type="submit" disabled={status === "sending"} className={buttonClass("primary", "lg", "w-full cursor-pointer disabled:cursor-wait disabled:opacity-90")}>
         {status === "sending" ? (
