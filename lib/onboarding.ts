@@ -30,6 +30,39 @@ export async function saveSchoolStep(s: Onboarding["school"]): Promise<string | 
   return null;
 }
 
+/** Step 2 values stored for the signed-in principal (option sets + holidays table), or null if none. */
+export async function loadCalendarStep(): Promise<Onboarding["calendar"] | null> {
+  const { data, error } = await supabase.from("school").select("id, year_start_month, exam_terms, school_days").maybeSingle();
+  if (error || !data) return null;
+  const { data: hols } = await supabase.from("holidays").select("id, name, start_date, end_date").eq("school", data.id).order("start_date");
+  return {
+    yearStartMonth: monthNames.indexOf(data.year_start_month) + 1 || 4,
+    examTerms: data.exam_terms?.length ? data.exam_terms : [""],
+    schoolDays: weekdays.filter((w) => (data.school_days ?? []).includes(w.short)).map((w) => w.n),
+    holidays: (hols ?? []).map((h) => ({ id: h.id, name: h.name, from: h.start_date, to: h.end_date })),
+  };
+}
+
+/**
+ * Saves step 2 (Calendar) in one transaction (public.save_calendar):
+ * year_start_month (month option set), exam_terms (exam_terms option set, new names created first),
+ * school_days (school_day option set) and the school's rows in the holidays table.
+ * Returns an error message, or null on success.
+ */
+export async function saveCalendarStep(c: Onboarding["calendar"]): Promise<string | null> {
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return "Your session has expired. Please log in again.";
+  const { error } = await supabase.rpc("save_calendar", {
+    p_year_start_month: monthNames[c.yearStartMonth - 1],
+    p_exam_terms: c.examTerms.map((t) => t.trim()).filter(Boolean),
+    p_school_days: weekdays.filter((w) => c.schoolDays.includes(w.n)).map((w) => w.short),
+    p_holidays: c.holidays.map((h) => ({ name: h.name.trim(), start_date: h.from, end_date: h.to })),
+  });
+  if (error?.code === "P0002") return "No school is linked to this account yet. Please contact support.";
+  if (error) return "Could not save your calendar. Please try again.";
+  return null;
+}
+
 export type Holiday = { id: string; name: string; from: string; to: string };
 export type BellPeriod = { id: string; label: string; start: string; end: string; isBreak: boolean };
 export type GradeSetup = { grade: number; on: boolean; sections: number };

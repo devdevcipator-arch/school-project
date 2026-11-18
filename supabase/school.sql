@@ -18,7 +18,9 @@ create table if not exists public.school (
   name                      text check (char_length(trim(name)) >= 3),       -- filled in onboarding
   principal_name            text not null check (char_length(trim(principal_name)) >= 2),
 
-  -- Step 2: Calendar
+  -- Step 2: Calendar. calendar.sql (run after this file) turns these into option sets:
+  -- year_start_month => month, school_days => school_day[], exam_terms => exam_terms option set,
+  -- and moves holidays into the public.holidays table.
   year_start_month          smallint not null default 4 check (year_start_month between 1 and 12),
   exam_terms                text[] not null default array['First Term Exam', 'Mid-Term Review', 'Final Semester']
                               check (cardinality(exam_terms) >= 1),

@@ -6,7 +6,7 @@ import { Logo } from "@/components/layout/Logo";
 import { Spinner } from "@/components/auth/fields";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon, iconPaths } from "@/components/ui/Icon";
-import { defaults, loadSchoolStep, saveSchoolStep, saveSettings, sectionTotal, steps, validateStep, type Errors, type Onboarding, type StepKey } from "@/lib/onboarding";
+import { defaults, loadCalendarStep, loadSchoolStep, saveCalendarStep, saveSchoolStep, saveSettings, sectionTotal, steps, validateStep, type Errors, type Onboarding, type StepKey } from "@/lib/onboarding";
 import { CalendarStep, ClassesStep, FeesStep, PoliciesStep, ReviewStep, SchoolStep, SubjectsStep, TimingsStep, type StepProps } from "./steps";
 
 // Front-end phase: the draft is kept in this browser so a refresh does not lose progress.
@@ -50,9 +50,11 @@ export default function OnboardingWizard() {
 
   // Restore a saved draft after mount (the server render always starts from the defaults).
   useEffect(() => {
+    let hasDraft = false;
     try {
       const raw = localStorage.getItem(KEY);
       if (raw) {
+        hasDraft = true;
         const saved = JSON.parse(raw) as Saved;
         // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time restore of browser-only state
         setData({ ...defaults, ...saved.data });
@@ -66,6 +68,13 @@ export default function OnboardingWizard() {
       if (!s) return;
       setData((d) => ({ ...d, school: { name: d.school.name || s.name, principal: d.school.principal || s.principal } }));
     });
+    // Without a draft in this browser, start the Calendar step from what is saved in the database
+    // (keeping the sample holidays when none are saved yet).
+    if (!hasDraft)
+      loadCalendarStep().then((c) => {
+        if (!c) return;
+        setData((d) => ({ ...d, calendar: { ...c, holidays: c.holidays.length ? c.holidays : d.calendar.holidays } }));
+      });
   }, []);
 
   useEffect(() => {
@@ -108,14 +117,15 @@ export default function OnboardingWizard() {
 
   // Navigation lock removed for now: Continue moves on even if this step is incomplete.
   // Finish setup still checks every step.
-  // Exception: the School step is saved to the school table, so it must be valid first.
+  // Exception: the School and Calendar steps are saved to the database, so they must be valid first.
+  // Until Continue is pressed, edits live only in React state (plus the local draft).
   const next = async () => {
-    if (key === "school") {
-      const found = validateStep("school", data);
+    if (key === "school" || key === "calendar") {
+      const found = validateStep(key, data);
       if (Object.keys(found).length) return showErrors(step, found);
       setAdvancing(true);
       setSaveError("");
-      const err = await saveSchoolStep(data.school);
+      const err = key === "school" ? await saveSchoolStep(data.school) : await saveCalendarStep(data.calendar);
       setAdvancing(false);
       if (err) return setSaveError(err);
     }
