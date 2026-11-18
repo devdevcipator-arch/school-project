@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import AuthGuard from "@/components/auth/AuthGuard";
+import LogoutButton from "@/components/auth/LogoutButton";
 import DashboardShell from "@/components/dashboard/DashboardShell";
 import { EmergencyBanner } from "@/components/announcements/emergency";
 import NotificationBell from "@/components/principal/NotificationBell";
@@ -14,26 +15,21 @@ export const metadata: Metadata = {
 
 export default function PrincipalLayout({ children }: LayoutProps<"/principal">) {
   return (
-    <DashboardShell
-      nav={principalNav}
-      banner={<EmergencyBanner />}
-      titles={principalTitles}
-      profile={
-        <div className="flex shrink-0 items-center gap-3">
-          <NotificationBell />
-          <ProfileCard />
-        </div>
-      }
-      footer={
-        <Link href="/login" className="flex items-center gap-3 rounded-full px-4 py-[11px] text-[.92rem] font-semibold text-surface/70 transition-colors hover:bg-surface/10 hover:text-surface">
-          <svg viewBox="0 0 24 24" aria-hidden className="size-[19px] shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 4h4v16h-4 M10 8l-4 4 4 4 M6 12h10" />
-          </svg>
-          Log out
-        </Link>
-      }
-    >
-      {children}
-    </DashboardShell>
+    <AuthGuard>
+      <DashboardShell
+        nav={principalNav}
+        banner={<EmergencyBanner />}
+        titles={principalTitles}
+        profile={
+          <div className="flex shrink-0 items-center gap-3">
+            <NotificationBell />
+            <ProfileCard />
+          </div>
+        }
+        footer={<LogoutButton />}
+      >
+        {children}
+      </DashboardShell>
+    </AuthGuard>
   );
 }

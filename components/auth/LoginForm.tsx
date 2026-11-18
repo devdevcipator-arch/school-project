@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon, iconPaths } from "@/components/ui/Icon";
 import { useRouter } from "next/navigation";
@@ -15,6 +15,15 @@ function validate(email: string, password: string): Errors {
   if (!emailPattern.test(email.trim())) e.email = "Please enter a valid email address.";
   if (!password) e.password = "Please enter your password.";
   return e;
+}
+
+// Where to go after sign in: the page the guard sent them from (?next=), otherwise
+// onboarding for a principal whose school has no name yet, otherwise the principal dashboard.
+async function destination(userId: string) {
+  const next = new URLSearchParams(window.location.search).get("next");
+  if (next && next.startsWith("/") && !next.startsWith("//")) return next;
+  const { data: school } = await supabase.from("school").select("name").eq("principal", userId).maybeSingle();
+  return school && !school.name ? "/onboarding" : "/principal";
 }
 
 export default function LoginForm() {
@@ -52,10 +61,15 @@ export default function LoginForm() {
       return;
     }
     setStatus("done");
-    // A principal whose school has no name yet still needs to finish onboarding.
-    const { data: school } = await supabase.from("school").select("name").eq("principal", data.user.id).maybeSingle();
-    router.replace(school && !school.name ? "/onboarding" : "/principal");
+    router.replace(await destination(data.user.id));
   };
+
+  // Already signed in: skip the form.
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (data.session) router.replace(await destination(data.session.user.id));
+    });
+  }, [router]);
 
   if (status === "done") {
     return (

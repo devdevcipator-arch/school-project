@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import AuthGuard from "@/components/auth/AuthGuard";
 import OnboardingWizard from "@/components/onboarding/OnboardingWizard";
 import { site } from "@/lib/site";
 
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function OnboardingPage() {
-  return <OnboardingWizard />;
+  return (
+    <AuthGuard>
+      <OnboardingWizard />
+    </AuthGuard>
+  );
 }
