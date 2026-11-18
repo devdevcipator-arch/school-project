@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon, iconPaths } from "@/components/ui/Icon";
+import { useRouter } from "next/navigation";
 import { Field, PasswordInput, Spinner, emailPattern, fieldAria, fieldClass } from "@/components/auth/fields";
+import { setRememberMe, supabase } from "@/lib/supabase";
 
 type Errors = { email?: string; password?: string };
 
@@ -22,6 +24,8 @@ export default function LoginForm() {
   const [errors, setErrors] = useState<Errors>({});
   const [touched, setTouched] = useState(false);
   const [status, setStatus] = useState<"idle" | "sending" | "done">("idle");
+  const [formError, setFormError] = useState("");
+  const router = useRouter();
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -33,9 +37,24 @@ export default function LoginForm() {
       return;
     }
     setStatus("sending");
-    // Front-end phase: simulate sign in. Replace with real auth in the backend phase.
-    await new Promise((r) => setTimeout(r, 1200));
+    setFormError("");
+    setRememberMe(remember);
+    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    if (error) {
+      setFormError(
+        error.code === "invalid_credentials"
+          ? "Incorrect email or password."
+          : error.code === "email_not_confirmed"
+            ? "Please confirm your email first. Check your inbox for the link we sent."
+            : error.message,
+      );
+      setStatus("idle");
+      return;
+    }
     setStatus("done");
+    // A principal whose school has no name yet still needs to finish onboarding.
+    const { data: school } = await supabase.from("school").select("name").eq("principal", data.user.id).maybeSingle();
+    router.replace(school && !school.name ? "/onboarding" : "/principal");
   };
 
   if (status === "done") {
@@ -46,11 +65,9 @@ export default function LoginForm() {
         </span>
         <h2 className="text-[1.4rem] font-extrabold">Welcome back!</h2>
         <p className="max-w-[340px] text-ink/70">
-          Signed in as <strong className="text-primary">{email}</strong>. Your dashboard is coming soon.
+          Signed in as <strong className="text-primary">{email}</strong>. Taking you to your dashboard...
         </p>
-        <button type="button" onClick={() => setStatus("idle")} className={buttonClass("dark", "md", "mt-2 cursor-pointer")}>
-          Back to login
-        </button>
+        <Spinner />
       </div>
     );
   }
@@ -103,6 +120,10 @@ export default function LoginForm() {
         <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="size-4 cursor-pointer accent-primary" />
         Remember me
       </label>
+
+      {formError && (
+        <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-[.9rem] text-red-700">{formError}</p>
+      )}
 
       <button type="submit" disabled={status === "sending"} className={buttonClass("primary", "lg", "w-full cursor-pointer disabled:cursor-wait disabled:opacity-90")}>
         {status === "sending" ? (
