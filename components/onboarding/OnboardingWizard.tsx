@@ -6,7 +6,7 @@ import { Logo } from "@/components/layout/Logo";
 import { Spinner } from "@/components/auth/fields";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon, iconPaths } from "@/components/ui/Icon";
-import { defaults, saveSettings, sectionTotal, steps, validateStep, type Errors, type Onboarding, type StepKey } from "@/lib/onboarding";
+import { defaults, loadSchoolStep, saveSchoolStep, saveSettings, sectionTotal, steps, validateStep, type Errors, type Onboarding, type StepKey } from "@/lib/onboarding";
 import { CalendarStep, ClassesStep, FeesStep, PoliciesStep, ReviewStep, SchoolStep, SubjectsStep, TimingsStep, type StepProps } from "./steps";
 
 // Front-end phase: the draft is kept in this browser so a refresh does not lose progress.
@@ -43,6 +43,8 @@ export default function OnboardingWizard() {
   const [furthest, setFurthest] = useState(0);
   const [errors, setErrors] = useState<Errors>({});
   const [status, setStatus] = useState<"editing" | "saving" | "done">("editing");
+  const [advancing, setAdvancing] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [loaded, setLoaded] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
 
@@ -59,6 +61,11 @@ export default function OnboardingWizard() {
       }
     } catch {}
     setLoaded(true);
+    // Fill step 1 from the school table where this browser has no value yet.
+    loadSchoolStep().then((s) => {
+      if (!s) return;
+      setData((d) => ({ ...d, school: { name: d.school.name || s.name, principal: d.school.principal || s.principal } }));
+    });
   }, []);
 
   useEffect(() => {
@@ -79,6 +86,7 @@ export default function OnboardingWizard() {
 
   const go = (i: number) => {
     setErrors({});
+    setSaveError("");
     setStep(i);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -100,7 +108,17 @@ export default function OnboardingWizard() {
 
   // Navigation lock removed for now: Continue moves on even if this step is incomplete.
   // Finish setup still checks every step.
-  const next = () => {
+  // Exception: the School step is saved to the school table, so it must be valid first.
+  const next = async () => {
+    if (key === "school") {
+      const found = validateStep("school", data);
+      if (Object.keys(found).length) return showErrors(step, found);
+      setAdvancing(true);
+      setSaveError("");
+      const err = await saveSchoolStep(data.school);
+      setAdvancing(false);
+      if (err) return setSaveError(err);
+    }
     setFurthest((f) => Math.max(f, step + 1));
     go(step + 1);
   };
@@ -221,12 +239,18 @@ export default function OnboardingWizard() {
                 )}
               </button>
             ) : (
-              <button type="button" onClick={next} className={buttonClass("primary", "lg", "cursor-pointer max-sm:w-full")}>
-                Continue
+              <button type="button" onClick={next} disabled={advancing} className={buttonClass("primary", "lg", "cursor-pointer disabled:cursor-wait disabled:opacity-90 max-sm:w-full")}>
+                {advancing && <Spinner />}
+                {advancing ? "Saving..." : "Continue"}
                 <svg viewBox="0 0 20 20" aria-hidden className="size-4"><path d="M4 10h11M11 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </button>
             )}
           </div>
+          {saveError && (
+            <p role="alert" className="mt-3 text-right text-[.88rem] font-medium text-red-600">
+              {saveError}
+            </p>
+          )}
         </div>
       </div>
     </main>

@@ -4,7 +4,31 @@
 // and attendance / grading thresholds. Teachers and students are added later from their own boards.
 // Front-end phase: defaults mirror the current mock constants; replace with the API in the backend phase.
 
+import { supabase } from "./supabase";
 import { teachers } from "./teachers";
+
+/* ---------------- Supabase: public.school (one row per principal, created on Sign Up) ---------------- */
+
+/** Step 1 values already stored for the signed-in principal, or null if none. */
+export async function loadSchoolStep(): Promise<Onboarding["school"] | null> {
+  const { data, error } = await supabase.from("school").select("name, principal_name").maybeSingle();
+  if (error || !data) return null;
+  return { name: data.name ?? "", principal: data.principal_name ?? "" };
+}
+
+/** Saves step 1 (School) into the principal's school row. Returns an error message, or null on success. */
+export async function saveSchoolStep(s: Onboarding["school"]): Promise<string | null> {
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return "Your session has expired. Please log in again.";
+  const { data, error } = await supabase
+    .from("school")
+    .update({ name: s.name.trim(), principal_name: s.principal.trim() })
+    .eq("principal", auth.user.id)
+    .select("id");
+  if (error) return "Could not save your school details. Please try again.";
+  if (!data?.length) return "No school is linked to this account yet. Please contact support.";
+  return null;
+}
 
 export type Holiday = { id: string; name: string; from: string; to: string };
 export type BellPeriod = { id: string; label: string; start: string; end: string; isBreak: boolean };
