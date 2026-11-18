@@ -20,8 +20,6 @@ create table if not exists public.school (
 
   -- Step 2: Calendar
   year_start_month          smallint not null default 4 check (year_start_month between 1 and 12),
-  term_name                 text not null default 'Autumn term 2026' check (trim(term_name) <> ''),
-  term_start                date,                                            -- filled in onboarding
   exam_terms                text[] not null default array['First Term Exam', 'Mid-Term Review', 'Final Semester']
                               check (cardinality(exam_terms) >= 1),
   school_days               smallint[] not null default array[1, 2, 3, 4, 5]::smallint[]   -- 0 = Sun ... 6 = Sat

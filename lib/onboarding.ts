@@ -38,7 +38,7 @@ export type FeePlan = "monthly" | "biannual" | "annual";
 
 export type Onboarding = {
   school: { name: string; principal: string };
-  calendar: { yearStartMonth: number; termName: string; termStart: string; examTerms: string[]; schoolDays: number[]; holidays: Holiday[] };
+  calendar: { yearStartMonth: number; examTerms: string[]; schoolDays: number[]; holidays: Holiday[] };
   timings: { start: string; end: string; periods: BellPeriod[] };
   grades: GradeSetup[];  subjects: SubjectSetup[];
   fees: { plans: FeePlan[]; dueDay: number; defaulterMonths: number };
@@ -90,8 +90,6 @@ export const defaults: Onboarding = {
   school: { name: "", principal: "" },
   calendar: {
     yearStartMonth: 4,
-    termName: "Autumn term 2026",
-    termStart: "2026-08-03",
     examTerms: ["First Term Exam", "Mid-Term Review", "Final Semester"],
     schoolDays: [1, 2, 3, 4, 5],
     holidays: [
@@ -150,8 +148,6 @@ export function validateStep(key: StepKey, d: Onboarding): Errors {
     if (d.school.principal.trim().length < 3) e["ob-principal"] = "Enter the principal's full name.";
   }
   if (key === "calendar") {
-    if (!d.calendar.termName.trim()) e["ob-term"] = "Name the current term.";
-    if (!d.calendar.termStart) e["ob-term-start"] = "Pick the date the term started.";
     if (!d.calendar.examTerms.some((t) => t.trim())) e["ob-exam-0"] = "Add at least one exam term.";
     if (!d.calendar.schoolDays.length) e["ob-days"] = "Pick at least one school day.";
     d.calendar.holidays.forEach((h) => {

@@ -55,13 +55,6 @@ export function CalendarStep({ d, set, errors }: StepProps) {
         </SelectField>
       </Block>
 
-      <Block title="Current term" hint="Attendance rates are counted from the term's start date.">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <TextField id="ob-term" label="Term name" placeholder="e.g. Autumn term 2026" value={c.termName} error={errors["ob-term"]} onChange={(e) => put({ termName: e.target.value })} />
-          <TextField id="ob-term-start" label="Term started on" type="date" value={c.termStart} error={errors["ob-term-start"]} onChange={(e) => put({ termStart: e.target.value })} />
-        </div>
-      </Block>
-
       <Block title="Exam terms" hint="Teachers fill one report card per student for each exam term." action={<AddButton onClick={() => put({ examTerms: [...c.examTerms, ""] })}>Add exam term</AddButton>}>
         <ol className="grid gap-2.5">
           {c.examTerms.map((t, i) => (
@@ -394,10 +387,6 @@ export function ReviewStep({ d, onEdit }: { d: Onboarding; onEdit: (k: StepKey) 
         "calendar",
         <>
           <Row label="Academic year">{monthNames[c.yearStartMonth - 1]} to {monthNames[(c.yearStartMonth + 10) % 12]}</Row>
-          <Row label="Current term">
-            {orMissing(c.termName)}
-            {c.termStart ? `, from ${shortDay(c.termStart)}` : <>, start date {missing}</>}
-          </Row>
           <Row label="Exam terms">{examTerms.length ? examTerms.join(", ") : missing}</Row>
           <Row label="School days">{days.length ? days.join(", ") : missing}</Row>
           <Row label="Holidays and breaks">{c.holidays.length ? c.holidays.map((h) => `${h.name} (${h.from === h.to ? shortDay(h.from) : `${shortDay(h.from)} to ${shortDay(h.to)}`})`).join(", ") : "None"}</Row>
