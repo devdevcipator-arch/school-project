@@ -95,22 +95,22 @@ export async function saveTimingsStep(t: Onboarding["timings"]): Promise<string 
   return null;
 }
 
-/** Step 4 values stored for the signed-in principal (classes table), or null if none saved yet. */
+/** Step 4 values stored for the signed-in principal (classes table, one row per grade), or null if none saved yet. */
 export async function loadClassesStep(): Promise<Onboarding["grades"] | null> {
   const { data, error } = await supabase.from("school").select("grades").maybeSingle();
-  if (error || !data?.grades) return null;
-  const { data: c } = await supabase.from("classes").select("*").eq("id", data.grades).maybeSingle();
-  if (!c) return null;
+  if (error || !data?.grades?.length) return null;
+  const { data: rows } = await supabase.from("classes").select("grade, sections").in("id", data.grades);
+  if (!rows?.length) return null;
   return Array.from({ length: 10 }, (_, i) => {
-    const sections: string[] = c[`grade_${i + 1}`] ?? [];
+    const sections: string[] = rows.find((r) => r.grade === i + 1)?.sections ?? [];
     return { grade: i + 1, on: sections.length > 0, sections: Math.max(1, sections.length) };
   });
 }
 
 /**
- * Saves step 4 (Classes) in one call (public.save_classes): the school's row in the classes table
- * (grade_1 ... grade_10, each the list of that grade's sections, e.g. ["1-A", "1-B"]; empty = not offered),
- * and school.grades pointing at that row. Returns an error message, or null on success.
+ * Saves step 4 (Classes) in one call (public.save_classes): one classes row per grade (1 to 10) with
+ * its sections, e.g. ["1-A", "1-B"] (empty = not offered; subjects already on a row are kept),
+ * and school.grades as the list of those rows. Returns an error message, or null on success.
  */
 export async function saveClassesStep(grades: Onboarding["grades"]): Promise<string | null> {
   const { data: auth } = await supabase.auth.getUser();
