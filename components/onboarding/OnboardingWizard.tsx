@@ -6,7 +6,7 @@ import { Logo } from "@/components/layout/Logo";
 import { Spinner } from "@/components/auth/fields";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon, iconPaths } from "@/components/ui/Icon";
-import { defaults, loadCalendarStep, loadSchoolStep, loadTimingsStep, saveCalendarStep, saveSchoolStep, saveSettings, saveTimingsStep, sectionTotal, steps, validateStep, type Errors, type Onboarding, type StepKey } from "@/lib/onboarding";
+import { defaults, loadCalendarStep, loadClassesStep, loadSchoolStep, loadTimingsStep, saveCalendarStep, saveClassesStep, saveSchoolStep, saveSettings, saveTimingsStep, sectionTotal, steps, validateStep, type Errors, type Onboarding, type StepKey } from "@/lib/onboarding";
 import { CalendarStep, ClassesStep, FeesStep, PoliciesStep, ReviewStep, SchoolStep, SubjectsStep, TimingsStep, type StepProps } from "./steps";
 
 // Front-end phase: the draft is kept in this browser so a refresh does not lose progress.
@@ -80,6 +80,11 @@ export default function OnboardingWizard() {
       loadTimingsStep().then((t) => {
         if (t) setData((d) => ({ ...d, timings: t }));
       });
+    // Same for the Classes step.
+    if (!hasDraft)
+      loadClassesStep().then((g) => {
+        if (g) setData((d) => ({ ...d, grades: g }));
+      });
   }, []);
 
   useEffect(() => {
@@ -122,16 +127,22 @@ export default function OnboardingWizard() {
 
   // Navigation lock removed for now: Continue moves on even if this step is incomplete.
   // Finish setup still checks every step.
-  // Exception: the School, Calendar and Timings steps are saved to the database, so they must be valid first.
+  // Exception: the School, Calendar, Timings and Classes steps are saved to the database, so they must be valid first.
   // Until Continue is pressed, edits live only in React state (plus the local draft).
   const next = async () => {
-    if (key === "school" || key === "calendar" || key === "timings") {
+    if (key === "school" || key === "calendar" || key === "timings" || key === "classes") {
       const found = validateStep(key, data);
       if (Object.keys(found).length) return showErrors(step, found);
       setAdvancing(true);
       setSaveError("");
       const err =
-        key === "school" ? await saveSchoolStep(data.school) : key === "calendar" ? await saveCalendarStep(data.calendar) : await saveTimingsStep(data.timings);
+        key === "school"
+          ? await saveSchoolStep(data.school)
+          : key === "calendar"
+            ? await saveCalendarStep(data.calendar)
+            : key === "timings"
+              ? await saveTimingsStep(data.timings)
+              : await saveClassesStep(data.grades);
       setAdvancing(false);
       if (err) return setSaveError(err);
     }

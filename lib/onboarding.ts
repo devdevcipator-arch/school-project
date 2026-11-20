@@ -95,6 +95,33 @@ export async function saveTimingsStep(t: Onboarding["timings"]): Promise<string 
   return null;
 }
 
+/** Step 4 values stored for the signed-in principal (classes table), or null if none saved yet. */
+export async function loadClassesStep(): Promise<Onboarding["grades"] | null> {
+  const { data, error } = await supabase.from("school").select("grades").maybeSingle();
+  if (error || !data?.grades) return null;
+  const { data: c } = await supabase.from("classes").select("*").eq("id", data.grades).maybeSingle();
+  if (!c) return null;
+  return Array.from({ length: 10 }, (_, i) => {
+    const sections: string[] = c[`grade_${i + 1}`] ?? [];
+    return { grade: i + 1, on: sections.length > 0, sections: Math.max(1, sections.length) };
+  });
+}
+
+/**
+ * Saves step 4 (Classes) in one call (public.save_classes): the school's row in the classes table
+ * (grade_1 ... grade_10, each the list of that grade's sections, e.g. ["1-A", "1-B"]; empty = not offered),
+ * and school.grades pointing at that row. Returns an error message, or null on success.
+ */
+export async function saveClassesStep(grades: Onboarding["grades"]): Promise<string | null> {
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return "Your session has expired. Please log in again.";
+  const p_grades = Object.fromEntries(grades.map((g) => [String(g.grade), g.on ? sectionLetters(g.sections).map((l) => `${g.grade}-${l}`) : []]));
+  const { error } = await supabase.rpc("save_classes", { p_grades });
+  if (error?.code === "P0002") return "No school is linked to this account yet. Please contact support.";
+  if (error) return "Could not save your classes. Please try again.";
+  return null;
+}
+
 export type Holiday = { id: string; name: string; from: string; to: string };
 export type BellPeriod = { id: string; label: string; start: string; end: string; isBreak: boolean };
 export type GradeSetup = { grade: number; on: boolean; sections: number };
