@@ -122,6 +122,37 @@ export async function saveClassesStep(grades: Onboarding["grades"]): Promise<str
   return null;
 }
 
+/** Step 5 subjects rebuilt from the classes table (classes.subjects per grade), or null if none saved yet. */
+export async function loadSubjectsStep(): Promise<Onboarding["subjects"] | null> {
+  const { data, error } = await supabase.from("school").select("grades").maybeSingle();
+  if (error || !data?.grades?.length) return null;
+  const { data: rows } = await supabase.from("classes").select("grade, subjects").in("id", data.grades).order("grade");
+  const names = [...new Set((rows ?? []).flatMap((r) => (r.subjects ?? []) as string[]))];
+  if (!names.length) return null;
+  return names.map((name) => ({
+    id: uid("sub"),
+    name,
+    skip: (rows ?? []).filter((r) => !(r.subjects ?? []).includes(name)).map((r) => r.grade as number),
+  }));
+}
+
+/**
+ * Saves step 5 (Subjects) in one call (public.save_subjects): each grade's row in the classes table
+ * gets the list of subjects taught in that grade (grades that are turned off get none).
+ * Returns an error message, or null on success.
+ */
+export async function saveSubjectsStep(d: Onboarding): Promise<string | null> {
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return "Your session has expired. Please log in again.";
+  const p_subjects = Object.fromEntries(
+    Array.from({ length: 10 }, (_, i) => [String(i + 1), d.subjects.filter((s) => subjectGrades(d, s).includes(i + 1)).map((s) => s.name.trim())]),
+  );
+  const { error } = await supabase.rpc("save_subjects", { p_subjects });
+  if (error?.code === "P0002") return "No school is linked to this account yet. Please contact support.";
+  if (error) return "Could not save your subjects. Please try again.";
+  return null;
+}
+
 export type Holiday = { id: string; name: string; from: string; to: string };
 export type BellPeriod = { id: string; label: string; start: string; end: string; isBreak: boolean };
 export type GradeSetup = { grade: number; on: boolean; sections: number };
