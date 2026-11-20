@@ -63,6 +63,38 @@ export async function saveCalendarStep(c: Onboarding["calendar"]): Promise<strin
   return null;
 }
 
+/** Step 3 values stored for the signed-in principal (school hours + periods table), or null if none saved yet. */
+export async function loadTimingsStep(): Promise<Onboarding["timings"] | null> {
+  const { data, error } = await supabase.from("school").select("id, start_time, end_time, periods").maybeSingle();
+  if (error || !data || !data.periods?.length) return null;
+  const { data: rows } = await supabase.from("periods").select("id, title, start_time, end_time").eq("school", data.id).order("start_time");
+  const hm = (t: string) => t.slice(0, 5);
+  return {
+    start: hm(data.start_time),
+    end: hm(data.end_time),
+    periods: (rows ?? []).map((p) => ({ id: p.id, label: p.title, start: hm(p.start_time), end: hm(p.end_time), isBreak: /break/i.test(p.title) })),
+  };
+}
+
+/**
+ * Saves step 3 (Timings) in one transaction (public.save_timings):
+ * school.start_time, school.end_time, the school's rows in the periods table,
+ * and school.periods (the list of those period rows).
+ * Returns an error message, or null on success.
+ */
+export async function saveTimingsStep(t: Onboarding["timings"]): Promise<string | null> {
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return "Your session has expired. Please log in again.";
+  const { error } = await supabase.rpc("save_timings", {
+    p_start_time: t.start,
+    p_end_time: t.end,
+    p_periods: t.periods.map((p) => ({ title: p.label.trim(), start_time: p.start, end_time: p.end })),
+  });
+  if (error?.code === "P0002") return "No school is linked to this account yet. Please contact support.";
+  if (error) return "Could not save your timings. Please try again.";
+  return null;
+}
+
 export type Holiday = { id: string; name: string; from: string; to: string };
 export type BellPeriod = { id: string; label: string; start: string; end: string; isBreak: boolean };
 export type GradeSetup = { grade: number; on: boolean; sections: number };
