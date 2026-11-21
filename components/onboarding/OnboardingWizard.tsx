@@ -255,18 +255,7 @@ export default function OnboardingWizard() {
           </div>
 
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-            {step > 0 ? (
-              <button
-                type="button"
-                onClick={() => go(step - 1)}
-                className="inline-flex cursor-pointer items-center gap-2 rounded-[10px] border border-ink/12 bg-white px-5 py-3 text-[.95rem] font-semibold transition-[border-color,color,translate] duration-300 hover:-translate-y-0.5 hover:border-accent hover:text-primary"
-              >
-                <svg viewBox="0 0 20 20" aria-hidden className="size-4"><path d="M16 10H5M9 5l-5 5 5 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                Back
-              </button>
-            ) : (
-              <span />
-            )}
+            <span />
             {last ? (
               <button type="button" onClick={finish} disabled={status === "saving"} className={buttonClass("primary", "lg", "cursor-pointer disabled:cursor-wait disabled:opacity-90 max-sm:w-full")}>
                 {status === "saving" ? (
