@@ -153,7 +153,28 @@ export async function saveSubjectsStep(d: Onboarding): Promise<string | null> {
   return null;
 }
 
-export type Holiday = { id: string; name: string; from: string; to: string };
+/** Step 6 values stored for the signed-in principal (school.fee_due_day, school.defaulter_months), or null if none. */
+export async function loadFeesStep(): Promise<Pick<Onboarding["fees"], "dueDay" | "defaulterMonths"> | null> {
+  const { data, error } = await supabase.from("school").select("fee_due_day, defaulter_months").maybeSingle();
+  if (error || !data) return null;
+  return { dueDay: data.fee_due_day, defaulterMonths: data.defaulter_months };
+}
+
+/** Saves step 6 (Fees) into the principal's school row. Returns an error message, or null on success. */
+export async function saveFeesStep(f: Onboarding["fees"]): Promise<string | null> {
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return "Your session has expired. Please log in again.";
+  const { data, error } = await supabase
+    .from("school")
+    .update({ fee_due_day: f.dueDay, defaulter_months: f.defaulterMonths })
+    .eq("principal", auth.user.id)
+    .select("id");
+  if (error) return "Could not save your fee rules. Please try again.";
+  if (!data?.length) return "No school is linked to this account yet. Please contact support.";
+  return null;
+}
+
+export type Holiday ={ id: string; name: string; from: string; to: string };
 export type BellPeriod = { id: string; label: string; start: string; end: string; isBreak: boolean };
 export type GradeSetup = { grade: number; on: boolean; sections: number };
 export type SubjectSetup = { id: string; name: string; skip: number[] };

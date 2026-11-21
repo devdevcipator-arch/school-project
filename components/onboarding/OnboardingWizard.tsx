@@ -6,7 +6,7 @@ import { Logo } from "@/components/layout/Logo";
 import { Spinner } from "@/components/auth/fields";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon, iconPaths } from "@/components/ui/Icon";
-import { defaults, loadCalendarStep, loadClassesStep, loadSchoolStep, loadSubjectsStep, loadTimingsStep, saveCalendarStep, saveClassesStep, saveSchoolStep, saveSettings, saveSubjectsStep, saveTimingsStep, sectionTotal, steps, validateStep, type Errors, type Onboarding, type StepKey } from "@/lib/onboarding";
+import { defaults, loadCalendarStep, loadClassesStep, loadFeesStep, loadSchoolStep, loadSubjectsStep, loadTimingsStep, saveCalendarStep, saveClassesStep, saveFeesStep, saveSchoolStep, saveSettings, saveSubjectsStep, saveTimingsStep, sectionTotal, steps, validateStep, type Errors, type Onboarding, type StepKey } from "@/lib/onboarding";
 import { CalendarStep, ClassesStep, FeesStep, PoliciesStep, ReviewStep, SchoolStep, SubjectsStep, TimingsStep, type StepProps } from "./steps";
 
 // Front-end phase: the draft is kept in this browser so a refresh does not lose progress.
@@ -90,6 +90,11 @@ export default function OnboardingWizard() {
       loadSubjectsStep().then((s) => {
         if (s) setData((d) => ({ ...d, subjects: s }));
       });
+    // Same for the Fees step (due day and defaulter rule).
+    if (!hasDraft)
+      loadFeesStep().then((f) => {
+        if (f) setData((d) => ({ ...d, fees: { ...d.fees, ...f } }));
+      });
   }, []);
 
   useEffect(() => {
@@ -132,10 +137,10 @@ export default function OnboardingWizard() {
 
   // Navigation lock removed for now: Continue moves on even if this step is incomplete.
   // Finish setup still checks every step.
-  // Exception: the School, Calendar, Timings, Classes and Subjects steps are saved to the database, so they must be valid first.
+  // Exception: the School, Calendar, Timings, Classes, Subjects and Fees steps are saved to the database, so they must be valid first.
   // Until Continue is pressed, edits live only in React state (plus the local draft).
   const next = async () => {
-    if (key === "school" || key === "calendar" || key === "timings" || key === "classes" || key === "subjects") {
+    if (key === "school" || key === "calendar" || key === "timings" || key === "classes" || key === "subjects" || key === "fees") {
       const found = validateStep(key, data);
       if (Object.keys(found).length) return showErrors(step, found);
       setAdvancing(true);
@@ -149,7 +154,9 @@ export default function OnboardingWizard() {
               ? await saveTimingsStep(data.timings)
               : key === "classes"
                 ? await saveClassesStep(data.grades)
-                : await saveSubjectsStep(data);
+                : key === "subjects"
+                  ? await saveSubjectsStep(data)
+                  : await saveFeesStep(data.fees);
       setAdvancing(false);
       if (err) return setSaveError(err);
     }
