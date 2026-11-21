@@ -44,6 +44,8 @@ export default function OnboardingWizard() {
   const [advancing, setAdvancing] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [loaded, setLoaded] = useState(false);
+  // True while a step is reopened from Review's Edit button: Continue then saves and returns to Review.
+  const [fromReview, setFromReview] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
 
   // Restore a saved draft after mount (the server render always starts from the defaults).
@@ -136,6 +138,7 @@ export default function OnboardingWizard() {
 
   // Navigation lock: forward only. Continue stays disabled until the current step is filled in,
   // and the step rail is display-only (no going back to a previous step, no skipping ahead).
+  // The one way back is Review's Edit button, which reopens that step and returns to Review on save.
   // Each step is saved to the database on Continue; until then edits live only in React state (plus the local draft).
   const pending = last ? [] : Object.values(validateStep(key, data));
   const incomplete = pending.length > 0;
@@ -159,6 +162,10 @@ export default function OnboardingWizard() {
                   : await savePoliciesStep(data.fees, data.policies);
       setAdvancing(false);
       if (err) return setSaveError(err);
+    }
+    if (fromReview) {
+      setFromReview(false);
+      return go(steps.length - 1);
     }
     setFurthest((f) => Math.max(f, step + 1));
     go(step + 1);
@@ -255,7 +262,13 @@ export default function OnboardingWizard() {
             <p className="mt-1.5 text-ink/65">{intro[key].text}</p>
 
             <div className="mt-7 rounded-[22px] border border-ink/10 bg-white p-5 shadow-[0_20px_50px_rgba(6,30,41,.08)] sm:p-8">
-              {Form ? <Form d={data} set={set} errors={errors} /> : <ReviewStep d={data} />}
+              {Form ? <Form d={data} set={set} errors={errors} /> : <ReviewStep
+                  d={data}
+                  onEdit={(k) => {
+                    setFromReview(true);
+                    go(steps.findIndex((s) => s.key === k));
+                  }}
+                />}
             </div>
           </div>
 
@@ -287,7 +300,7 @@ export default function OnboardingWizard() {
                 className={buttonClass("primary", "lg", `cursor-pointer max-sm:w-full ${incomplete ? "disabled:cursor-not-allowed disabled:opacity-45" : "disabled:cursor-wait disabled:opacity-90"}`)}
               >
                 {advancing && <Spinner />}
-                {advancing ? "Saving..." : "Continue"}
+                {advancing ? "Saving..." : fromReview ? "Save and return to review" : "Continue"}
                 <svg viewBox="0 0 20 20" aria-hidden className="size-4"><path d="M4 10h11M11 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </button>
             )}
