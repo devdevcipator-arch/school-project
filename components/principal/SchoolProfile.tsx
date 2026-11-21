@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Spinner } from "@/components/auth/fields";
 import { pillClass, useSlidingPill } from "@/components/motion/useSlidingPill";
-import { CalendarStep, ClassesStep, FeesStep, PoliciesStep, SchoolStep, SubjectsStep, TimingsStep, type StepProps } from "@/components/onboarding/steps";
+import { CalendarStep, ClassesStep, PoliciesStep, SchoolStep, SubjectsStep, TimingsStep, type StepProps } from "@/components/onboarding/steps";
 import { buttonClass } from "@/components/ui/Button";
 import { defaults, formSteps, loadSettings, saveSettings, validateStep, type Errors, type Onboarding, type StepKey } from "@/lib/onboarding";
 import { principal } from "@/lib/principal";
@@ -16,7 +16,6 @@ const forms: Partial<Record<StepKey, (p: StepProps) => React.ReactNode>> = {
   timings: TimingsStep,
   classes: ClassesStep,
   subjects: SubjectsStep,
-  fees: FeesStep,
   policies: PoliciesStep,
 };
 
@@ -26,8 +25,7 @@ const intro: Partial<Record<StepKey, string>> = {
   timings: "Used for teacher check-ins and the student timetable.",
   classes: "The grades you teach and how many sections each one has.",
   subjects: "What is taught and in which grades.",
-  fees: "How installments are planned and when a student counts as late or a defaulter.",
-  policies: "The thresholds that flag students and classes.",
+  policies: "When a student counts as late or a fee defaulter, and the attendance thresholds that flag students and classes.",
 };
 
 // Before onboarding has been finished on this device, start from the onboarding defaults with the signed-in school.

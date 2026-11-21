@@ -195,8 +195,7 @@ export const steps = [
   { key: "timings", label: "Timings", hint: "School hours and periods" },
   { key: "classes", label: "Classes", hint: "Grades and sections" },
   { key: "subjects", label: "Subjects", hint: "Subjects and grades" },
-  { key: "fees", label: "Fees", hint: "Plans and due dates" },
-  { key: "policies", label: "Policies", hint: "Attendance thresholds" },
+  { key: "policies", label: "Policies", hint: "Fee rules and attendance" },
   { key: "review", label: "Review", hint: "Check and finish" },
 ] as const;
 export type StepKey = (typeof steps)[number]["key"];

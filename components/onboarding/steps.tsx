@@ -264,17 +264,20 @@ export function SubjectsStep({ d, set, errors }: StepProps) {
   );
 }
 
-/* ---------------- 6. Fees ---------------- */
+/* ---------------- 6. Policies (fee rules + attendance thresholds) ---------------- */
 
-export function FeesStep({ d, set }: StepProps) {
+export function PoliciesStep({ d, set }: StepProps) {
   const f = d.fees;
-  const put = (patch: Partial<Onboarding["fees"]>) => set((x) => ({ ...x, fees: { ...x.fees, ...patch } }));
+  const putFees = (patch: Partial<Onboarding["fees"]>) => set((x) => ({ ...x, fees: { ...x.fees, ...patch } }));
+  const p = d.policies;
+  const put = (patch: Partial<Onboarding["policies"]>) => set((x) => ({ ...x, policies: { ...x.policies, ...patch } }));
+  const pct = (v: string) => Math.max(0, Math.min(100, Math.round(Number(v) || 0)));
   return (
     <div className="grid gap-7">
       <Block title="Due date and defaulters">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <SelectField id="ob-due" label="Fees fall due on" value={f.dueDay} onChange={(v) => put({ dueDay: Number(v) })}>
+            <SelectField id="ob-due" label="Fees fall due on" value={f.dueDay} onChange={(v) => putFees({ dueDay: Number(v) })}>
               {Array.from({ length: 28 }, (_, i) => i + 1).map((n) => (
                 <option key={n} value={n}>Day {n} of the month</option>
               ))}
@@ -282,7 +285,7 @@ export function FeesStep({ d, set }: StepProps) {
             <p className="pt-1.5 text-[.8rem] text-ink/55">Paid after this day counts as late.</p>
           </div>
           <div>
-            <SelectField id="ob-defaulter" label="Mark as defaulter after" value={f.defaulterMonths} onChange={(v) => put({ defaulterMonths: Number(v) })}>
+            <SelectField id="ob-defaulter" label="Mark as defaulter after" value={f.defaulterMonths} onChange={(v) => putFees({ defaulterMonths: Number(v) })}>
               {[1, 2, 3, 4, 5, 6].map((n) => (
                 <option key={n} value={n}>{n} unpaid {n === 1 ? "month" : "months"}</option>
               ))}
@@ -291,18 +294,7 @@ export function FeesStep({ d, set }: StepProps) {
           </div>
         </div>
       </Block>
-    </div>
-  );
-}
 
-/* ---------------- 7. Policies ---------------- */
-
-export function PoliciesStep({ d, set }: StepProps) {
-  const p = d.policies;
-  const put = (patch: Partial<Onboarding["policies"]>) => set((x) => ({ ...x, policies: { ...x.policies, ...patch } }));
-  const pct = (v: string) => Math.max(0, Math.min(100, Math.round(Number(v) || 0)));
-  return (
-    <div className="grid gap-7">
       <Block title="Attendance thresholds">
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField id="ob-att-student" label="Student attendance defaulter below (%)" type="number" min={0} max={100} value={p.studentAttendanceBelow} onChange={(e) => put({ studentAttendanceBelow: pct(e.target.value) })} note="Students under this term rate are flagged." />
@@ -313,7 +305,7 @@ export function PoliciesStep({ d, set }: StepProps) {
   );
 }
 
-/* ---------------- 8. Review ---------------- */
+/* ---------------- 7. Review ---------------- */
 
 const missing = <span className="font-semibold text-danger">Not filled in</span>;
 /** Shows the value, or a red "Not filled in" when it is blank (steps can now be skipped). */
@@ -404,15 +396,10 @@ export function ReviewStep({ d, onEdit }: { d: Onboarding; onEdit: (k: StepKey) 
         ),
       )}
       {card(
-        "fees",
-        <>
-          <Row label="Due date">Day {d.fees.dueDay} of each month</Row>
-          <Row label="Defaulter after">{d.fees.defaulterMonths} unpaid {d.fees.defaulterMonths === 1 ? "month" : "months"}</Row>
-        </>,
-      )}
-      {card(
         "policies",
         <>
+          <Row label="Fee due date">Day {d.fees.dueDay} of each month</Row>
+          <Row label="Fee defaulter after">{d.fees.defaulterMonths} unpaid {d.fees.defaulterMonths === 1 ? "month" : "months"}</Row>
           <Row label="Student attendance">Defaulter below {d.policies.studentAttendanceBelow}%</Row>
           <Row label="Class attendance">Flagged below {d.policies.classAttendanceBelow}%</Row>
         </>,

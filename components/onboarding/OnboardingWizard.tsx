@@ -7,7 +7,7 @@ import { Spinner } from "@/components/auth/fields";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon, iconPaths } from "@/components/ui/Icon";
 import { defaults, loadCalendarStep, loadClassesStep, loadFeesStep, loadSchoolStep, loadSubjectsStep, loadTimingsStep, saveCalendarStep, saveClassesStep, saveFeesStep, saveSchoolStep, saveSettings, saveSubjectsStep, saveTimingsStep, sectionTotal, steps, validateStep, type Errors, type Onboarding, type StepKey } from "@/lib/onboarding";
-import { CalendarStep, ClassesStep, FeesStep, PoliciesStep, ReviewStep, SchoolStep, SubjectsStep, TimingsStep, type StepProps } from "./steps";
+import { CalendarStep, ClassesStep, PoliciesStep, ReviewStep, SchoolStep, SubjectsStep, TimingsStep, type StepProps } from "./steps";
 
 // Front-end phase: the draft is kept in this browser so a refresh does not lose progress.
 // Replace with the onboarding API in the backend phase.
@@ -20,8 +20,7 @@ const intro: Record<StepKey, { title: string; text: string }> = {
   timings: { title: "School hours and periods", text: "Used for teacher check-ins and the student timetable." },
   classes: { title: "Grades and sections", text: "Pick the grades you teach and how many sections each one has." },
   subjects: { title: "Subjects", text: "What is taught and in which grades." },
-  fees: { title: "Fee rules", text: "How installments are planned and when a student counts as late or a defaulter." },
-  policies: { title: "Attendance", text: "The thresholds that flag students and classes." },
+  policies: { title: "Policies", text: "When a student counts as late or a fee defaulter, and the attendance thresholds that flag students and classes." },
   review: { title: "Review and finish", text: "Check everything once. You can change these settings later." },
 };
 
@@ -31,7 +30,6 @@ const forms: Partial<Record<StepKey, (p: StepProps) => React.ReactNode>> = {
   timings: TimingsStep,
   classes: ClassesStep,
   subjects: SubjectsStep,
-  fees: FeesStep,
   policies: PoliciesStep,
 };
 
@@ -58,8 +56,9 @@ export default function OnboardingWizard() {
         const saved = JSON.parse(raw) as Saved;
         // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time restore of browser-only state
         setData({ ...defaults, ...saved.data });
-        setStep(saved.step);
-        setFurthest(saved.furthest);
+        // Clamp: a draft saved before the Fees step was merged into Policies can point past the last step.
+        setStep(Math.min(saved.step, steps.length - 1));
+        setFurthest(Math.min(saved.furthest, steps.length - 1));
       }
     } catch {}
     setLoaded(true);
@@ -137,10 +136,10 @@ export default function OnboardingWizard() {
 
   // Navigation lock removed for now: Continue moves on even if this step is incomplete.
   // Finish setup still checks every step.
-  // Exception: the School, Calendar, Timings, Classes, Subjects and Fees steps are saved to the database, so they must be valid first.
+  // Exception: the School, Calendar, Timings, Classes, Subjects and Policies (fee rules) steps are saved to the database, so they must be valid first.
   // Until Continue is pressed, edits live only in React state (plus the local draft).
   const next = async () => {
-    if (key === "school" || key === "calendar" || key === "timings" || key === "classes" || key === "subjects" || key === "fees") {
+    if (key === "school" || key === "calendar" || key === "timings" || key === "classes" || key === "subjects" || key === "policies") {
       const found = validateStep(key, data);
       if (Object.keys(found).length) return showErrors(step, found);
       setAdvancing(true);
