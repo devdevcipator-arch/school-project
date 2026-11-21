@@ -134,12 +134,11 @@ export default function OnboardingWizard() {
     requestAnimationFrame(() => document.getElementById(Object.keys(found)[0])?.focus());
   };
 
-  // Navigation lock: Continue stays disabled until the current step is filled in, and the step rail
-  // only opens steps already reached through Continue (and only while every step before them is valid).
+  // Navigation lock: forward only. Continue stays disabled until the current step is filled in,
+  // and the step rail is display-only (no going back to a previous step, no skipping ahead).
   // Each step is saved to the database on Continue; until then edits live only in React state (plus the local draft).
   const pending = last ? [] : Object.values(validateStep(key, data));
   const incomplete = pending.length > 0;
-  const reachable = (i: number) => i <= step || (i <= furthest && !firstInvalid(i - 1));
 
   const next = async () => {
     if (incomplete) return;
@@ -199,16 +198,10 @@ export default function OnboardingWizard() {
               {steps.map((s, i) => {
                 // Completed = passed with Continue and still filled in correctly.
                 const done = i < furthest && i !== step && !Object.keys(validateStep(s.key, data)).length;
-                const open = reachable(i);
+                const open = i <= step;
                 return (
                   <li key={s.key} style={{ height: RAIL_ITEM }}>
-                    <button
-                      type="button"
-                      disabled={!open}
-                      onClick={() => go(i)}
-                      aria-current={i === step ? "step" : undefined}
-                      className="relative flex h-full w-full cursor-pointer items-center gap-3 rounded-xl px-3 text-left disabled:cursor-default"
-                    >
+                    <div aria-current={i === step ? "step" : undefined} className="relative flex h-full w-full items-center gap-3 rounded-xl px-3">
                       <span
                         className={`grid size-8 shrink-0 place-items-center rounded-full text-[.8rem] font-bold transition-colors duration-300 ${
                           i === step ? "bg-linear-135 from-primary to-accent text-surface" : done ? "bg-accent text-ink" : "border border-surface/20 text-surface/50"
@@ -229,7 +222,7 @@ export default function OnboardingWizard() {
                         </span>
                         <span className="block truncate text-[.76rem] text-surface/50">{s.hint}</span>
                       </span>
-                    </button>
+                    </div>
                   </li>
                 );
               })}
@@ -262,7 +255,7 @@ export default function OnboardingWizard() {
             <p className="mt-1.5 text-ink/65">{intro[key].text}</p>
 
             <div className="mt-7 rounded-[22px] border border-ink/10 bg-white p-5 shadow-[0_20px_50px_rgba(6,30,41,.08)] sm:p-8">
-              {Form ? <Form d={data} set={set} errors={errors} /> : <ReviewStep d={data} onEdit={(k) => go(steps.findIndex((s) => s.key === k))} />}
+              {Form ? <Form d={data} set={set} errors={errors} /> : <ReviewStep d={data} />}
             </div>
           </div>
 

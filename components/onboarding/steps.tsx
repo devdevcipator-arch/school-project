@@ -320,7 +320,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-export function ReviewStep({ d, onEdit }: { d: Onboarding; onEdit: (k: StepKey) => void }) {
+export function ReviewStep({ d }: { d: Onboarding }) {
   const c = d.calendar;
   const days = weekdays.filter((w) => c.schoolDays.includes(w.n)).map((w) => w.short);
   const examTerms = c.examTerms.filter((t) => t.trim());
@@ -337,9 +337,6 @@ export function ReviewStep({ d, onEdit }: { d: Onboarding; onEdit: (k: StepKey) 
               </span>
             )}
           </div>
-          <button type="button" onClick={() => onEdit(key)} className="cursor-pointer rounded-lg px-2.5 py-1 text-[.84rem] font-semibold text-primary transition-colors hover:bg-primary/8">
-            {issues ? "Fix" : "Edit"}
-          </button>
         </div>
         <dl className="divide-y divide-ink/8">{rows}</dl>
       </section>
