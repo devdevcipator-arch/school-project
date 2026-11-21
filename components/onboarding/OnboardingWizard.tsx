@@ -6,7 +6,7 @@ import { Logo } from "@/components/layout/Logo";
 import { Spinner } from "@/components/auth/fields";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon, iconPaths } from "@/components/ui/Icon";
-import { defaults, loadCalendarStep, loadClassesStep, loadFeesStep, loadSchoolStep, loadSubjectsStep, loadTimingsStep, saveCalendarStep, saveClassesStep, saveFeesStep, saveSchoolStep, saveSettings, saveSubjectsStep, saveTimingsStep, sectionTotal, steps, validateStep, type Errors, type Onboarding, type StepKey } from "@/lib/onboarding";
+import { defaults, loadCalendarStep, loadClassesStep, loadPoliciesStep, loadSchoolStep, loadSubjectsStep, loadTimingsStep, saveCalendarStep, saveClassesStep, savePoliciesStep, saveSchoolStep, saveSettings, saveSubjectsStep, saveTimingsStep, sectionTotal, steps, validateStep, type Errors, type Onboarding, type StepKey } from "@/lib/onboarding";
 import { CalendarStep, ClassesStep, PoliciesStep, ReviewStep, SchoolStep, SubjectsStep, TimingsStep, type StepProps } from "./steps";
 
 // Front-end phase: the draft is kept in this browser so a refresh does not lose progress.
@@ -89,10 +89,10 @@ export default function OnboardingWizard() {
       loadSubjectsStep().then((s) => {
         if (s) setData((d) => ({ ...d, subjects: s }));
       });
-    // Same for the Fees step (due day and defaulter rule).
+    // Same for the Policies step (fee rules and attendance thresholds).
     if (!hasDraft)
-      loadFeesStep().then((f) => {
-        if (f) setData((d) => ({ ...d, fees: { ...d.fees, ...f } }));
+      loadPoliciesStep().then((p) => {
+        if (p) setData((d) => ({ ...d, fees: { ...d.fees, ...p.fees }, policies: p.policies }));
       });
   }, []);
 
@@ -136,7 +136,7 @@ export default function OnboardingWizard() {
 
   // Navigation lock removed for now: Continue moves on even if this step is incomplete.
   // Finish setup still checks every step.
-  // Exception: the School, Calendar, Timings, Classes, Subjects and Policies (fee rules) steps are saved to the database, so they must be valid first.
+  // Exception: the School, Calendar, Timings, Classes, Subjects and Policies steps are saved to the database, so they must be valid first.
   // Until Continue is pressed, edits live only in React state (plus the local draft).
   const next = async () => {
     if (key === "school" || key === "calendar" || key === "timings" || key === "classes" || key === "subjects" || key === "policies") {
@@ -155,7 +155,7 @@ export default function OnboardingWizard() {
                 ? await saveClassesStep(data.grades)
                 : key === "subjects"
                   ? await saveSubjectsStep(data)
-                  : await saveFeesStep(data.fees);
+                  : await savePoliciesStep(data.fees, data.policies);
       setAdvancing(false);
       if (err) return setSaveError(err);
     }

@@ -153,23 +153,35 @@ export async function saveSubjectsStep(d: Onboarding): Promise<string | null> {
   return null;
 }
 
-/** Step 6 values stored for the signed-in principal (school.fee_due_day, school.defaulter_months), or null if none. */
-export async function loadFeesStep(): Promise<Pick<Onboarding["fees"], "dueDay" | "defaulterMonths"> | null> {
-  const { data, error } = await supabase.from("school").select("fee_due_day, defaulter_months").maybeSingle();
+/**
+ * Step 6 values stored for the signed-in principal, or null if none: fee rules
+ * (school.fee_due_day, school.defaulter_months) and attendance thresholds
+ * (school.student_attendance_below, school.class_attendance_below).
+ */
+export async function loadPoliciesStep(): Promise<{ fees: Pick<Onboarding["fees"], "dueDay" | "defaulterMonths">; policies: Onboarding["policies"] } | null> {
+  const { data, error } = await supabase.from("school").select("fee_due_day, defaulter_months, student_attendance_below, class_attendance_below").maybeSingle();
   if (error || !data) return null;
-  return { dueDay: data.fee_due_day, defaulterMonths: data.defaulter_months };
+  return {
+    fees: { dueDay: data.fee_due_day, defaulterMonths: data.defaulter_months },
+    policies: { studentAttendanceBelow: data.student_attendance_below, classAttendanceBelow: data.class_attendance_below },
+  };
 }
 
-/** Saves step 6 (Fees) into the principal's school row. Returns an error message, or null on success. */
-export async function saveFeesStep(f: Onboarding["fees"]): Promise<string | null> {
+/** Saves step 6 (Policies: fee rules + attendance thresholds) into the principal's school row. Returns an error message, or null on success. */
+export async function savePoliciesStep(f: Onboarding["fees"], p: Onboarding["policies"]): Promise<string | null> {
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return "Your session has expired. Please log in again.";
   const { data, error } = await supabase
     .from("school")
-    .update({ fee_due_day: f.dueDay, defaulter_months: f.defaulterMonths })
+    .update({
+      fee_due_day: f.dueDay,
+      defaulter_months: f.defaulterMonths,
+      student_attendance_below: p.studentAttendanceBelow,
+      class_attendance_below: p.classAttendanceBelow,
+    })
     .eq("principal", auth.user.id)
     .select("id");
-  if (error) return "Could not save your fee rules. Please try again.";
+  if (error) return "Could not save your policies. Please try again.";
   if (!data?.length) return "No school is linked to this account yet. Please contact support.";
   return null;
 }
