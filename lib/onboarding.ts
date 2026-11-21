@@ -301,7 +301,6 @@ export function validateStep(key: StepKey, d: Onboarding): Errors {
       seen.add(k);
     });
   }
-  if (key === "fees" && !d.fees.plans.length) e["ob-plan-monthly"] = "Offer at least one fee plan.";
   return e;
 }
 

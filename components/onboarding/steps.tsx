@@ -2,7 +2,6 @@
 
 import {
   ampm,
-  feePlans,
   monthNames,
   sectionLetters,
   sectionTotal,
@@ -267,29 +266,11 @@ export function SubjectsStep({ d, set, errors }: StepProps) {
 
 /* ---------------- 6. Fees ---------------- */
 
-export function FeesStep({ d, set, errors }: StepProps) {
+export function FeesStep({ d, set }: StepProps) {
   const f = d.fees;
   const put = (patch: Partial<Onboarding["fees"]>) => set((x) => ({ ...x, fees: { ...x.fees, ...patch } }));
   return (
     <div className="grid gap-7">
-      <Block title="Installment plans offered" hint="Each student follows one of these plans per academic year.">
-        <div id="ob-plan-monthly" tabIndex={-1} className="grid gap-3 outline-none sm:grid-cols-3">
-          {feePlans.map((p) => {
-            const on = f.plans.includes(p.key);
-            return (
-              <label key={p.key} className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-colors has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-accent/30 ${on ? "border-primary bg-primary/5" : "border-ink/12 bg-white hover:border-accent"}`}>
-                <input type="checkbox" checked={on} onChange={() => put({ plans: on ? f.plans.filter((x) => x !== p.key) : [...f.plans, p.key] })} className="mt-1 size-[18px] shrink-0 cursor-pointer accent-primary" />
-                <span>
-                  <span className="block font-bold">{p.label}</span>
-                  <span className="block text-[.82rem] text-ink/60">{p.hint}</span>
-                </span>
-              </label>
-            );
-          })}
-        </div>
-        <ErrorText id="ob-plan-monthly" error={errors["ob-plan-monthly"]} />
-      </Block>
-
       <Block title="Due date and defaulters">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -425,7 +406,6 @@ export function ReviewStep({ d, onEdit }: { d: Onboarding; onEdit: (k: StepKey) 
       {card(
         "fees",
         <>
-          <Row label="Plans offered">{d.fees.plans.length ? feePlans.filter((p) => d.fees.plans.includes(p.key)).map((p) => p.label).join(", ") : missing}</Row>
           <Row label="Due date">Day {d.fees.dueDay} of each month</Row>
           <Row label="Defaulter after">{d.fees.defaulterMonths} unpaid {d.fees.defaulterMonths === 1 ? "month" : "months"}</Row>
         </>,
