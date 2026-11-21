@@ -16,7 +16,7 @@ import {
   type Onboarding,
   type StepKey,
 } from "@/lib/onboarding";
-import { AddButton, Block, ErrorText, Note, RemoveButton, SelectField, Stepper, TextField, ToggleChip, inputClass } from "./kit";
+import { AddButton, Block, ErrorText, RemoveButton, SelectField, Stepper, TextField, ToggleChip, inputClass } from "./kit";
 
 export type StepProps = { d: Onboarding; set: (fn: (d: Onboarding) => Onboarding) => void; errors: Errors };
 
@@ -272,8 +272,6 @@ export function FeesStep({ d, set, errors }: StepProps) {
   const put = (patch: Partial<Onboarding["fees"]>) => set((x) => ({ ...x, fees: { ...x.fees, ...patch } }));
   return (
     <div className="grid gap-7">
-      <Note>Fees are tracked by status, due dates and payment behaviour only. No amounts are recorded anywhere on the platform.</Note>
-
       <Block title="Installment plans offered" hint="Each student follows one of these plans per academic year.">
         <div id="ob-plan-monthly" tabIndex={-1} className="grid gap-3 outline-none sm:grid-cols-3">
           {feePlans.map((p) => {
