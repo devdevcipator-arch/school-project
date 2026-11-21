@@ -134,14 +134,16 @@ export default function OnboardingWizard() {
     requestAnimationFrame(() => document.getElementById(Object.keys(found)[0])?.focus());
   };
 
-  // Navigation lock removed for now: Continue moves on even if this step is incomplete.
-  // Finish setup still checks every step.
-  // Exception: the School, Calendar, Timings, Classes, Subjects and Policies steps are saved to the database, so they must be valid first.
-  // Until Continue is pressed, edits live only in React state (plus the local draft).
+  // Navigation lock: Continue stays disabled until the current step is filled in, and the step rail
+  // only opens steps already reached through Continue (and only while every step before them is valid).
+  // Each step is saved to the database on Continue; until then edits live only in React state (plus the local draft).
+  const pending = last ? [] : Object.values(validateStep(key, data));
+  const incomplete = pending.length > 0;
+  const reachable = (i: number) => i <= step || (i <= furthest && !firstInvalid(i - 1));
+
   const next = async () => {
+    if (incomplete) return;
     if (key === "school" || key === "calendar" || key === "timings" || key === "classes" || key === "subjects" || key === "policies") {
-      const found = validateStep(key, data);
-      if (Object.keys(found).length) return showErrors(step, found);
       setAdvancing(true);
       setSaveError("");
       const err =
@@ -196,12 +198,12 @@ export default function OnboardingWizard() {
             <ol>
               {steps.map((s, i) => {
                 const done = i < furthest && i !== step;
-                const reachable = true;
+                const open = reachable(i);
                 return (
                   <li key={s.key} style={{ height: RAIL_ITEM }}>
                     <button
                       type="button"
-                      disabled={!reachable}
+                      disabled={!open}
                       onClick={() => go(i)}
                       aria-current={i === step ? "step" : undefined}
                       className="relative flex h-full w-full cursor-pointer items-center gap-3 rounded-xl px-3 text-left disabled:cursor-default"
@@ -214,7 +216,7 @@ export default function OnboardingWizard() {
                         {done ? <Icon d={iconPaths.check} className="size-4" /> : i + 1}
                       </span>
                       <span className="min-w-0">
-                        <span className={`block text-[.92rem] font-semibold ${reachable ? "text-surface" : "text-surface/45"}`}>{s.label}</span>
+                        <span className={`block text-[.92rem] font-semibold ${open ? "text-surface" : "text-surface/45"}`}>{s.label}</span>
                         <span className="block truncate text-[.76rem] text-surface/50">{s.hint}</span>
                       </span>
                     </button>
@@ -255,7 +257,14 @@ export default function OnboardingWizard() {
           </div>
 
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-            <span />
+            {incomplete ? (
+              <p role="status" className="min-w-0 flex-1 text-[.88rem] text-ink/60">
+                To continue: {pending[0]}
+                {pending.length > 1 && ` (+${pending.length - 1} more)`}
+              </p>
+            ) : (
+              <span />
+            )}
             {last ? (
               <button type="button" onClick={finish} disabled={status === "saving"} className={buttonClass("primary", "lg", "cursor-pointer disabled:cursor-wait disabled:opacity-90 max-sm:w-full")}>
                 {status === "saving" ? (
@@ -268,7 +277,12 @@ export default function OnboardingWizard() {
                 )}
               </button>
             ) : (
-              <button type="button" onClick={next} disabled={advancing} className={buttonClass("primary", "lg", "cursor-pointer disabled:cursor-wait disabled:opacity-90 max-sm:w-full")}>
+              <button
+                type="button"
+                onClick={next}
+                disabled={advancing || incomplete}
+                className={buttonClass("primary", "lg", `cursor-pointer max-sm:w-full ${incomplete ? "disabled:cursor-not-allowed disabled:opacity-45" : "disabled:cursor-wait disabled:opacity-90"}`)}
+              >
                 {advancing && <Spinner />}
                 {advancing ? "Saving..." : "Continue"}
                 <svg viewBox="0 0 20 20" aria-hidden className="size-4"><path d="M4 10h11M11 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
