@@ -197,7 +197,8 @@ export default function OnboardingWizard() {
             />
             <ol>
               {steps.map((s, i) => {
-                const done = i < furthest && i !== step;
+                // Completed = passed with Continue and still filled in correctly.
+                const done = i < furthest && i !== step && !Object.keys(validateStep(s.key, data)).length;
                 const open = reachable(i);
                 return (
                   <li key={s.key} style={{ height: RAIL_ITEM }}>
@@ -210,13 +211,22 @@ export default function OnboardingWizard() {
                     >
                       <span
                         className={`grid size-8 shrink-0 place-items-center rounded-full text-[.8rem] font-bold transition-colors duration-300 ${
-                          i === step ? "bg-linear-135 from-primary to-accent text-surface" : done ? "bg-accent/25 text-accent" : "border border-surface/20 text-surface/50"
+                          i === step ? "bg-linear-135 from-primary to-accent text-surface" : done ? "bg-accent text-ink" : "border border-surface/20 text-surface/50"
                         }`}
                       >
-                        {done ? <Icon d={iconPaths.check} className="size-4" /> : i + 1}
+                        {done ? (
+                          <svg viewBox="0 0 24 24" aria-hidden className="size-4" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <path d={iconPaths.check} />
+                          </svg>
+                        ) : (
+                          i + 1
+                        )}
                       </span>
                       <span className="min-w-0">
-                        <span className={`block text-[.92rem] font-semibold ${open ? "text-surface" : "text-surface/45"}`}>{s.label}</span>
+                        <span className={`block text-[.92rem] font-semibold ${open ? "text-surface" : "text-surface/45"}`}>
+                          {s.label}
+                          {done && <span className="sr-only"> (completed)</span>}
+                        </span>
                         <span className="block truncate text-[.76rem] text-surface/50">{s.hint}</span>
                       </span>
                     </button>
