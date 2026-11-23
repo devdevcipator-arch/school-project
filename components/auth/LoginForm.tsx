@@ -22,8 +22,8 @@ function validate(email: string, password: string): Errors {
 async function destination(userId: string) {
   const next = new URLSearchParams(window.location.search).get("next");
   if (next && next.startsWith("/") && !next.startsWith("//")) return next;
-  const { data: school } = await supabase.from("school").select("name").eq("principal", userId).maybeSingle();
-  return school && !school.name ? "/onboarding" : "/principal";
+  const { data: profile } = await supabase.from("users").select("name").eq("id", userId).maybeSingle();
+  return profile && !profile.name ? "/onboarding" : "/principal";
 }
 
 export default function LoginForm() {

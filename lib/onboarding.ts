@@ -7,23 +7,23 @@
 import { supabase } from "./supabase";
 import { teachers } from "./teachers";
 
-/* ---------------- Supabase: public.school (one row per principal, created on Sign Up) ---------------- */
+/* ---------------- Supabase: public.users (one row per auth user, same id, created on Sign Up) ---------------- */
 
 /** Step 1 values already stored for the signed-in principal, or null if none. */
 export async function loadSchoolStep(): Promise<Onboarding["school"] | null> {
-  const { data, error } = await supabase.from("school").select("name, principal_name").maybeSingle();
+  const { data, error } = await supabase.from("users").select("name, principal_name").maybeSingle();
   if (error || !data) return null;
   return { name: data.name ?? "", principal: data.principal_name ?? "" };
 }
 
-/** Saves step 1 (School) into the principal's school row. Returns an error message, or null on success. */
+/** Saves step 1 (School) into the signed-in user's row. Returns an error message, or null on success. */
 export async function saveSchoolStep(s: Onboarding["school"]): Promise<string | null> {
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return "Your session has expired. Please log in again.";
   const { data, error } = await supabase
-    .from("school")
+    .from("users")
     .update({ name: s.name.trim(), principal_name: s.principal.trim() })
-    .eq("principal", auth.user.id)
+    .eq("id", auth.user.id)
     .select("id");
   if (error) return "Could not save your school details. Please try again.";
   if (!data?.length) return "No school is linked to this account yet. Please contact support.";
@@ -32,9 +32,9 @@ export async function saveSchoolStep(s: Onboarding["school"]): Promise<string | 
 
 /** Step 2 values stored for the signed-in principal (option sets + holidays table), or null if none. */
 export async function loadCalendarStep(): Promise<Onboarding["calendar"] | null> {
-  const { data, error } = await supabase.from("school").select("id, year_start_month, exam_terms, school_days").maybeSingle();
+  const { data, error } = await supabase.from("users").select("id, year_start_month, exam_terms, school_days").maybeSingle();
   if (error || !data) return null;
-  const { data: hols } = await supabase.from("holidays").select("id, name, start_date, end_date").eq("school", data.id).order("start_date");
+  const { data: hols } = await supabase.from("holidays").select("id, name, start_date, end_date").eq("user", data.id).order("start_date");
   return {
     yearStartMonth: monthNames.indexOf(data.year_start_month) + 1 || 4,
     examTerms: data.exam_terms?.length ? data.exam_terms : [""],
@@ -46,7 +46,7 @@ export async function loadCalendarStep(): Promise<Onboarding["calendar"] | null>
 /**
  * Saves step 2 (Calendar) in one transaction (public.save_calendar):
  * year_start_month (month option set), exam_terms (exam_terms option set, new names created first),
- * school_days (school_day option set) and the school's rows in the holidays table.
+ * school_days (school_day option set) and the user's rows in the holidays table.
  * Returns an error message, or null on success.
  */
 export async function saveCalendarStep(c: Onboarding["calendar"]): Promise<string | null> {
@@ -65,9 +65,9 @@ export async function saveCalendarStep(c: Onboarding["calendar"]): Promise<strin
 
 /** Step 3 values stored for the signed-in principal (school hours + periods table), or null if none saved yet. */
 export async function loadTimingsStep(): Promise<Onboarding["timings"] | null> {
-  const { data, error } = await supabase.from("school").select("id, start_time, end_time, periods").maybeSingle();
+  const { data, error } = await supabase.from("users").select("id, start_time, end_time, periods").maybeSingle();
   if (error || !data || !data.periods?.length) return null;
-  const { data: rows } = await supabase.from("periods").select("id, title, start_time, end_time").eq("school", data.id).order("start_time");
+  const { data: rows } = await supabase.from("periods").select("id, title, start_time, end_time").eq("user", data.id).order("start_time");
   const hm = (t: string) => t.slice(0, 5);
   return {
     start: hm(data.start_time),
@@ -78,8 +78,8 @@ export async function loadTimingsStep(): Promise<Onboarding["timings"] | null> {
 
 /**
  * Saves step 3 (Timings) in one transaction (public.save_timings):
- * school.start_time, school.end_time, the school's rows in the periods table,
- * and school.periods (the list of those period rows).
+ * users.start_time, users.end_time, the user's rows in the periods table,
+ * and users.periods (the list of those period rows).
  * Returns an error message, or null on success.
  */
 export async function saveTimingsStep(t: Onboarding["timings"]): Promise<string | null> {
@@ -97,7 +97,7 @@ export async function saveTimingsStep(t: Onboarding["timings"]): Promise<string 
 
 /** Step 4 values stored for the signed-in principal (classes table, one row per grade), or null if none saved yet. */
 export async function loadClassesStep(): Promise<Onboarding["grades"] | null> {
-  const { data, error } = await supabase.from("school").select("grades").maybeSingle();
+  const { data, error } = await supabase.from("users").select("grades").maybeSingle();
   if (error || !data?.grades?.length) return null;
   const { data: rows } = await supabase.from("classes").select("grade, sections").in("id", data.grades);
   if (!rows?.length) return null;
@@ -110,7 +110,7 @@ export async function loadClassesStep(): Promise<Onboarding["grades"] | null> {
 /**
  * Saves step 4 (Classes) in one call (public.save_classes): one classes row per grade (1 to 10) with
  * its sections, e.g. ["1-A", "1-B"] (empty = not offered; subjects already on a row are kept),
- * and school.grades as the list of those rows. Returns an error message, or null on success.
+ * and users.grades as the list of those rows. Returns an error message, or null on success.
  */
 export async function saveClassesStep(grades: Onboarding["grades"]): Promise<string | null> {
   const { data: auth } = await supabase.auth.getUser();
@@ -124,7 +124,7 @@ export async function saveClassesStep(grades: Onboarding["grades"]): Promise<str
 
 /** Step 5 subjects rebuilt from the classes table (classes.subjects per grade), or null if none saved yet. */
 export async function loadSubjectsStep(): Promise<Onboarding["subjects"] | null> {
-  const { data, error } = await supabase.from("school").select("grades").maybeSingle();
+  const { data, error } = await supabase.from("users").select("grades").maybeSingle();
   if (error || !data?.grades?.length) return null;
   const { data: rows } = await supabase.from("classes").select("grade, subjects").in("id", data.grades).order("grade");
   const names = [...new Set((rows ?? []).flatMap((r) => (r.subjects ?? []) as string[]))];
@@ -155,11 +155,11 @@ export async function saveSubjectsStep(d: Onboarding): Promise<string | null> {
 
 /**
  * Step 6 values stored for the signed-in principal, or null if none: fee rules
- * (school.fee_due_day, school.defaulter_months) and attendance thresholds
- * (school.student_attendance_below, school.class_attendance_below).
+ * (users.fee_due_day, users.defaulter_months) and attendance thresholds
+ * (users.student_attendance_below, users.class_attendance_below).
  */
 export async function loadPoliciesStep(): Promise<{ fees: Pick<Onboarding["fees"], "dueDay" | "defaulterMonths">; policies: Onboarding["policies"] } | null> {
-  const { data, error } = await supabase.from("school").select("fee_due_day, defaulter_months, student_attendance_below, class_attendance_below").maybeSingle();
+  const { data, error } = await supabase.from("users").select("fee_due_day, defaulter_months, student_attendance_below, class_attendance_below").maybeSingle();
   if (error || !data) return null;
   return {
     fees: { dueDay: data.fee_due_day, defaulterMonths: data.defaulter_months },
@@ -167,19 +167,19 @@ export async function loadPoliciesStep(): Promise<{ fees: Pick<Onboarding["fees"
   };
 }
 
-/** Saves step 6 (Policies: fee rules + attendance thresholds) into the principal's school row. Returns an error message, or null on success. */
+/** Saves step 6 (Policies: fee rules + attendance thresholds) into the signed-in user's row. Returns an error message, or null on success. */
 export async function savePoliciesStep(f: Onboarding["fees"], p: Onboarding["policies"]): Promise<string | null> {
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return "Your session has expired. Please log in again.";
   const { data, error } = await supabase
-    .from("school")
+    .from("users")
     .update({
       fee_due_day: f.dueDay,
       defaulter_months: f.defaulterMonths,
       student_attendance_below: p.studentAttendanceBelow,
       class_attendance_below: p.classAttendanceBelow,
     })
-    .eq("principal", auth.user.id)
+    .eq("id", auth.user.id)
     .select("id");
   if (error) return "Could not save your policies. Please try again.";
   if (!data?.length) return "No school is linked to this account yet. Please contact support.";
